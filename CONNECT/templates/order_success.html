@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Заказ подтверждён — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-search">
+    <input type="text" placeholder="order confirmed" readonly>
+  </div>
+  <div class="s-user">
+    <span class="s-session">order: <b>confirmed</b></span>
+  </div>
+</header>
+
+<main class="order-page">
+
+  <div class="shutdown-notice">
+    <div class="shutdown-notice__label">СИСТЕМНОЕ УВЕДОМЛЕНИЕ</div>
+    <div class="shutdown-notice__text">
+      Заказ <strong>{{ order_id }}</strong> принят.
+      Операция завершает сессию. Все данные будут уничтожены.
+    </div>
+  </div>
+
+  <h1 class="order-head__title">ЗАКАЗ ПОДТВЕРЖДЁН</h1>
+  <p class="order-head__lead">
+    Номер заказа — <strong>{{ order_id }}</strong>.
+    Адрес кошелька для оплаты — ниже.
+  </p>
+
+  <div class="order-receipt">
+    <div class="order-receipt__row">
+      <span>Артикул</span>
+      <strong class="mono">{{ dress.sku }}</strong>
+    </div>
+    <div class="order-receipt__row">
+      <span>Изделие</span>
+      <strong>{{ dress.title }}</strong>
+    </div>
+    <div class="order-receipt__row">
+      <span>Тариф</span>
+      <strong class="hot">{{ dress.price }}</strong>
+    </div>
+    <div class="order-receipt__row">
+      <span>Срок проката</span>
+      <strong class="mono">{{ order.hours }} ч.</strong>
+    </div>
+    <div class="order-receipt__row">
+      <span>Итого к оплате</span>
+      <strong class="hot">{{ total }}</strong>
+    </div>
+    <div class="order-receipt__divider"></div>
+    <div class="order-receipt__row">
+      <span>Адрес доставки</span>
+      <strong>{{ order.address }}</strong>
+    </div>
+    <div class="order-receipt__row">
+      <span>Дата</span>
+      <strong class="mono">{{ order.date }}</strong>
+    </div>
+    <div class="order-receipt__row">
+      <span>Интервал</span>
+      <strong class="mono">{{ order.slot }}</strong>
+    </div>
+  </div>
+
+  <div class="wallet-box">
+    <div class="wallet-box__label">АДРЕС КОШЕЛЬКА · {{ order.coin | upper }}</div>
+    <div class="wallet-box__address">{{ wallet }}</div>
+    <div class="wallet-box__note">{{ rental.crypto.usdt_note }}</div>
+  </div>
+
+  <p class="shutdown-warning">
+    Соединение будет разорвано автоматически.
+  </p>
+
+</main>
+
+<script>
+  // Через 2 секунды — на /shutdown?reason=order
+  setTimeout(function() {
+    document.body.classList.add("is-shutting-down");
+    setTimeout(function() {
+      window.location.href = "/shutdown?reason=order";
+    }, 500);
+  }, 2000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Заказ {{ dress.sku }} — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-search">
+    <input type="text" placeholder="order /{{ dress.sku }}" readonly>
+  </div>
+  <div class="s-user">
+    <span class="s-session">item: <b>{{ dress.sku }}</b></span>
+    <a href="{{ url_for('dress', sku=dress.sku) }}" class="s-nav-link">← item</a>
+    <a href="{{ url_for('catalog') }}" class="s-nav-link">// catalog</a>
+    <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
+  </div>
+</header>
+
+<main class="order-page">
+
+  <header class="order-head">
+    <div class="order-head__kicker">RENTAL · ORDER FORM</div>
+    <h1 class="order-head__title">ОФОРМЛЕНИЕ ПРОКАТА</h1>
+    <p class="order-head__lead">
+      Изделие <strong>{{ dress.title }}</strong> · артикул
+      <strong>{{ dress.sku }}</strong> · тариф
+      <strong>{{ dress.price }}</strong>
+    </p>
+  </header>
+
+  <form class="order-form" method="post">
+
+    <div class="order-form__section">
+      <div class="order-form__section-label">01 · Адрес доставки</div>
+      <label class="order-field">
+        <span class="order-field__label">Куда доставить изделие</span>
+        <select name="address" required>
+          <option value="" disabled selected>— выберите адрес —</option>
+          {% for a in rental.addresses %}
+            <option value="{{ a }}">{{ a }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <div class="order-form__section">
+      <div class="order-form__section-label">02 · Время доставки</div>
+      <div class="order-form__grid">
+        <label class="order-field">
+          <span class="order-field__label">Дата</span>
+          <input type="date" name="date" required>
+        </label>
+        <label class="order-field">
+          <span class="order-field__label">Интервал</span>
+          <select name="slot" required>
+            <option value="" disabled selected>— выберите интервал —</option>
+            {% for s in rental.delivery_slots %}
+              <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="order-form__section">
+      <div class="order-form__section-label">03 · Срок проката</div>
+      <label class="order-field">
+        <span class="order-field__label">
+          Сколько часов изделие будет у вас
+          (от {{ rental.min_hours }} до {{ rental.max_hours }})
+        </span>
+        <input type="number" name="hours"
+               min="{{ rental.min_hours }}" max="{{ rental.max_hours }}"
+               value="{{ rental.min_hours }}" required>
+      </label>
+    </div>
+
+    <div class="order-form__section">
+      <div class="order-form__section-label">04 · Оплата</div>
+      <label class="order-field">
+        <span class="order-field__label">Валюта</span>
+        <select name="coin">
+          <option value="usdt_trc20">USDT · TRC-20</option>
+          <option value="btc">BTC · Bitcoin</option>
+          <option value="eth">ETH · Ethereum</option>
+        </select>
+      </label>
+      <div class="order-form__hint">
+        Оплата принимается только в криптовалюте. Адрес кошелька будет показан
+        на следующем шаге. Комиссия сети — на стороне арендатора.
+      </div>
+    </div>
+
+    <div class="order-form__section">
+      <div class="order-form__section-label">05 · Комментарий</div>
+      <label class="order-field">
+        <span class="order-field__label">Дополнительно (необязательно)</span>
+        <textarea name="notes" rows="3"
+                  placeholder="Особые пожелания, контактное лицо, время для звонка..."></textarea>
+      </label>
+    </div>
+
+    <div class="order-penalty">
+      <div class="order-penalty__label">ВНИМАНИЕ</div>
+      <div class="order-penalty__text">{{ rental.penalty }}</div>
+    </div>
+
+    <div class="order-form__actions">
+      <button type="submit" class="dress-btn">Подтвердить заказ</button>
+      <a href="{{ url_for('dress', sku=dress.sku) }}" class="dress-btn dress-btn--ghost">Отмена</a>
+    </div>
+
+  </form>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/secret.js') }}"></script>
+</body>
+</html>

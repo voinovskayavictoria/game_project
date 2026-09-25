@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ dress.title }} — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+
+  <div class="s-search">
+    <input type="text" placeholder="search /catalog/{{ dress.sku }}" readonly>
+  </div>
+
+  <div class="s-user">
+    <span class="s-session">item: <b>{{ dress.sku }}</b></span>
+    <a href="{{ url_for('catalog') }}" class="s-nav-link">// catalog</a>
+    <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
+  </div>
+</header>
+
+<main class="dress-page">
+
+  <div class="dress-page__grid">
+    <div class="dress-page__image">
+      <img src="{{ url_for('static', filename=dress.image) }}" alt=""
+           onerror="this.style.display='none'">
+    </div>
+
+    <div class="dress-page__info">
+      <div class="dress-page__sku">{{ dress.sku }}</div>
+      <h1 class="dress-page__title">{{ dress.title }}</h1>
+      <div class="dress-page__price">{{ dress.price }}</div>
+      <div class="dress-page__rent-note">только прокат · оплата почасовая</div>
+
+      <p class="dress-page__desc">{{ dress.description }}</p>
+
+      <h2 class="dress-page__h2">Характеристики</h2>
+      <ul class="dress-page__specs">
+        {% for s in dress.specs %}
+          <li>{{ s }}</li>
+        {% endfor %}
+      </ul>
+
+      <h2 class="dress-page__h2">Условия проката</h2>
+      <ul class="dress-page__specs">
+        {% for r in rental.rules %}
+          <li>{{ r }}</li>
+        {% endfor %}
+      </ul>
+
+      <div class="penalty-box">
+        <div class="penalty-box__label">Штрафы</div>
+        <div class="penalty-box__text">{{ rental.penalty }}</div>
+      </div>
+
+      <div class="dress-page__cta">
+        <a class="dress-btn" href="{{ url_for('order', sku=dress.sku) }}">Заказать</a>
+        <button type="button" class="dress-btn dress-btn--ghost">В избранное</button>
+      </div>
+
+      <div class="dress-page__hint">
+        <div class="dress-page__hint-label">TECHNICAL NOTE // INTERNAL</div>
+        <div class="dress-page__hint-text">{{ dress.code_hint }}</div>
+        <div class="dress-page__hint-warn">
+          Служебная информация. Не подлежит передаче третьим лицам.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a class="s-nav-link" href="{{ url_for('catalog') }}">← вернуться в каталог</a>
+</main>
+
+<script src="{{ url_for('static', filename='js/secret.js') }}"></script>
+</body>
+</html>

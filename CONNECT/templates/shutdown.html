@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>CONNECTION TERMINATED</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--shutdown">
+
+<main class="shutdown-page">
+
+  <!-- Заголовок с причиной -->
+  <div class="shutdown-reason" id="shutdown-reason">
+    {% if reason == "order" %}
+      ORDER ACCEPTED · SESSION CLOSING
+    {% elif reason == "bruteforce" %}
+      TOO MANY FAILED ATTEMPTS · SECURITY LOCKDOWN
+    {% elif reason == "keyword" %}
+      RESTRICTED KEYWORD DETECTED · SECURITY LOCKDOWN
+    {% else %}
+      SECURITY BREACH · SESSION TERMINATED
+    {% endif %}
+  </div>
+
+  <!-- Большой счётчик 3 / 2 / 1 -->
+  <div class="shutdown-counter" id="counter">3</div>
+
+  <!-- Финальный экран (изначально скрыт) -->
+  <div class="shutdown-final" id="final" style="display: none;">
+    <pre class="shutdown-ascii">
+ ██████╗ ██████╗ ███╗   ██╗███╗   ██╗███████╗ ██████╗████████╗
+██╔════╝██╔═══██╗████╗  ██║████╗  ██║██╔════╝██╔════╝╚══██╔══╝
+██║     ██║   ██║██╔██╗ ██║██╔██╗ ██║█████╗  ██║        ██║
+██║     ██║   ██║██║╚██╗██║██║╚██╗██║██╔══╝  ██║        ██║
+╚██████╗╚██████╔╝██║ ╚████║██║ ╚████║███████╗╚██████╗   ██║
+ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═╝
+
+             T E R M I N A T E D
+    </pre>
+
+    <div class="shutdown-log" id="log"></div>
+
+    <div class="shutdown-hint">
+      connection to node 1704 has been closed.<br>
+      all session data wiped.<br>
+      this node no longer exists.
+    </div>
+
+    <div class="shutdown-cursor">
+      <span class="shutdown-cursor__mark">█</span>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  (function() {
+    var counter = document.getElementById("counter");
+    var finalBox = document.getElementById("final");
+    var reasonBox = document.getElementById("shutdown-reason");
+
+    var n = 3;
+    function tick() {
+      if (n > 0) {
+        counter.textContent = n;
+        counter.classList.remove("is-anim");
+        void counter.offsetWidth; // reflow
+        counter.classList.add("is-anim");
+        n -= 1;
+        setTimeout(tick, 900);
+      } else {
+        // 3, 2, 1 — прошло. Показываем TERMINATED.
+        counter.style.display = "none";
+        reasonBox.style.display = "none";
+        finalBox.style.display = "block";
+        runLog();
+      }
+    }
+    tick();
+
+    // Лог после появления финального экрана
+    function runLog() {
+      var lines = [
+        "> wiping session data...",
+        "> closing node 1704...",
+        "> removing user-017 from active sessions...",
+        "> unlinking admin-01...",
+        "> erasing history...",
+        "> DONE.",
+        "",
+        "ERROR: signal lost.",
+        "ERROR: no route to host.",
+      ];
+      var el = document.getElementById("log");
+      var i = 0;
+      function next() {
+        if (i >= lines.length) return;
+        var line = document.createElement("div");
+        line.textContent = lines[i];
+        line.className = "shutdown-log__line";
+        if (lines[i].indexOf("ERROR") === 0) line.classList.add("is-error");
+        el.appendChild(line);
+        i += 1;
+        setTimeout(next, 380);
+      }
+      next();
+    }
+  })();
+</script>
+
+</body>
+</html>

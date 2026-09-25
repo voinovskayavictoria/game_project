@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Каталог — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+
+  <div class="s-search">
+    <input type="text" placeholder="search /catalog" readonly>
+  </div>
+
+  <div class="s-user">
+    <span class="s-session">uid: <b>anon</b></span>
+    <a href="{{ url_for('inbox') }}" class="s-nav-link">// inbox</a>
+    <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
+  </div>
+</header>
+
+<main class="catalog">
+
+  <header class="catalog__head">
+    <div class="catalog__kicker">SEASON 26/27 · PRIVATE COLLECTION</div>
+    <h1 class="catalog__title">КАТАЛОГ</h1>
+    <p class="catalog__lead">
+      Ручная работа. Ограниченные партии. Только прокат.
+    </p>
+  </header>
+
+  <div class="catalog__grid">
+    {% for d in dresses %}
+      <a class="dress" href="{{ url_for('dress', sku=d.sku) }}">
+        <div class="dress__image">
+          <img src="{{ url_for('static', filename=d.image) }}" alt=""
+               onerror="this.style.display='none'">
+          <div class="dress__sku">{{ d.sku }}</div>
+        </div>
+        <div class="dress__body">
+          <h2 class="dress__title">{{ d.title }}</h2>
+          <div class="dress__price">{{ d.price }}</div>
+          <p class="dress__desc">{{ d.description }}</p>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="catalog__note">{{ note }}</div>
+
+  <div class="catalog__footer">
+    {{ footer }} · Позиций: {{ dresses|length }}
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/secret.js') }}"></script>
+</body>
+</html>

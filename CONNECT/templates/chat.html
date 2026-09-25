@@ -49,8 +49,14 @@
       </div>
     </header>
 
-    <div class="conversation__messages">
+    <div class="conversation__messages" id="messages">
       {% for m in chat.messages %}
+        <div class="msg {% if m.from == 'me' %}msg--me{% endif %}">
+          <div class="msg__text">{{ m.text }}</div>
+          <div class="msg__time">{{ m.time }}</div>
+        </div>
+      {% endfor %}
+      {% for m in extra %}
         <div class="msg {% if m.from == 'me' %}msg--me{% endif %}">
           <div class="msg__text">{{ m.text }}</div>
           <div class="msg__time">{{ m.time }}</div>
@@ -58,13 +64,14 @@
       {% endfor %}
     </div>
 
-    <div class="conversation__input">
-      <input type="text" placeholder="Написать сообщение...">
-      <button>Отправить</button>
-    </div>
+    <form class="conversation__input" method="post" autocomplete="off" id="chat-form">
+      <input type="text" name="text" placeholder="Написать сообщение..." autofocus autocomplete="off">
+      <button type="submit">Отправить</button>
+    </form>
   </main>
 
 </div>
 
+<script src="{{ url_for('static', filename='js/public.js') }}"></script>
 </body>
 </html>
