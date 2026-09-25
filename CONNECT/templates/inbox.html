@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>CONNECT — чаты</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public.css') }}">
+</head>
+<body class="app">
+
+<header class="app__topbar">
+  <div class="app__brand">
+    <span class="logo-mark logo-mark--sm">C</span>
+    <span class="logo-text">CONNECT</span>
+  </div>
+  <div class="app__user">
+    <span>С. Климов</span>
+    <a href="{{ url_for('logout') }}" class="app__logout">Выйти</a>
+  </div>
+</header>
+
+<div class="app__body">
+
+  <aside class="sidebar">
+    <div class="sidebar__search">
+      <input type="text" placeholder="Поиск чатов">
+    </div>
+    <nav class="sidebar__list">
+      {% for c in chats %}
+        <a class="chat-item" href="{{ url_for('chat', chat_id=c.id) }}">
+          <div class="chat-item__avatar" style="background: {{ c.color }}">{{ c.avatar }}</div>
+          <div class="chat-item__body">
+            <div class="chat-item__name">{{ c.name }}</div>
+            <div class="chat-item__last">{{ c.last }}</div>
+          </div>
+          {% if c.unread %}<div class="chat-item__badge">{{ c.unread }}</div>{% endif %}
+        </a>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <main class="empty">
+    <div class="empty__icon">💬</div>
+    <div class="empty__title">Выберите чат</div>
+    <div class="empty__sub">Список дел — слева. Можно начать с любого.</div>
+  </main>
+
+</div>
+
+</body>
+</html>

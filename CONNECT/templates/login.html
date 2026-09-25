@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CONNECT — вход</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public.css') }}">
+</head>
+<body class="login-page">
+
+<div class="login-box">
+  <div class="login-box__logo">
+    <span class="logo-mark">C</span>
+    <span class="logo-text">CONNECT</span>
+  </div>
+  <p class="login-box__sub">{{ site.firm }}</p>
+
+  <h1 class="login-box__title">Вход в систему</h1>
+  <p class="login-box__hint">Внутренний мессенджер для юридических команд.</p>
+
+  {% if error %}
+    <div class="login-error">
+      Неверный пароль. Попробуйте ещё раз.
+    </div>
+  {% endif %}
+
+  <form method="post" class="login-form">
+    <label class="login-form__label">
+      <span>Пароль</span>
+      <input type="password" name="password" autofocus required placeholder="••••••">
+    </label>
+    <button type="submit">Войти</button>
+  </form>
+
+  <p class="login-box__footer">
+    Обратитесь в IT-поддержку, если не помните пароль.
+  </p>
+</div>
+
+</body>
+</html>
