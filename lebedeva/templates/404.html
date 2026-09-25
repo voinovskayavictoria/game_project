@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}404{% endblock %}
+{% block content %}
+<h1 class="page-title">404</h1>
+<p class="body">Такой страницы нет. Возможно, я её удалила.</p>
+<a class="marker-link" href="{{ url_for('index') }}">← На главную</a>
+{% endblock %}

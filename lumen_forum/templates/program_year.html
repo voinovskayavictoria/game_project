@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}LUMEN {{ year }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>LUMEN {{ year }}</h1>
+<p class="lead">{{ item.theme }}</p>
+
+{% if item.note %}<p class="note">{{ item.note }}</p>{% endif %}
+
+<section class="section">
+  <h2>Участники</h2>
+  {% if item.participants %}
+    <ul class="plain-list">
+      {% for line in item.participants %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Список участников будет объявлен позже.</p>
+  {% endif %}
+</section>
+
+<section class="section">
+  <h2>Ключевые события</h2>
+  <ul class="plain-list">
+    {% for line in item.highlights %}<li>{{ line }}</li>{% endfor %}
+  </ul>
+</section>
+
+<a class="back-link" href="{{ url_for('program') }}">← Все годы</a>
+{% endblock %}

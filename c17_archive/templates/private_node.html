@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}PRIVATE NODE — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">{{ node.title }}</h1>
+
+<pre class="log-pre private">
+STATUS: {{ node.status }}
+
+Last connection:
+{{ node.last_connection }}
+
+<span class="blink">█</span> {{ node.session }}
+</pre>
+
+<p class="foot-note">
+  No user identifier attached to this node.
+</p>
+{% endblock %}

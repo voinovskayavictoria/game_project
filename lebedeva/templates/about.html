@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Обо мне — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Обо мне</h1>
+
+<div class="about-grid">
+  <img class="about-photo" src="{{ url_for('static', filename=BIO.photo) }}" alt="">
+  <div>
+    <p class="about-role">{{ BIO.role }}</p>
+    <p class="body">{{ BIO.intro }}</p>
+  </div>
+</div>
+
+<section class="block">
+  <h2 class="section-label">Специализация</h2>
+  <ul class="plain">
+    {% for s in BIO.specialization %}<li>{{ s }}</li>{% endfor %}
+  </ul>
+</section>
+
+<section class="block">
+  <h2 class="section-label">Архив работы</h2>
+  <ul class="career">
+    {% for a in BIO.archive %}
+      <li class="{% if a.current %}career--current{% endif %}">
+        <span class="career__year">{{ a.year }}</span>
+        {% if a.current %}
+          <a href="{{ url_for('investigation', slug=a.slug) }}">{{ a.title }}</a>
+        {% else %}
+          {{ a.title }}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}DELETED — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">DELETED RECORDS</h1>
+<p class="foot-note">Partial recovery. Some fields lost permanently.</p>
+
+{% for r in records %}
+  <pre class="log-pre deleted">{% for line in r.lines %}{{ line }}
+{% endfor %}</pre>
+{% endfor %}
+
+<p class="foot-note">
+  Owner of ADMIN-01 could not be restored.
+</p>
+{% endblock %}

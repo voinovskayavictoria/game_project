@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}OD-17 — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="od17">
+  <div class="od17__kicker">
+    <span class="chip chip--archived">{{ od.status|upper }}</span>
+    <span class="muted">{{ od.start }}–{{ od.end }}</span>
+  </div>
+
+  <h1 class="od17__title">{{ od.title }}</h1>
+  <p class="lead">{{ od.description }}</p>
+
+  <div class="kv-grid">
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Lead</div>
+      <div class="kv-grid__value">{{ od.lead }}</div>
+    </div>
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Technical partner</div>
+      <div class="kv-grid__value">
+        <a href="{{ external_url('vector') }}">{{ od.technical_partner }} →</a>
+      </div>
+    </div>
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Period</div>
+      <div class="kv-grid__value">{{ od.start }}–{{ od.end }}</div>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <a href="{{ url_for('project', slug='od17') }}" class="is-active">Обзор</a>
+    <a href="{{ url_for('od17_documents') }}">Документы</a>
+    <a href="{{ url_for('od17_users') }}">Users</a>
+    <a href="{{ url_for('access_control') }}">Access Control</a>
+  </nav>
+
+  <a class="link-more" href="{{ url_for('projects') }}">← Все проекты</a>
+</article>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}О компании — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">О компании</h1>
+<p class="lead">{{ SITE.description }}</p>
+
+<section class="block">
+  <h2 class="section-title">История</h2>
+  <ul class="timeline">
+    {% for year, text in history %}
+      <li>
+        <span class="timeline__year">{{ year }}</span>
+        <span class="timeline__text">{{ text }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="block">
+  <h2 class="section-title">Направления</h2>
+  <div class="cards">
+    <div class="card card--static">
+      <h3 class="card__title">Secure Communications</h3>
+      <p class="card__desc">Защищённые каналы и протоколы обмена.</p>
+    </div>
+    <div class="card card--static">
+      <h3 class="card__title">Data Infrastructure</h3>
+      <p class="card__desc">Распределённые хранилища и аналитика.</p>
+    </div>
+    <div class="card card--static">
+      <h3 class="card__title">Legacy Systems</h3>
+      <p class="card__desc">Поддержка и миграция устаревших систем.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

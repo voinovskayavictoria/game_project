@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ file.name }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">{{ file.name }}</h1>
+
+<table class="kv">
+  <tr><td>SIZE</td><td>{{ file.size }}</td></tr>
+  <tr><td>MODIFIED</td><td>{{ file.modified }}</td></tr>
+  <tr><td>STATUS</td><td>{{ file.status | upper }}</td></tr>
+</table>
+
+{% if file.status == 'corrupted' %}
+  <pre class="log-pre error">ERROR: FILE CORRUPTED
+Unable to read payload.
+Contact system administrator.</pre>
+
+{% elif file.status == 'denied' %}
+  <pre class="log-pre error">ACCESS DENIED
+Authentication required.
+Try: /archive/c17/1704</pre>
+
+{% elif transfer %}
+  <h2 class="term-h2">PROJECT TRANSFER RECORD</h2>
+  <table class="kv">
+    <tr><td>Date</td><td class="hot">17.04.2019</td></tr>
+    <tr><td>From</td><td>PRIME SYSTEMS</td></tr>
+    <tr><td>To</td><td><span class="redact">REDACTED</span></td></tr>
+    <tr><td>Technical consultant</td><td class="hot">C.U.</td></tr>
+    <tr><td>Administrator assigned</td><td class="hot">ADMIN-01</td></tr>
+  </table>
+  <pre class="log-pre ok">TRANSFER COMPLETED</pre>
+
+{% else %}
+  <pre class="log-pre">{{ file.content }}</pre>
+{% endif %}
+
+<a class="term-link" href="{{ url_for('files') }}">← /FILES</a>
+{% endblock %}

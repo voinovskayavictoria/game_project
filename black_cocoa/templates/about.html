@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}О нас — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">О нас</h1>
+
+<p class="lead">
+  «Чёрный какао» открылся в {{ SITE.opened_year }} году как небольшое
+  семейное кафе. Сейчас мы работаем каждый день и регулярно
+  проводим закрытые мероприятия.
+</p>
+
+<section class="block">
+  <h2 class="h-script">Немного истории</h2>
+  <p>
+    Первые годы мы жили на небольшой улочке в центре —
+    там было всего четыре столика и очень мало места.
+    В {{ SITE.moved_year }} году мы переехали в новое помещение
+    и наконец смогли поставить большой стол для настольных игр
+    и второй зал для мероприятий.
+  </p>
+  <div class="addr-grid">
+    <div class="addr-card addr-card--old">
+      <div class="addr-card__label">Раньше</div>
+      <div class="addr-card__value">{{ SITE.address_old }}</div>
+      <div class="addr-card__note">до {{ SITE.moved_year }} года</div>
+    </div>
+    <div class="addr-card addr-card--new">
+      <div class="addr-card__label">Сейчас</div>
+      <div class="addr-card__value">{{ SITE.address_new }}</div>
+      <div class="addr-card__note">вход со двора</div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2 class="h-script">Наши принципы</h2>
+  <ul class="plain">
+    <li>Варим какао только из настоящего тёмного шоколада.</li>
+    <li>Все десерты — из нашей кухни, каждое утро.</li>
+    <li>Не торопим гостей.</li>
+    <li>Раз в месяц проводим закрытые мероприятия — по приглашениям.</li>
+  </ul>
+</section>
+{% endblock %}

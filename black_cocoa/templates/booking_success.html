@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Бронь подтверждена — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<div class="booking-done">
+  <h1 class="h-script">Спасибо! Ждём вас.</h1>
+  <p class="lead">Ваша бронь подтверждена.</p>
+
+  <div class="booking-ticket">
+    <div class="booking-ticket__row">
+      <span>Номер брони</span><strong>{{ booking.ref }}</strong>
+    </div>
+    <div class="booking-ticket__row">
+      <span>Дата</span><strong>{{ booking.date }}</strong>
+    </div>
+    <div class="booking-ticket__row">
+      <span>Время</span><strong>{{ booking.time }}</strong>
+    </div>
+    <div class="booking-ticket__row">
+      <span>Столик</span><strong>№{{ booking.table }}</strong>
+    </div>
+    <div class="booking-ticket__row">
+      <span>Гостей</span><strong>{{ booking.guests }}</strong>
+    </div>
+    <div class="booking-ticket__note">{{ booking.note }}</div>
+  </div>
+
+  <p class="muted">
+    Если планы изменятся — позвоните нам: {{ SITE.phone }}.
+  </p>
+</div>
+{% endblock %}

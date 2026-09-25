@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Команда — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Команда</h1>
+
+<div class="staff">
+  {% for p in staff %}
+    <article class="staff__item">
+      <img src="{{ url_for('static', filename=p.photo) }}" alt="" class="staff__photo">
+      <div class="staff__name">{{ p.name }}</div>
+      <div class="staff__role">{{ p.role }}</div>
+      {% if p.instagram %}
+        <a class="link-more" href="{{ p.instagram }}" target="_blank" rel="noopener">Instagram →</a>
+      {% endif %}
+    </article>
+  {% endfor %}
+</div>
+{% endblock %}

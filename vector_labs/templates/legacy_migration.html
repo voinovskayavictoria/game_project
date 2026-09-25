@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="legacy-doc">
+  <div class="legacy-doc__head">
+    <span class="badge badge--doc">INTERNAL DOCUMENT</span>
+    <span class="legacy-doc__date">Дата: {{ doc.date }}</span>
+  </div>
+
+  <h1 class="legacy-doc__title">{{ doc.title }}</h1>
+  <p class="lead">{{ doc.summary }}</p>
+
+  <section class="legacy-section">
+    <h2 class="section-title">Перенесённые пользователи</h2>
+    <pre class="mono-block">{% for u in doc.users_migrated %}{{ u }}
+{% endfor %}</pre>
+  </section>
+
+  <section class="legacy-section">
+    <h2 class="section-title">Перенесённый административный доступ</h2>
+    <pre class="mono-block mono-block--hot">{{ doc.admin_migrated }}</pre>
+  </section>
+
+  <section class="legacy-section">
+    <h2 class="section-title">Ответственный за перенос</h2>
+    <pre class="mono-block">Migration supervisor: <span class="hot">{{ doc.supervisor }}</span></pre>
+  </section>
+
+  <p class="footnote">
+    Документ доступен только в рамках внутреннего архива VECTOR LABS.
+    Связанные записи: <a href="{{ url_for('system_log') }}">/system-log</a>,
+    <a href="{{ external_url('c17arch') }}">C-17 Archive →</a>
+  </p>
+</article>
+{% endblock %}

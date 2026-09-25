@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top__inner">
+    <a href="{{ url_for('index') }}" class="brand">
+      <span class="brand__logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="5" fill="#4f46e5"/>
+          <ellipse cx="14" cy="14" rx="13" ry="6" stroke="#4f46e5" stroke-width="1.5" transform="rotate(-25 14 14)"/>
+          <circle cx="24" cy="9" r="1.6" fill="#4f46e5"/>
+        </svg>
+      </span>
+      <span class="brand__name">ORBIT<span class="brand__thin">DATA</span></span>
+    </a>
+    <nav class="nav">
+      <a href="{{ url_for('about') }}">О компании</a>
+      <a href="{{ url_for('team') }}">Команда</a>
+      <a href="{{ url_for('projects') }}">Проекты</a>
+      <a href="{{ url_for('gallery') }}">Галерея</a>
+      <a href="{{ url_for('news') }}">Новости</a>
+      <a href="{{ url_for('partners') }}">Партнёры</a>
+    </nav>
+    <a class="nav-cta" href="{{ url_for('projects') }}">Открыть панель</a>
+  </div>
+</header>
+
+<main class="wrap main">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="bottom">
+  <div class="wrap bottom__inner">
+    <div>
+      <div class="bottom__brand">ORBIT<span>DATA</span></div>
+      <p class="muted">Data beyond boundaries.</p>
+      <p class="muted small">С {{ SITE.founded }} года.</p>
+    </div>
+    <div>
+      <div class="bottom__label">Партнёры</div>
+      {% for k in PARTNERS %}
+        <a href="{{ external_url(k) }}">{{ EXTERNAL_LINKS[k].name }}</a>
+      {% endfor %}
+    </div>
+    <div>
+      <div class="bottom__label">Связь</div>
+      <a href="mailto:hello@orbit-data.example">hello@orbit-data.example</a>
+      <span class="muted small">+7 (000) 000-00-05</span>
+    </div>
+  </div>
+  <div class="wrap bottom__copy">© {{ SITE.founded }}–2026 ORBIT DATA.</div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

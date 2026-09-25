@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}OD-17 — Users — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">OD-17 · Users</h1>
+
+<nav class="tabs">
+  <a href="{{ url_for('project', slug='od17') }}">Обзор</a>
+  <a href="{{ url_for('od17_documents') }}">Документы</a>
+  <a href="{{ url_for('od17_users') }}" class="is-active">Users</a>
+  <a href="{{ url_for('access_control') }}">Access Control</a>
+</nav>
+
+<table class="data-table">
+  <thead><tr><th>ID</th><th>STATUS</th><th>LAST ACTIVITY</th></tr></thead>
+  <tbody>
+    {% for u in od.users %}
+      <tr class="{% if u.status == 'ACTIVE' %}row-active{% endif %}">
+        <td><span class="mono">{{ u.id }}</span></td>
+        <td>
+          {% if u.status == 'ACTIVE' %}
+            <span class="chip chip--active">ACTIVE</span>
+          {% else %}
+            <span class="chip chip--inactive">INACTIVE</span>
+          {% endif %}
+        </td>
+        <td class="{% if u.status == 'ACTIVE' %}hot{% endif %}">{{ u.last }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="footnote">
+  Активность <strong>USER-017</strong> зафиксирована <span class="hot">21.09.2026</span>.
+  Совпадает с датой последних событий в
+  <a href="{{ external_url('c17arch') }}">C-17 Archive →</a>.
+</p>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}PROJECT — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">PROJECT C-17</h1>
+
+<table class="kv">
+  <tr><td>Project ID</td><td>{{ project.id }}</td></tr>
+  <tr><td>Created</td><td>{{ project.created }}</td></tr>
+  <tr><td>Status</td><td class="warn">{{ project.status }}</td></tr>
+  <tr><td>Owner</td><td>{{ project.owner }}</td></tr>
+  <tr><td>Technical Lead</td><td>{{ project.tech_lead }}</td></tr>
+</table>
+
+<h2 class="term-h2">Description</h2>
+<blockquote class="quote">{{ project.description }}</blockquote>
+
+<h2 class="term-h2">Transfer</h2>
+<pre class="kv-block">Project transferred: <span class="hot">{{ project.transfer_date }}</span>
+External consultant: <span class="hot">{{ project.external_consultant }}</span></pre>
+
+<p class="foot-note">
+  Note: consultant initials only. Full record available in
+  <a href="{{ url_for('file_detail', file_id='TRANSFER_1704') }}">/FILES/TRANSFER_1704</a>.
+</p>
+{% endblock %}

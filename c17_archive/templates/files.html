@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}FILES — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">FILES</h1>
+
+<table class="data-table">
+  <thead>
+    <tr><th>NAME</th><th>SIZE</th><th>MODIFIED</th><th>STATUS</th></tr>
+  </thead>
+  <tbody>
+    {% for f in files %}
+      <tr>
+        <td>
+          {% if f.status == 'ok' %}
+            <a href="{{ url_for('file_detail', file_id=f.id) }}">{{ f.name }}</a>
+          {% else %}
+            <span class="cell-muted">{{ f.name }}</span>
+          {% endif %}
+        </td>
+        <td>{{ f.size }}</td>
+        <td>{{ f.modified }}</td>
+        <td class="{% if f.status == 'ok' %}cell-active{% elif f.status == 'denied' %}cell-warn{% else %}cell-muted{% endif %}">
+          {{ f.status | upper }}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

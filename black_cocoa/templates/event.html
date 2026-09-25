@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="article">
+  <time class="article__date">{{ event.date }}</time>
+  <h1 class="article__title">{{ event.title }}</h1>
+  <p class="lead">{{ event.desc }}</p>
+
+  {% if event.note %}
+    <p class="note">{{ event.note }}</p>
+  {% endif %}
+
+  {% if event.photo %}
+    <figure class="article__figure">
+      <img src="{{ url_for('static', filename=event.photo) }}" alt="">
+    </figure>
+  {% endif %}
+
+  <a class="link-more" href="{{ url_for('events') }}">← Все события</a>
+</article>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Расследования — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Расследования</h1>
+<p class="lede">Всё, что я успела опубликовать с 2019 года.</p>
+
+<ul class="investigation-list">
+  {% for i in items %}
+    <li class="{% if i.current %}investigation-list__current{% endif %}">
+      <div class="investigation-list__date">{{ i.date }}</div>
+      <a class="investigation-list__title"
+         href="{{ url_for('investigation', slug=i.slug) }}">{{ i.title }}</a>
+      <p class="investigation-list__lead">{{ i.lead }}</p>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

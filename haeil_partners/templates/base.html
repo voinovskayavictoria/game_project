@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<div class="shell">
+
+  <aside class="rail">
+    <div class="rail__crest">
+      <span class="rail__monogram">H&amp;P</span>
+      <span class="rail__est">Est. {{ SITE.founded }}</span>
+    </div>
+
+    <nav class="rail__nav">
+      <a href="{{ url_for('about') }}">О компании</a>
+      <a href="{{ url_for('team') }}">Команда</a>
+      <a href="{{ url_for('clients') }}">Клиенты</a>
+      <a href="{{ url_for('projects') }}">Проекты</a>
+      <a href="{{ url_for('publications') }}">Публикации</a>
+      <a href="{{ url_for('archive') }}">Архив</a>
+      <a href="{{ url_for('gallery') }}">Фото</a>
+      <a href="{{ url_for('contacts') }}">Контакты</a>
+    </nav>
+
+    <div class="rail__meta">
+      <div class="rail__label">Офисы</div>
+      {% for o in SITE.offices %}
+        <div>{{ o }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="rail__meta">
+      <div class="rail__label">Контакты</div>
+      <div>info@haeil-partners.example</div>
+      <div>+7 (000) 000-00-03</div>
+    </div>
+
+    <div class="rail__partners">
+      <div class="rail__label">Партнёры</div>
+      {% for k in PARTNER_LINKS %}
+        <a href="{{ external_url(k) }}">{{ EXTERNAL_LINKS[k].name }}</a>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <a href="{{ url_for('index') }}" class="topbar__brand">HAEIL &amp; PARTNERS</a>
+      <span class="topbar__tag">{{ SITE.tagline }} · Сеул · Москва</span>
+    </header>
+
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+
+    <footer class="legal-footer">
+      <div>© {{ SITE.founded }}–2026 HAEIL &amp; PARTNERS. Все права защищены.</div>
+      <div>Информация на сайте не является юридической консультацией.</div>
+    </footer>
+  </main>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

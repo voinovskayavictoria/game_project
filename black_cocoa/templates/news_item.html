@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="article">
+  <time class="article__date">{{ item.date }}</time>
+  <h1 class="article__title">{{ item.title }}</h1>
+
+  {% for p in item.body.split('\n\n') %}
+    <p>{{ p }}</p>
+  {% endfor %}
+
+  {% if item.photo %}
+    <figure class="article__figure">
+      <img src="{{ url_for('static', filename=item.photo) }}" alt="">
+    </figure>
+  {% endif %}
+
+  <a class="link-more" href="{{ url_for('news') }}">← Все новости</a>
+</article>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="pub-article">
+  <header>
+    <div class="pub-article__meta">{{ item.date }} · {{ item.author }}</div>
+    <h1>{{ item.title }}</h1>
+  </header>
+  <p class="lede">{{ item.excerpt }}</p>
+  <div class="body">
+    <p>{{ item.body }}</p>
+  </div>
+  <a class="link-arrow" href="{{ url_for('publications') }}">← Все публикации</a>
+</article>
+{% endblock %}

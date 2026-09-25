@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Команда — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Команда</h1>
+<div class="team-grid">
+  {% for m in team %}
+    <article class="person">
+      <img src="{{ url_for('static', filename=m.photo) }}" alt="" class="person__photo">
+      <div class="person__name">{{ m.name }}</div>
+      <div class="person__role">{{ m.role }}</div>
+      <a class="link-more" href="{{ url_for('team_member', slug=m.slug) }}">Профиль →</a>
+    </article>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Партнёры — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Партнёры</h1>
+
+<div class="cards">
+  {% for k in PARTNERS %}
+    <a class="card" href="{{ external_url(k) }}">
+      <h3 class="card__title">{{ EXTERNAL_LINKS[k].name }}</h3>
+      <p class="card__desc">Внешний ресурс →</p>
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

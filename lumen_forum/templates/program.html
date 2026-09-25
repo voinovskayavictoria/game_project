@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Программа — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Программа</h1>
+<p class="lead">Программа форумов по годам.</p>
+
+<ul class="program-list">
+  {% for y in years %}
+    <li>
+      <a href="{{ url_for('program_year', year=y) }}">LUMEN {{ y }}</a>
+      <span class="muted"> — {{ program[y].theme }}</span>
+      {% if program[y].upcoming %}<span class="tag">скоро</span>{% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

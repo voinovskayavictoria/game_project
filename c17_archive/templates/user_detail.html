@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ person.id }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">USER :: {{ person.id }}</h1>
+
+<table class="kv">
+  <tr><td>ID</td><td>{{ person.id }}</td></tr>
+  <tr><td>NAME</td>
+      <td>{% if person.name == 'REDACTED' %}<span class="redact">REDACTED</span>{% else %}{{ person.name }}{% endif %}</td></tr>
+  <tr><td>ROLE</td><td>{{ person.role }}</td></tr>
+  <tr><td>STATUS</td>
+      <td class="{% if person.status == 'ACTIVE' %}cell-active{% else %}cell-muted{% endif %}">{{ person.status }}</td></tr>
+  <tr><td>CREATED</td><td>{{ person.since }}</td></tr>
+  <tr><td>LAST ACTIVITY</td>
+      <td>{% if person.status == 'ACTIVE' %}<span class="hot">{{ person.last }}</span>{% else %}{{ person.last }}{% endif %}</td></tr>
+</table>
+
+{% if person.note %}
+  <p class="foot-note">{{ person.note }}</p>
+{% endif %}
+
+<a class="term-link" href="{{ url_for('users') }}">← /USERS</a>
+{% endblock %}

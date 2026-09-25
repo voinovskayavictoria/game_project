@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}404 — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<div class="not-found">
+  <h1 class="h-script">Ой…</h1>
+  <p class="lead">Кажется, такой страницы у нас нет.</p>
+  <p>Но у нас точно есть какао.</p>
+  <a class="btn" href="{{ url_for('index') }}">На главную</a>
+</div>
+{% endblock %}

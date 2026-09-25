@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="project-page">
+  <div class="project-page__kicker">{{ project.status | upper }} · {{ project.period }}</div>
+  <h1 class="page-title">{{ project.title }}</h1>
+  <p class="lead">{{ project.summary }}</p>
+
+  {% if project.lead %}
+    <p class="muted">Lead engineer: {{ project.lead }}</p>
+  {% endif %}
+
+  <a class="link-more" href="{{ url_for('projects') }}">← Все проекты</a>
+</article>
+{% endblock %}

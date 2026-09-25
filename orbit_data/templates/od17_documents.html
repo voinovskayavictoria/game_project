@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}OD-17 — Документы — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">OD-17 · Документы</h1>
+
+<nav class="tabs">
+  <a href="{{ url_for('project', slug='od17') }}">Обзор</a>
+  <a href="{{ url_for('od17_documents') }}" class="is-active">Документы</a>
+  <a href="{{ url_for('od17_users') }}">Users</a>
+  <a href="{{ url_for('access_control') }}">Access Control</a>
+</nav>
+
+<div class="doc-cards">
+  {% for d in od.documents %}
+    <div class="doc-card">
+      <div class="doc-card__head">
+        <span class="doc-card__name">{{ d.name }}</span>
+        <span class="doc-card__date">{{ d.date }}</span>
+      </div>
+      <p class="doc-card__note">{{ d.note }}</p>
+
+      {% if d.clue %}
+        <div class="doc-card__clue">{{ d.clue }}</div>
+      {% endif %}
+
+      {% if d.special == 'transfer' %}
+        <a class="link-more" href="{{ url_for('transfer_2021') }}">Открыть документ →</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

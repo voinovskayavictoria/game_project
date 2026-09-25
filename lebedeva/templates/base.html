@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<div class="paper">
+
+  <header class="masthead">
+    <a href="{{ url_for('index') }}" class="masthead__name">{{ SITE.name }}</a>
+    <p class="masthead__tag">{{ SITE.tagline }}</p>
+    <nav class="masthead__nav">
+      <a href="{{ url_for('investigations') }}">Расследования</a>
+      <span>·</span>
+      <a href="{{ url_for('documents') }}">Документы</a>
+      <span>·</span>
+      <a href="{{ url_for('sources') }}">Источники</a>
+      <span>·</span>
+      <a href="{{ url_for('timeline') }}">Хронология</a>
+      <span>·</span>
+      <a href="{{ url_for('inconsistencies') }}">Несостыковки</a>
+      <span>·</span>
+      <a href="{{ url_for('about') }}">Обо мне</a>
+      <span>·</span>
+      <a href="{{ url_for('contact') }}">Связаться</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <aside class="telegram-cta">
+    <div class="telegram-cta__inner">
+      <div class="telegram-cta__label">Текущие события — в Telegram</div>
+      <a class="telegram-cta__btn" href="{{ SITE.telegram }}" target="_blank" rel="noopener">
+        Следить за расследованием в Telegram →
+      </a>
+      <p class="telegram-cta__note">
+        Сайт — это архив. Всё, что происходит сейчас, я публикую
+        только в Telegram.
+      </p>
+    </div>
+  </aside>
+
+  <footer class="colophon">
+    <div class="colophon__row">
+      <span>© 2019–2026 {{ SITE.name }}</span>
+      <span>·</span>
+      <a href="mailto:{{ SITE.email }}">{{ SITE.email }}</a>
+      <span>·</span>
+      <a href="{{ SITE.telegram }}" target="_blank" rel="noopener">Telegram</a>
+    </div>
+    <p class="colophon__note">
+      Все материалы — независимое расследование. Возможны ошибки и неточности.
+      Если вы располагаете информацией — <a href="{{ url_for('contact') }}">свяжитесь со мной</a>.
+    </p>
+  </footer>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

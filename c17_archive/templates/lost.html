@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}SIGNAL LOST{% endblock %}
+
+{% block content %}
+<pre class="log-pre error">
+  ███████ ██  ██████  ███    ██  █████  ██
+  ██      ██ ██       ████   ██ ██   ██ ██
+  ███████ ██ ██   ███ ██ ██  ██ ███████ ██
+       ██ ██ ██    ██ ██  ██ ██ ██   ██ ██
+  ███████ ██  ██████  ██   ████ ██   ██ ███████
+
+  L O S T
+</pre>
+
+<p class="foot-note">
+  Requested node does not exist or has been removed.
+</p>
+
+<a class="term-link" href="{{ url_for('index') }}">← /root</a>
+{% endblock %}

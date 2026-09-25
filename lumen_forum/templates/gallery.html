@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Фото — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Фотогалерея</h1>
+
+{% for year, photos in by_year.items() %}
+  <section class="gallery-block">
+    <h2>LUMEN {{ year }}</h2>
+    <div class="gallery">
+      {% for ph in photos %}
+        <figure data-clue="{{ ph.clue or '' }}">
+          <img src="{{ url_for('static', filename='img/' + ph.file) }}"
+               alt=""
+               loading="lazy">
+          <figcaption>
+            {{ ph.caption }}
+            {% if ph.tags %}
+              <span class="tags">
+                {% for t in ph.tags %}<span class="tag">{{ t }}</span>{% endfor %}
+              </span>
+            {% endif %}
+          </figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  </section>
+{% endfor %}
+{% endblock %}

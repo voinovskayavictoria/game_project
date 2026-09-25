@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Меню — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Меню</h1>
+
+{% for group in menu %}
+  <section class="menu-group">
+    <h2 class="h-script">{{ group.group }}</h2>
+    <ul class="menu-list">
+      {% for item in group["items"] %}
+        <li class="menu-item {% if item.signature %}menu-item--sig{% endif %}">
+          <div class="menu-item__row">
+            <span class="menu-item__name">{{ item.name }}</span>
+            <span class="menu-item__dots"></span>
+            <span class="menu-item__price">{{ item.price }}</span>
+          </div>
+          {% if item.note %}
+            <div class="menu-item__note">{{ item.note }}</div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endfor %}
+{% endblock %}

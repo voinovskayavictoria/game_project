@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Несостыковки — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Несостыковки</h1>
+<p class="lede">
+  Официальная версия и то, что я вижу в документах. Иногда
+  они не совпадают. Это может значить что-то. А может — ничего.
+</p>
+
+{% for item in items %}
+  <section class="incons">
+    <div class="incons__num">№{{ item.n }}</div>
+
+    <div class="incons__row">
+      <div class="incons__label">Официально</div>
+      <div class="incons__text">{{ item.official }}</div>
+    </div>
+
+    <div class="incons__row incons__row--reality">
+      <div class="incons__label">Но</div>
+      <div class="incons__text">{{ item.reality }}</div>
+    </div>
+
+    {% if item.source %}
+      <div class="incons__src">
+        Проверить на: <a href="{{ external_url(item.source) }}">{{ EXTERNAL_LINKS[item.source].name }} →</a>
+      </div>
+    {% endif %}
+  </section>
+{% endfor %}
+{% endblock %}

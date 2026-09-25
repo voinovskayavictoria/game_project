@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Проекты — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Архив проектов</h1>
+<p class="lede">Юридическое сопровождение проектов клиентов.</p>
+
+<table class="ledger">
+  <thead>
+    <tr>
+      <th>Проект</th>
+      <th>Год</th>
+      <th>Клиент</th>
+      <th>Ответственный</th>
+      <th>Статус</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in projects %}
+      <tr class="{% if p.status == 'архив' %}row--archived{% endif %}">
+        <td><a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a></td>
+        <td>{{ p.year }}</td>
+        <td>{{ p.client }}</td>
+        <td>{{ p.responsible }}</td>
+        <td>{{ p.status }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

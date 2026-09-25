@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="prompt-line">
+  <span class="prompt">c17@archive:~$</span>
+  <span class="cmd">cat README.txt</span>
+</div>
+
+<pre class="ascii">
+   ██████╗   ██╗ ███████╗
+  ██╔════╝  ███║ ╚════██║
+  ██║       ╚██║     ██╔╝
+  ██║        ██║    ██╔╝
+  ╚██████╗   ██║    ██║
+   ╚═════╝   ╚═╝    ╚═╝
+</pre>
+
+<div class="readme">
+  <p>PROJECT C-17 — ARCHIVED NODE.</p>
+  <p>Public access is read-only.</p>
+  <p>Data marked <span class="redact">REDACTED</span> is unavailable to unauthenticated users.</p>
+</div>
+
+<div class="prompt-line">
+  <span class="prompt">c17@archive:~$</span>
+  <span class="cmd">ls /</span>
+</div>
+
+<ul class="fs-listing">
+  <li><a href="{{ url_for('project') }}">PROJECT/</a></li>
+  <li><a href="{{ url_for('users') }}">USERS/</a></li>
+  <li><a href="{{ url_for('access_log') }}">ACCESS_LOG/</a></li>
+  <li><a href="{{ url_for('files') }}">FILES/</a></li>
+  <li><a href="{{ url_for('changelog') }}">CHANGELOG/</a></li>
+  <li><a href="{{ url_for('system_log') }}">SYSTEM_LOG/</a></li>
+  <li><a href="{{ url_for('deleted') }}">DELETED/</a></li>
+  <li><a href="{{ url_for('archived_data') }}">ARCHIVED_DATA/</a></li>
+</ul>
+
+<p class="blink">_</p>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Проекты — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Проекты</h1>
+
+<h2>Активные</h2>
+<ul class="project-list">
+  {% for p in active %}
+    <li>
+      <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
+      <span class="muted">({{ p.period }})</span> — {{ p.short }}
+    </li>
+  {% endfor %}
+</ul>
+
+<h2>Архивные</h2>
+<ul class="project-list project-list--archive">
+  {% for p in archived %}
+    <li>
+      <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
+      <span class="muted">({{ p.period }})</span> — {{ p.short }}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

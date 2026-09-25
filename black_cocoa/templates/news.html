@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Новости — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Новости</h1>
+
+<ul class="news-list">
+  {% for n in news %}
+    <li>
+      <span class="news-list__date">{{ n.date }}</span>
+      <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
+      {% if n.featured %}<span class="badge">с фото</span>{% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

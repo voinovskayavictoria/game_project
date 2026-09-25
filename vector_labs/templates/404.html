@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}404 — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<div class="not-found">
+  <div class="not-found__code">404</div>
+  <p class="lead">Запрошенный модуль не найден.</p>
+  <a class="btn btn--primary" href="{{ url_for('index') }}">На главную</a>
+</div>
+{% endblock %}

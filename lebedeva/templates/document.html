@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Документ №{{ doc.id }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="doc-view">
+  <div class="doc-view__meta">
+    <span class="doc-view__num">Документ №{{ doc.id }}</span>
+    <span class="doc-view__date">{{ doc.date }}</span>
+  </div>
+
+  <h1 class="doc-view__title">{{ doc.title }}</h1>
+  <p class="doc-view__caption">{{ doc.caption }}</p>
+
+  <figure class="doc-view__figure">
+    <img src="{{ url_for('static', filename=doc.file) }}" alt="">
+    {% if doc.redacted %}
+      <span class="redacted-badge">часть закрыта</span>
+    {% endif %}
+    <figcaption>
+      {{ doc.description }}
+      {% if doc.clue %}<br><em>На скане видно: {{ doc.clue }}</em>{% endif %}
+    </figcaption>
+  </figure>
+
+  <a class="marker-link" href="{{ url_for('documents') }}">← Все документы</a>
+</article>
+{% endblock %}

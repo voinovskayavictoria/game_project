@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}ARCHIVED DATA — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">ARCHIVED DATA</h1>
+
+<table class="data-table">
+  <thead><tr><th>YEAR</th><th>STATUS</th><th></th></tr></thead>
+  <tbody>
+    {% for y in years %}
+      <tr>
+        <td><a href="{{ url_for('archive_year', year=y) }}">/archive/{{ y }}</a></td>
+        <td>
+          {% if data[y].status == 'files' %}{{ data[y].count }} files
+          {% elif data[y].status == 'restricted' %}<span class="cell-warn">ACCESS RESTRICTED</span>
+          {% else %}{{ data[y].text }}{% endif %}
+        </td>
+        <td></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

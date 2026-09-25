@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}События — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">События</h1>
+<p class="lead">Раз в неделю что-то происходит. Иногда чаще.</p>
+
+<ul class="event-list">
+  {% for e in events %}
+    <li>
+      <span class="event-list__date">{{ e.date }}</span>
+      <a class="event-list__title" href="{{ url_for('event', slug=e.slug) }}">{{ e.title }}</a>
+      <p class="event-list__desc">{{ e.desc }}</p>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

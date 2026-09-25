@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Акт передачи C-17 — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<div class="scan-wrap">
+  <div class="scan">
+
+    <div class="scan__watermark">АРХИВ</div>
+    <div class="scan__stamp">КОНФИДЕНЦИАЛЬНО</div>
+
+    <header class="scan__head">
+      <div class="scan__firm">HAEIL &amp; PARTNERS</div>
+      <div class="scan__sub">Attorneys at Law · Сеул · Москва</div>
+      <hr>
+      <div class="scan__doctype">АКТ ПЕРЕДАЧИ ПРОЕКТА</div>
+    </header>
+
+    <table class="scan__meta">
+      <tr><td>Дата:</td><td><strong>17.04.2019</strong></td></tr>
+      <tr><td>Сторона 1:</td><td>PRIME SYSTEMS</td></tr>
+      <tr><td>Сторона 2:</td><td><span class="redacted redacted--wide"></span></td></tr>
+      <tr><td>Юридический представитель:</td><td>Сергей Климов</td></tr>
+      <tr><td>Технический консультант:</td><td>Чон У Джин</td></tr>
+      <tr><td>Предмет:</td><td>Передача проекта C-17</td></tr>
+    </table>
+
+    <div class="scan__body">
+      <p>
+        Настоящим Актом подтверждается передача технологической
+        документации и связанных прав по проекту <strong>C-17</strong>
+        от Стороны 1 к Стороне 2 в объёме, предусмотренном
+        Соглашением о передаче проекта от 15.04.2019.
+      </p>
+      <p>
+        Сторона 1 подтверждает, что на момент подписания настоящего
+        Акта обязательства Стороны 1 в части внутреннего этапа
+        проекта C-17 исполнены в полном объёме.
+      </p>
+      <p>
+        Все дальнейшие вопросы по сопровождению проекта передаются
+        контактному лицу со стороны Стороны 2:
+        <span class="redacted"></span>.
+      </p>
+      <p class="scan__note">
+        Примечание: состав Стороны 2 и персональные данные
+        контактного лица изъяты из открытой версии документа.
+        Полная версия доступна по запросу в архиве фирмы.
+      </p>
+    </div>
+
+    <footer class="scan__foot">
+      <div class="scan__sign">
+        <div class="scan__sign-line"></div>
+        <div class="scan__sign-label">С. Климов</div>
+      </div>
+      <div class="scan__sign">
+        <div class="scan__sign-line"></div>
+        <div class="scan__sign-label">Чон У Джин</div>
+      </div>
+    </footer>
+
+    <div class="scan__ref">Reference: 17/04 — 1704</div>
+  </div>
+
+  <p class="footnote">
+    Источник: внутренний архив HAEIL &amp; PARTNERS. Открытая версия
+    документа. <a href="{{ url_for('project', slug='c17') }}">← Вернуться к проекту</a>
+  </p>
+</div>
+{% endblock %}

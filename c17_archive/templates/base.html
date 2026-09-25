@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="terminal">
+
+  <header class="term-head">
+    <div class="term-head__line">
+      <span class="term-head__prompt">$</span>
+      <span class="term-head__path">C-17 // ARCHIVE</span>
+      <span class="term-head__status">SYSTEM STATUS: {{ SITE.status }}</span>
+    </div>
+    <div class="term-head__sub">
+      Last public update: {{ SITE.last_public_update }}
+    </div>
+  </header>
+
+  <nav class="term-nav">
+    <a href="{{ url_for('index') }}">/root</a>
+    <a href="{{ url_for('project') }}">/PROJECT</a>
+    <a href="{{ url_for('users') }}">/USERS</a>
+    <a href="{{ url_for('access_log') }}">/ACCESS_LOG</a>
+    <a href="{{ url_for('files') }}">/FILES</a>
+    <a href="{{ url_for('changelog') }}">/CHANGELOG</a>
+    <a href="{{ url_for('system_log') }}">/SYSTEM_LOG</a>
+    <a href="{{ url_for('deleted') }}">/DELETED</a>
+    <a href="{{ url_for('archived_data') }}">/ARCHIVED_DATA</a>
+  </nav>
+
+  <main class="term-body">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="term-foot">
+    <span>C-17 ARCHIVE NODE — UNSTABLE</span>
+    <span class="term-foot__cursor">█</span>
+  </footer>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

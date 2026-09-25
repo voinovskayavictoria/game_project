@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Проекты — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Проекты</h1>
+
+<h2 class="section-title">Активные</h2>
+<div class="cards">
+  {% for p in active %}
+    <a class="card" href="{{ url_for('project', slug=p.slug) }}">
+      <span class="chip chip--active">ACTIVE</span>
+      <h3 class="card__title">{{ p.title }}</h3>
+      <p class="card__desc">{{ p.summary }}</p>
+      <div class="card__meta">{{ p.period }}</div>
+    </a>
+  {% endfor %}
+</div>
+
+<h2 class="section-title">Архивные</h2>
+<div class="cards">
+  {% for p in archived %}
+    <a class="card card--archived" href="{{ url_for('project', slug=p.slug) }}">
+      <span class="chip chip--archived">ARCHIVED</span>
+      <h3 class="card__title">{{ p.title }}</h3>
+      <p class="card__desc">{{ p.summary }}</p>
+      <div class="card__meta">{{ p.period }}{% if p.lead %} · Lead: {{ p.lead }}{% endif %}</div>
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Документы — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Документы</h1>
+<p class="lede">
+  Материалы, полученные от источников. Я публикую их как есть.
+  Ничего не подтверждаю и не опровергаю.
+</p>
+
+<div class="doc-grid">
+  {% for d in documents %}
+    <a class="doc-card" href="{{ url_for('document', doc_id=d.id) }}">
+      <div class="doc-card__num">№{{ d.id }}</div>
+      <div class="doc-card__title">{{ d.title }}</div>
+      <div class="doc-card__date">{{ d.date }}</div>
+      <div class="doc-card__caption">{{ d.caption }}</div>
+      {% if d.clue %}
+        <div class="doc-card__clue">метка на скане: <span>{{ d.clue }}</span></div>
+      {% endif %}
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

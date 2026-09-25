@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ person.name }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="person-detail">
+  <div class="person-detail__head">
+    <img src="{{ url_for('static', filename=person.photo) }}"
+         alt="{{ person.name }}" class="person-photo person-photo--lg">
+    <div>
+      <h1>{{ person.name }}</h1>
+      <div class="person-role">{{ person.role }}</div>
+      <div class="person-company">{{ person.company }}</div>
+      <p class="lead">{{ person.bio }}</p>
+
+      <h3>Годы участия</h3>
+      <p>
+        {% for y in person.years %}
+          <a href="{{ url_for('program_year', year=y) }}">{{ y }}</a>{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+
+      {% if person.external %}
+        <h3>Компания</h3>
+        <p><a href="{{ external_url(person.external) }}">
+          {{ EXTERNAL_LINKS[person.external].name }} →
+        </a></p>
+      {% endif %}
+    </div>
+  </div>
+</article>
+{% endblock %}

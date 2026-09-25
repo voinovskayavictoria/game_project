@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Telegram — {{ person.name }}{% endblock %}
+
+{% block content %}
+<div class="social-mock social-mock--tg">
+  <div class="social-mock__bar">
+    <span class="social-mock__app">Telegram</span>
+    <span class="social-mock__handle">{{ feed.handle }}</span>
+  </div>
+
+  <div class="tg-chat">
+    <div class="tg-chat__header">
+      <span class="tg-chat__avatar"></span>
+      <span class="tg-chat__name">{{ feed.handle }}</span>
+      <span class="tg-chat__status">last seen recently</span>
+    </div>
+
+    <div class="tg-chat__messages">
+      {% for m in feed.messages %}
+        <div class="tg-msg {% if m.hot %}tg-msg--hot{% endif %}">
+          <div class="tg-msg__text">{{ m.text }}</div>
+          <div class="tg-msg__time">{{ m.date }} · {{ m.time }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="tg-chat__input">
+      <span class="muted">Канал закрыт для комментариев.</span>
+    </div>
+  </div>
+
+  <p class="footnote">
+    Запись от <strong>20.09.2026</strong> — «Завтра снова туда».
+    Куда — не указано.
+  </p>
+</div>
+{% endblock %}

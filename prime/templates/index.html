@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <img src="{{ url_for('static', filename='img/hero.jpg') }}" alt="" class="hero-img">
+  <div class="hero-overlay">
+    <h1>{{ SITE.name }}</h1>
+    <p class="lead">{{ SITE.tagline }}</p>
+  </div>
+</section>
+
+<section class="grid-3 section">
+  <div class="card">
+    <h3>О компании</h3>
+    <p>История, ценности и подход к работе.</p>
+    <a href="{{ url_for('about') }}">Подробнее →</a>
+  </div>
+  <div class="card">
+    <h3>Команда</h3>
+    <p>Люди, которые стоят за проектами PRIME.</p>
+    <a href="{{ url_for('team') }}">Познакомиться →</a>
+  </div>
+  <div class="card">
+    <h3>Проекты</h3>
+    <p>Открытые и архивные инициативы компании.</p>
+    <a href="{{ url_for('projects') }}">Смотреть →</a>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Руководство</h2>
+  <div class="team-grid">
+    {% for person in team %}
+      <article class="person">
+        <img src="{{ url_for('static', filename=person.photo) }}"
+             alt="{{ person.name }}" class="person-photo">
+        <h3>{{ person.name }}</h3>
+        <div class="person-role">{{ person.role }}</div>
+        <p>{{ person.short }}</p>
+        <a href="{{ url_for('team_member', slug=person.slug) }}">Подробнее →</a>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section two-col">
+  <div>
+    <h2>Последние новости</h2>
+    <ul class="news-list">
+      {% for n in news %}
+        <li>
+          <time>{{ n.date }}</time>
+          <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div>
+    <h2>Активные проекты</h2>
+    <ul class="plain-list">
+      {% for p in projects %}
+        <li>
+          <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
+          <span class="muted">— {{ p.short }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

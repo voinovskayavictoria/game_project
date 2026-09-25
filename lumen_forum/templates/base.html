@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead__top">
+    <span class="masthead__date">Выпуск №{{ SITE.founded and (2026 - SITE.founded) }} · Москва</span>
+    <span class="masthead__tagline">{{ SITE.tagline }}</span>
+  </div>
+  <div class="masthead__brand">
+    <a href="{{ url_for('index') }}">LUMEN<span class="masthead__brand-mark">/</span>FORUM</a>
+  </div>
+  <nav class="masthead__nav">
+    <a href="{{ url_for('about') }}">О форуме</a>
+    <a href="{{ url_for('participants') }}">Участники</a>
+    <a href="{{ url_for('speakers') }}">Спикеры</a>
+    <a href="{{ url_for('program') }}">Программа</a>
+    <a href="{{ url_for('gallery') }}">Фото</a>
+    <a href="{{ url_for('partners') }}">Партнёры</a>
+    <a href="{{ url_for('news') }}">Новости</a>
+    <a href="{{ url_for('archive') }}">Архив</a>
+  </nav>
+</header>
+
+<main class="page">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="colophon">
+  <div class="colophon__inner">
+    <div>
+      <div class="colophon__name">LUMEN FORUM</div>
+      <p>{{ SITE.description }}</p>
+    </div>
+    <div>
+      <div class="colophon__label">Партнёры</div>
+      {% for p in PARTNERS %}
+        <a href="{{ external_url(p.key) }}">{{ p.name }}</a>
+      {% endfor %}
+    </div>
+    <div>
+      <div class="colophon__label">Контакты</div>
+      <a href="mailto:hello@lumen-forum.example">hello@lumen-forum.example</a>
+      <span>+7 (000) 000-00-01</span>
+    </div>
+  </div>
+  <div class="colophon__bottom">
+    © {{ SITE.founded }}–2026 LUMEN FORUM. Все материалы защищены.
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

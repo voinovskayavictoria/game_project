@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Клиенты — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Клиенты</h1>
+<p class="lede">Компании, которым HAEIL &amp; PARTNERS оказывает юридическую поддержку.</p>
+
+<table class="ledger">
+  <thead>
+    <tr>
+      <th>Компания</th>
+      <th>Период</th>
+      <th>Отрасль</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in clients %}
+      <tr>
+        <td><a href="{{ url_for('client', slug=c.slug) }}">{{ c.name }}</a></td>
+        <td>{{ c.period }}</td>
+        <td>{{ c.industries | join(', ') }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

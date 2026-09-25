@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}О компании — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>О компании</h1>
+<p class="lede">{{ SITE.description }}</p>
+
+<section class="block">
+  <h2>История</h2>
+  <ul class="timeline">
+    <li><span>2004</span> Основание фирмы в Сеуле. Первые клиенты — технологические стартапы.</li>
+    <li><span>2008</span> Открытие офиса в Москве.</li>
+    <li><span>2012</span> Сергей Климов присоединяется к фирме в качестве партнёра.</li>
+    <li><span>2015</span> Формирование практики по IT-праву.</li>
+    <li><span>2018</span> Начало сотрудничества с PRIME SYSTEMS.</li>
+    <li><span>2021</span> Открытие направления по защите данных.</li>
+    <li><span>2024</span> Двадцатилетие фирмы.</li>
+  </ul>
+</section>
+
+<section class="block">
+  <h2>Основатели</h2>
+  <ul class="plain">
+    <li>Ким Хэ Иль — управляющий партнёр (Сеул)</li>
+    <li>Владимир Титов — советник (Москва)</li>
+  </ul>
+</section>
+
+<section class="block">
+  <h2>Офисы</h2>
+  <ul class="plain">
+    {% for o in SITE.offices %}<li>{{ o }}</li>{% endfor %}
+  </ul>
+  <p class="body">Общее число сотрудников: 42.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Партнёры — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Партнёры</h1>
+<p class="lead">Компании, поддерживающие LUMEN FORUM.</p>
+
+<div class="grid-2">
+  {% for p in PARTNERS %}
+    <div class="card">
+      <h3><a href="{{ external_url(p.key) }}">{{ p.name }}</a></h3>
+      <p>{{ p.desc }}</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

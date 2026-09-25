@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}USERS — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">USERS</h1>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>ID</th><th>NAME</th><th>ROLE</th><th>STATUS</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+      <tr class="{% if u.status == 'ACTIVE' %}row-active{% endif %}">
+        <td>{{ u.id }}</td>
+        <td>{% if u.name == 'REDACTED' %}<span class="redact">REDACTED</span>{% else %}{{ u.name }}{% endif %}</td>
+        <td>{{ u.role }}</td>
+        <td class="{% if u.status == 'ACTIVE' %}cell-active{% else %}cell-muted{% endif %}">{{ u.status }}</td>
+        <td><a href="{{ url_for('user_detail', user_id=u.id) }}">[VIEW]</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="foot-note">
+  Note: user <span class="hot">USER-017</span> created 18.04.2019,
+  one day after project transfer.
+</p>
+{% endblock %}

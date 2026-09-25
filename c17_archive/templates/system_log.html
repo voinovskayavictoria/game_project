@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}SYSTEM LOG — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">SYSTEM LOG</h1>
+
+<pre class="log-pre">
+{% for e in log %}<span class="log-date">{{ e.date }} {{ e.time }}</span>
+{% if e.hot %}<span class="hot">{{ e.text }}</span>{% else %}{{ e.text }}{% endif %}
+
+{% endfor %}</pre>
+{% endblock %}

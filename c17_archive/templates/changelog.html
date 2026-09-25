@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}CHANGELOG — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">CHANGELOG</h1>
+
+<pre class="log-pre">
+{% for e in changelog %}<span class="log-date">{{ e.date }}</span>
+{% if e.hot %}<span class="hot">{{ e.text }}</span>{% else %}{{ e.text }}{% endif %}
+
+{% endfor %}</pre>
+
+<p class="foot-note">
+  Last entry: <span class="hot">System activity detected (2026)</span>.
+  No record of who triggered it.
+</p>
+{% endblock %}

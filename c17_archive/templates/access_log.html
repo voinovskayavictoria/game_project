@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}ACCESS LOG — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">ACCESS LOG</h1>
+
+<table class="data-table data-table--log">
+  <thead>
+    <tr><th>DATE</th><th>TIME</th><th>USER</th><th>ACTION</th><th>LOCATION</th></tr>
+  </thead>
+  <tbody>
+    {% for e in log %}
+      <tr class="{% if e.date.endswith('17.04.2019') or e.date == '17.04.2019' or e.date == '17.04.2022' or e.date == '17.04.2025' %}row-hot{% endif %}{% if e.date == '21.09.2026' %}row-active{% endif %}">
+        <td>{{ e.date }}</td>
+        <td>{{ e.time }}</td>
+        <td>{{ e.user }}</td>
+        <td>{{ e.action }}</td>
+        <td>{{ e.location }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="foot-note">
+  Recurring pattern detected: <span class="hot">17/04</span>.
+  Pattern repeats every year. Reason unknown.
+</p>
+{% endblock %}

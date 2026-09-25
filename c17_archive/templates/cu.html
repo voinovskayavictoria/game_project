@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}C.U. — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">FILE :: C.U.</h1>
+
+<pre class="log-pre">
+C.U.
+{{ cu.role }}
+
+Access level:
+LEVEL {{ cu.access_level }}
+
+Authorized:
+{% for a in cu.authorized %}{{ a }}
+{% endfor %}</pre>
+
+<p class="foot-note">
+  No further information available.
+  Cross-reference with external sources.
+</p>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="project-page">
+  <span class="chip chip--{{ project.status }}">{{ project.status|upper }}</span>
+  <h1 class="page-title">{{ project.title }}</h1>
+  <p class="lead">{{ project.summary }}</p>
+  <div class="card__meta">Период: {{ project.period }}</div>
+  <a class="link-more" href="{{ url_for('projects') }}">← Все проекты</a>
+</article>
+{% endblock %}

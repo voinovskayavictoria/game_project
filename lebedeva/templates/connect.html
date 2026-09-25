@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}CONNECT — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="connect">
+
+  <div class="article__meta">
+    <span class="article__date">2026</span>
+    <span class="article__author">· {{ SITE.name }}</span>
+  </div>
+
+  <h1 class="connect__title">CONNECT: система, которой официально не существует</h1>
+
+  <p class="connect__warning">
+    <strong>Внимание.</strong> У меня нет доказательств, что CONNECT
+    существует. Всё, что ниже — совокупность свидетельств и документов,
+    достоверность которых я не могу подтвердить на 100 %.
+  </p>
+
+  {% for part in parts %}
+    <section class="connect__part">
+      <h2 class="connect__part-title">
+        <span class="connect__part-num">{{ loop.index }}</span>
+        {{ part.title }}
+      </h2>
+
+      <div class="connect__body">
+        {% for p in part.body %}
+          <p>{{ p }}</p>
+        {% endfor %}
+      </div>
+
+      {% if part.note %}
+        <p class="margin-note">{{ part.note }}</p>
+      {% endif %}
+
+      {% if part.warning %}
+        <p class="warning-inline">{{ part.warning }}</p>
+      {% endif %}
+
+      {% if part.link %}
+        <p class="connect__link">
+          <a class="marker-link" href="{{ external_url(part.link) }}">
+            {{ EXTERNAL_LINKS[part.link].name }} →
+          </a>
+        </p>
+      {% endif %}
+
+      {% if part.links %}
+        <p class="connect__link">
+          {% for k in part.links %}
+            <a class="marker-link" href="{{ external_url(k) }}">{{ EXTERNAL_LINKS[k].name }} →</a>{% if not loop.last %} · {% endif %}
+          {% endfor %}
+        </p>
+      {% endif %}
+    </section>
+  {% endfor %}
+
+  <aside class="connect__outro">
+    <p>
+      Если вы знаете что-то о CONNECT — напишите мне. Анонимно.
+    </p>
+    <a class="marker-link" href="{{ url_for('contact') }}">Связаться →</a>
+    <a class="marker-link" href="{{ SITE.telegram }}" target="_blank" rel="noopener">Telegram →</a>
+  </aside>
+
+</article>
+{% endblock %}

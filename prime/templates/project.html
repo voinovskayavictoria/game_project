@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} — {{ SITE.name }}{% endblock %}
+
+{% block head_extra %}
+  {% if project.meta %}
+    <meta name="project_id"    content="{{ project.meta.project_id }}">
+    <meta name="archive_ref"   content="{{ project.meta.archive_ref }}">
+    <meta name="transfer_date" content="{{ project.meta.transfer_date }}">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<article class="project-detail">
+  <h1>{{ project.title }}</h1>
+
+  <ul class="facts">
+    <li><strong>Период:</strong> {{ project.period }}</li>
+    <li><strong>Статус:</strong> {{ project.status }}</li>
+  </ul>
+
+  {% if project.description %}
+    <p class="lead">{{ project.description }}</p>
+  {% else %}
+    <p class="lead">{{ project.short }}</p>
+  {% endif %}
+
+  {% if project.team %}
+    <h2>Команда проекта</h2>
+    <ul class="plain-list">
+      {% for line in project.team %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if project.last_note %}
+    <h2>Последняя запись</h2>
+    <p class="note">{{ project.last_note }}</p>
+  {% endif %}
+
+  <a class="back-link" href="{{ url_for('projects') }}">← Все проекты</a>
+</article>
+{% endblock %}

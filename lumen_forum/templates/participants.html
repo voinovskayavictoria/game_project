@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Участники — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Участники</h1>
+<p class="lead">Компании и эксперты, регулярно принимающие участие в форуме.</p>
+
+<div class="people-grid">
+  {% for p in participants %}
+    <article class="person">
+      <img src="{{ url_for('static', filename=p.photo) }}"
+           alt="{{ p.name }}" class="person-photo">
+      <h3>{{ p.name }}</h3>
+      <div class="person-role">{{ p.role }}</div>
+      <div class="person-company">{{ p.company }}</div>
+      <div class="person-years">
+        Годы участия:
+        {% for y in p.years %}{{ y }}{% if not loop.last %}, {% endif %}{% endfor %}
+      </div>
+      <a href="{{ url_for('participant', slug=p.slug) }}">Подробнее →</a>
+    </article>
+  {% endfor %}
+</div>
+{% endblock %}

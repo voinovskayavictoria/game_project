@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ person.name }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="profile">
+  <header class="profile__head">
+    <img src="{{ url_for('static', filename=person.photo) }}" alt="" class="profile__photo">
+    <div>
+      <h1>{{ person.name }}</h1>
+      <div class="profile__role">{{ person.role }}</div>
+      <div class="profile__since">в компании с {{ person.since }}</div>
+      <p class="lead">{{ person.bio }}</p>
+    </div>
+  </header>
+
+  {% if person.career %}
+    <section class="block">
+      <h2 class="section-title">Карьера</h2>
+      <pre class="career">{% for line in person.career %}{{ line }}
+{% endfor %}</pre>
+    </section>
+  {% endif %}
+
+  {% if person.specialization %}
+    <section class="block">
+      <h2 class="section-title">Специализация</h2>
+      <ul class="chips">
+        {% for s in person.specialization %}<li class="chip">{{ s }}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if person.selected_projects %}
+    <section class="block">
+      <h2 class="section-title">Избранные проекты</h2>
+      <ul class="plain">
+        {% for p in person.selected_projects %}<li>{{ p }}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if person.clue %}
+    <p class="footnote">{{ person.clue }}</p>
+  {% endif %}
+</article>
+{% endblock %}

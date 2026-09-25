@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero">
+  <div class="hero__content">
+    <span class="pill">ORBIT DATA PLATFORM</span>
+    <h1 class="hero__title">Данные <span class="grad">без границ</span>.</h1>
+    <p class="hero__lead">{{ SITE.description }}</p>
+    <div class="hero__cta">
+      <a class="btn btn--primary" href="{{ url_for('projects') }}">Наши проекты →</a>
+      <a class="btn btn--ghost" href="{{ url_for('about') }}">О компании</a>
+    </div>
+  </div>
+  <div class="hero__panel">
+    <div class="panel-card">
+      <div class="panel-card__head">
+        <span class="dot-ind"></span>
+        <span>Live dashboard</span>
+      </div>
+      <div class="panel-card__grid">
+        <div class="stat">
+          <div class="stat__label">Projects</div>
+          <div class="stat__value">03</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Team</div>
+          <div class="stat__value">{{ team|length }}+</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Uptime</div>
+          <div class="stat__value">99.98%</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Regions</div>
+          <div class="stat__value">12</div>
+        </div>
+      </div>
+      <div class="panel-card__chart">
+        <div class="chart-bar" style="--h:40%"></div>
+        <div class="chart-bar" style="--h:65%"></div>
+        <div class="chart-bar" style="--h:52%"></div>
+        <div class="chart-bar" style="--h:80%"></div>
+        <div class="chart-bar" style="--h:58%"></div>
+        <div class="chart-bar" style="--h:90%"></div>
+        <div class="chart-bar" style="--h:70%"></div>
+        <div class="chart-bar" style="--h:96%"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2 class="section-title">Активные проекты</h2>
+  <div class="cards">
+    {% for p in projects %}
+      <a class="card" href="{{ url_for('project', slug=p.slug) }}">
+        <span class="chip chip--active">ACTIVE</span>
+        <h3 class="card__title">{{ p.title }}</h3>
+        <p class="card__desc">{{ p.summary }}</p>
+        <div class="card__meta">{{ p.period }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="block">
+  <h2 class="section-title">Руководство</h2>
+  <div class="team-strip">
+    {% for m in team %}
+      <a class="team-card" href="{{ url_for('team_member', slug=m.slug) }}">
+        <img class="team-card__photo" src="{{ url_for('static', filename=m.photo) }}" alt="">
+        <div class="team-card__name">{{ m.name }}</div>
+        <div class="team-card__role">{{ m.role }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="block two-col">
+  <div>
+    <h2 class="section-title">Новости</h2>
+    <ul class="news-list">
+      {% for n in news %}
+        <li>
+          <span class="news-list__date">{{ n.date }}</span>
+          <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div>
+    <h2 class="section-title">Партнёры</h2>
+    <ul class="partners-list">
+      {% for k in PARTNERS %}
+        <li>
+          <a href="{{ external_url(k) }}">{{ EXTERNAL_LINKS[k].name }}</a>
+          <span class="arrow">→</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+{% endblock %}

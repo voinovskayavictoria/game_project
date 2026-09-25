@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Instagram — {{ person.name }}{% endblock %}
+
+{% block content %}
+<div class="social-mock social-mock--ig">
+  <div class="social-mock__bar">
+    <span class="social-mock__app">Instagram</span>
+    <span class="social-mock__handle">{{ feed.handle }}</span>
+  </div>
+
+  <div class="ig-profile">
+    <div class="ig-profile__avatar"></div>
+    <div class="ig-profile__info">
+      <div class="ig-profile__handle">{{ feed.handle }}</div>
+      <div class="ig-profile__bio">{{ person.name }} · {{ person.role }} at ORBIT DATA</div>
+    </div>
+  </div>
+
+  <div class="ig-feed">
+    {% for p in feed.posts %}
+      <figure class="ig-post">
+        <div class="ig-post__head">
+          <span class="ig-post__avatar"></span>
+          <span class="ig-post__handle">{{ feed.handle }}</span>
+        </div>
+        <img class="ig-post__img" src="{{ url_for('static', filename=p.image) }}" alt="">
+        <figcaption class="ig-post__body">
+          <div class="ig-post__caption">{{ p.caption }}</div>
+          {% if p.location %}<div class="ig-post__loc">📍 {{ p.location }}</div>{% endif %}
+          <div class="ig-post__date">{{ p.date }}</div>
+          {% if p.photo_hint %}
+            <div class="ig-post__hint">{{ p.photo_hint }}</div>
+          {% endif %}
+        </figcaption>
+      </figure>
+    {% endfor %}
+  </div>
+
+  <p class="footnote">
+    Это публичный профиль Хана. Обратите внимание на фото от 16.09.2026.
+    <a href="{{ url_for('han_telegram') }}">Telegram →</a>
+  </p>
+</div>
+{% endblock %}

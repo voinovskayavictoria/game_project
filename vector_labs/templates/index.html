@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero">
+  <div class="hero__grid-mark">◈</div>
+  <div class="hero__content">
+    <div class="hero__kicker">RESEARCH · SECURE SYSTEMS · DATA</div>
+    <h1 class="hero__title">Engineering<br>the invisible.</h1>
+    <p class="hero__lead">{{ SITE.description }}</p>
+    <div class="hero__cta">
+      <a class="btn btn--primary" href="{{ url_for('projects') }}">Проекты →</a>
+      <a class="btn btn--ghost" href="{{ url_for('about') }}">О компании</a>
+    </div>
+  </div>
+  <div class="hero__aside">
+    <div class="status-card">
+      <div class="status-card__label">STATUS</div>
+      <div class="status-card__value"><span class="dot dot--ok"></span> OPERATIONAL</div>
+      <div class="status-card__rows">
+        <div><span>Projects active</span><strong>03</strong></div>
+        <div><span>Team</span><strong>{{ team|length }}+</strong></div>
+        <div><span>Last update</span><strong>2024</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2 class="section-title">Текущие проекты</h2>
+  <div class="cards">
+    {% for p in projects %}
+      <a class="card" href="{{ url_for('project', slug=p.slug) }}">
+        <div class="card__status card__status--active">ACTIVE</div>
+        <h3 class="card__title">{{ p.title }}</h3>
+        <p class="card__desc">{{ p.summary }}</p>
+        <div class="card__meta">{{ p.period }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="block">
+  <h2 class="section-title">Команда</h2>
+  <div class="team-strip">
+    {% for m in team %}
+      <a class="team-card" href="{{ url_for('team_member', slug=m.slug) }}">
+        <img src="{{ url_for('static', filename=m.photo) }}" alt="" class="team-card__photo">
+        <div class="team-card__name">{{ m.name }}</div>
+        <div class="team-card__role">{{ m.role }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="block two-col">
+  <div>
+    <h2 class="section-title">Последние новости</h2>
+    <ul class="news-list">
+      {% for n in news %}
+        <li>
+          <span class="news-list__date">{{ n.date }}</span>
+          <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div>
+    <h2 class="section-title">Партнёры</h2>
+    <ul class="partners-list">
+      {% for k in PARTNERS %}
+        <li>
+          <a href="{{ external_url(k) }}">{{ EXTERNAL_LINKS[k].name }}</a>
+          <span class="muted">→</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+{% endblock %}

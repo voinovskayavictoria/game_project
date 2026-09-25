@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Как нас найти — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Как нас найти</h1>
+
+<p class="lead">
+  Мы внутри старого здания. Если вы стоите у главного фасада —
+  вы не там. Заходите со двора.
+</p>
+
+<div class="map-block">
+  <div class="map-block__map">
+    <div class="map-block__placeholder">
+      <div class="map-block__pin">📍</div>
+      <div>{{ SITE.address_new }}</div>
+      <div class="map-block__sub">вход со двора, второй подъезд</div>
+    </div>
+  </div>
+
+  <div class="map-block__steps">
+    <h2 class="h-script">Как дойти</h2>
+    <ol class="steps">
+      <li>Метро — 7 минут пешком.</li>
+      <li>Поверните во двор между домом 15 и домом 19.</li>
+      <li>Второй подъезд, деревянная дверь справа.</li>
+      <li>На двери — маленькая вывеска «Чёрный какао».</li>
+    </ol>
+    <p class="note">
+      В картах адрес может показываться как «Садовая, 17, стр. 2».
+      Это мы.
+    </p>
+  </div>
+</div>
+
+<figure class="map-photo">
+  <img src="{{ url_for('static', filename='img/entrance.jpg') }}" alt="">
+  <figcaption>Так выглядит вход. Вывеска — слева от двери.</figcaption>
+</figure>
+{% endblock %}

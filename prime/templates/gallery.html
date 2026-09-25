@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Медиа — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Медиа</h1>
+
+<section class="gallery-block">
+  <h2>Lumen Forum 2021</h2>
+  <div class="gallery">
+    <figure>
+      <img src="{{ url_for('static', filename='img/gallery/lumen-2021-1.jpg') }}" alt="">
+      <figcaption>Команда PRIME SYSTEMS на Lumen Forum.</figcaption>
+    </figure>
+    <figure>
+      <img src="{{ url_for('static', filename='img/gallery/lumen-2021-2.jpg') }}" alt="">
+      <figcaption>Панельная дискуссия.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="gallery-block">
+  <h2>Корпоративный вечер 2019</h2>
+  <div class="gallery">
+    <figure>
+      <img src="{{ url_for('static', filename='img/gallery/corp-2019-1.jpg') }}" alt="">
+      <figcaption>Команда проекта C-17.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="gallery-block">
+  <h2>Партнёрская встреча 2020</h2>
+  <div class="gallery">
+    <figure>
+      <img src="{{ url_for('static', filename='img/gallery/partners-2020-1.jpg') }}" alt="">
+      <figcaption>Рабочая встреча с партнёрами.</figcaption>
+    </figure>
+  </div>
+</section>
+{% endblock %}

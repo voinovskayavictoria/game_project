@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Команда — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Команда</h1>
+<p class="lede">Юристы и советники фирмы.</p>
+
+<div class="team-grid">
+  {% for m in team %}
+    <article class="lawyer">
+      <img src="{{ url_for('static', filename=m.photo) }}" alt="" class="lawyer__photo">
+      <div class="lawyer__name">{{ m.name }}</div>
+      <div class="lawyer__role">{{ m.role }}</div>
+      {% if m.practice %}
+        <div class="lawyer__practice">{{ m.practice | join(' · ') }}</div>
+      {% endif %}
+      <a class="link-arrow" href="{{ url_for('team_member', slug=m.slug) }}">Профиль →</a>
+    </article>
+  {% endfor %}
+</div>
+{% endblock %}

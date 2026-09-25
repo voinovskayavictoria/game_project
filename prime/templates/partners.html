@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Партнёры — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Партнёры</h1>
+<div class="grid-2">
+  {% for p in PARTNERS %}
+    <div class="card">
+      <h3><a href="{{ p.url }}">{{ p.name }}</a></h3>
+      <p>{{ p.desc }}</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

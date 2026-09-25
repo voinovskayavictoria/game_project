@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}1704.jpg — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">FILE :: 1704.jpg</h1>
+
+<div class="photo-frame">
+  <img src="{{ url_for('static', filename='img/1704.jpg') }}" alt="Room 1704">
+  <div class="photo-frame__label">PHOTO — ROOM 1704</div>
+</div>
+
+<table class="kv">
+  <tr><td>SOURCE</td><td>Internal archive</td></tr>
+  <tr><td>DATE</td><td>2019-04-15</td></tr>
+  <tr><td>SUBJECT</td><td>Server room, unit 1704</td></tr>
+  <tr><td>NOTES</td><td>Contents: server rack, desk, monitor, folder labeled C-17.</td></tr>
+</table>
+
+<a class="term-link" href="{{ url_for('files') }}">← /FILES</a>
+{% endblock %}

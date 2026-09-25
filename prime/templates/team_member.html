@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ member.name }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="person-detail">
+  <div class="person-detail__head">
+    <img src="{{ url_for('static', filename=member.photo) }}"
+         alt="{{ member.name }}" class="person-photo person-photo--lg">
+    <div>
+      <h1>{{ member.name }}</h1>
+      <div class="person-role">{{ member.role }}</div>
+      <ul class="facts">
+        {% if member.age %}<li><strong>Возраст:</strong> {{ member.age }}</li>{% endif %}
+        {% if member.since %}<li><strong>В PRIME с:</strong> {{ member.since }}</li>{% endif %}
+      </ul>
+      <p class="lead">{{ member.bio }}</p>
+    </div>
+  </div>
+
+  {% if member.education %}
+    <h2>Образование</h2>
+    <ul class="plain-list">
+      {% for line in member.education %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if member.career %}
+    <h2>Карьера</h2>
+    <pre class="career">{% for line in member.career %}{{ line }}
+{% endfor %}</pre>
+  {% endif %}
+
+  {% if member.projects %}
+    <h2>Проекты</h2>
+    <ul class="plain-list">
+      {% for p in member.projects %}
+        <li>
+          <a href="{{ p.link }}">{{ p.title }}</a><br>
+          <small>{{ p.period }} · статус: {{ p.status }}</small>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if member.partner_links %}
+    <h2>Партнёры</h2>
+    <ul class="plain-list">
+      {% for l in member.partner_links %}
+        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if member.extra_links %}
+    <h2>Связанные ресурсы</h2>
+    <ul class="plain-list">
+      {% for l in member.extra_links %}
+        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</article>
+{% endblock %}

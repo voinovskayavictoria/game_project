@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Источники — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Источники</h1>
+<p class="lede">
+  Имена не раскрываю. Никого из них я не могу назвать публично —
+  иначе они перестанут говорить.
+</p>
+
+<ul class="sources">
+  {% for s in sources %}
+    <li class="source {% if s.warning %}source--warn{% endif %}">
+      <div class="source__code">Источник {{ s.code }}</div>
+      <div class="source__role">{{ s.role }}</div>
+      <blockquote class="source__quote">«{{ s.quote }}»</blockquote>
+      {% if s.warning %}
+        <div class="source__warning">{{ s.warning }}</div>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

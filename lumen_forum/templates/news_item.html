@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }}{% endblock %}
+
+{% block content %}
+<article class="news-article">
+  <time class="muted">{{ item.date }}</time>
+  <h1>{{ item.title }}</h1>
+  <p class="lead">{{ item.body }}</p>
+  <a class="back-link" href="{{ url_for('news') }}">← Все новости</a>
+</article>
+{% endblock %}

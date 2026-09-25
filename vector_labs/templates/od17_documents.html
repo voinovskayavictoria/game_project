@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}OD-17 — Документы — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">OD-17 — Документы</h1>
+
+<div class="doc-cards">
+  {% for d in od.documents %}
+    <div class="doc-card">
+      <div class="doc-card__head">
+        <span class="doc-card__name">{{ d.name }}</span>
+        <span class="doc-card__date">{{ d.date }}</span>
+      </div>
+      <p class="doc-card__note">{{ d.note }}</p>
+      {% if d.clue %}
+        <div class="doc-card__clue">
+          <span class="kv-mono">{{ d.clue }}</span>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+<a class="link-more" href="{{ url_for('project', slug='od17') }}">← Проект OD-17</a>
+{% endblock %}

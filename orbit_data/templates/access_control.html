@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}OD-17 — Access Control — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">OD-17 · Access Control</h1>
+
+<nav class="tabs">
+  <a href="{{ url_for('project', slug='od17') }}">Обзор</a>
+  <a href="{{ url_for('od17_documents') }}">Документы</a>
+  <a href="{{ url_for('od17_users') }}">Users</a>
+  <a href="{{ url_for('access_control') }}" class="is-active">Access Control</a>
+</nav>
+
+<div class="access-grid">
+  {% for a in od.access_control %}
+    <div class="access-card {% if a.status == 'ACTIVE' %}access-card--active{% endif %}">
+      <div class="access-card__head">
+        <span class="mono">{{ a.id }}</span>
+        <span class="chip chip--{{ 'active' if a.status == 'ACTIVE' else 'inactive' }}">{{ a.status }}</span>
+      </div>
+      <div class="access-card__role">{{ a.role }}</div>
+      {% if a.note %}
+        <div class="access-card__note">
+          <span class="hot">{{ a.note }}</span>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+<p class="footnote">
+  ADMIN-01 присутствует одновременно в этой системе и в архиве C-17.
+  Связанные записи:
+  <a href="{{ external_url('c17arch') }}">C-17 Archive →</a>
+</p>
+{% endblock %}

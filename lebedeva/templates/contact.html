@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Связаться — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Связаться</h1>
+
+{% if sent %}
+  <div class="form-thanks">
+    <p>Спасибо. Я прочитаю. Если смогу — отвечу.</p>
+    <p class="muted">Мария</p>
+  </div>
+{% else %}
+  <p class="lede">
+    Если вы располагаете информацией о CONNECT, о проекте C-17
+    или о людях, которых я упоминаю, — напишите. Анонимность
+    гарантирую.
+  </p>
+
+  <form class="contact-form" method="post">
+    <label>
+      <span>Имя</span>
+      <input type="text" name="name" placeholder="Можно не указывать">
+    </label>
+    <label>
+      <span>Email</span>
+      <input type="email" name="email" placeholder="Нужен для ответа">
+    </label>
+    <label>
+      <span>Сообщение</span>
+      <textarea name="message" rows="7" placeholder="Что вам известно?"></textarea>
+    </label>
+    <button type="submit">Отправить</button>
+  </form>
+{% endif %}
+{% endblock %}

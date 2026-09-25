@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}C.U. — Consultant profile{% endblock %}
+
+{% block content %}
+<article class="consultant">
+  <div class="consultant__code">{{ c.code }}</div>
+  <div class="consultant__role">{{ c.role }}</div>
+
+  <h1 class="consultant__name">{{ c.full_name }}</h1>
+
+  <p class="consultant__note">{{ c.note }}</p>
+
+  <div class="consultant__grid">
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Access level</div>
+      <div class="kv-grid__value">{{ c.access_level }}</div>
+    </div>
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Authorized</div>
+      <div class="kv-grid__value">{{ c.authorized | join(' · ') }}</div>
+    </div>
+  </div>
+
+  <div class="warning-box">
+    Совпадение с упоминаниями <strong>C.U.</strong> в документах
+    HAEIL &amp; PARTNERS, C-17 ARCHIVE и VECTOR LABS — намеренно
+    не подтверждается.
+  </div>
+
+  <p class="footnote">
+    Профиль восстановлен из старой архивной системы.
+  </p>
+</article>
+{% endblock %}

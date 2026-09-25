@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}System Log — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">System Log</h1>
+<p class="lead">Фрагмент технического журнала исследовательского отдела.</p>
+
+<div class="log-table">
+  <div class="log-table__head">
+    <span>DATE</span><span>TIME</span><span>EVENT</span>
+  </div>
+  {% for e in log %}
+    <div class="log-table__row {% if e.hot %}is-hot{% endif %}">
+      <span class="log-table__date">{{ e.date }}</span>
+      <span class="log-table__time">{{ e.time }}</span>
+      <span class="log-table__text">{{ e.text }}</span>
+    </div>
+  {% endfor %}
+</div>
+
+<p class="footnote">
+  Записи за апрель 2019 года восстановлены из резервной копии.
+</p>
+{% endblock %}

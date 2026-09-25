@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="doc-view">
+  <div class="doc-view__head">
+    <span class="chip chip--archived">INTERNAL DOCUMENT</span>
+    <span class="muted">{{ doc.date }}</span>
+  </div>
+
+  <h1 class="page-title">{{ doc.title }}</h1>
+
+  <table class="doc-table">
+    <tr><td>Project</td><td>{{ doc.project }}</td></tr>
+    <tr><td>Previous infrastructure</td><td>{{ doc.previous_infra }}</td></tr>
+    <tr><td>Administrator</td><td>{{ doc.administrator }}</td></tr>
+    <tr><td>Technical consultant</td>
+        <td><a href="{{ url_for('consultant_cu') }}" class="hot-link">
+          {{ doc.technical_consultant }} — External Technical Consultant →
+        </a></td></tr>
+    <tr><td>Research director</td><td>{{ doc.research_director }}</td></tr>
+    <tr><td>Transfer date</td><td>{{ doc.date }}</td></tr>
+  </table>
+
+  <p class="footnote">
+    Документ из внутреннего архива ORBIT DATA.
+    Связанные записи: <a href="{{ url_for('od17_users') }}">/users</a>,
+    <a href="{{ url_for('access_control') }}">/access-control</a>.
+  </p>
+</article>
+{% endblock %}

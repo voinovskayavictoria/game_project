@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Архив — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Архив</h1>
+<p class="lead">Материалы форумов по годам.</p>
+
+<div class="filter-bar">
+  <a href="{{ url_for('archive') }}" class="{% if not current %}is-active{% endif %}">Все</a>
+  {% for y in years %}
+    <a href="{{ url_for('archive', year=y) }}"
+       class="{% if current == y %}is-active{% endif %}">{{ y }}</a>
+  {% endfor %}
+</div>
+
+{% if current %}
+  {% set item = program[current] %}
+  <section class="archive-block">
+    <h2>LUMEN {{ current }}</h2>
+    <p class="lead">{{ item.theme }}</p>
+
+    <h3>Участники</h3>
+    {% if item.participants %}
+      <ul class="plain-list">
+        {% for line in item.participants %}<li>{{ line }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Список участников будет объявлен позже.</p>
+    {% endif %}
+
+    <h3>События</h3>
+    <ul class="plain-list">
+      {% for line in item.highlights %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+
+    <h3>Партнёры</h3>
+    <ul class="plain-list">
+      {% for p in PARTNERS %}
+        <li><a href="{{ external_url(p.key) }}">{{ p.name }}</a></li>
+      {% endfor %}
+    </ul>
+
+    <h3>Фотографии</h3>
+    <p><a href="{{ url_for('gallery') }}">Смотреть галерею →</a></p>
+  </section>
+{% else %}
+  <p class="muted">Выберите год, чтобы посмотреть материалы.</p>
+{% endif %}
+{% endblock %}

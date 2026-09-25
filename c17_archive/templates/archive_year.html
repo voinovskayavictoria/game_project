@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}/archive/{{ year }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="term-h1">/archive/{{ year }}</h1>
+
+{% if item.status == 'unavailable' %}
+  <pre class="log-pre error">Data unavailable.</pre>
+
+{% elif item.status == 'files' %}
+  <p>{{ item.count }} files.</p>
+  <p class="foot-note">Individual files hidden from public index.</p>
+
+{% elif item.status == 'migration' %}
+  <pre class="log-pre ok">Migration completed.</pre>
+
+{% elif item.status == 'restricted' %}
+  <pre class="log-pre error">ACCESS RESTRICTED</pre>
+  <p><a class="term-link" href="{{ url_for('private_node') }}">[ REQUEST ACCESS ]</a></p>
+{% endif %}
+
+<a class="term-link" href="{{ url_for('archived_data') }}">← /ARCHIVED_DATA</a>
+{% endblock %}

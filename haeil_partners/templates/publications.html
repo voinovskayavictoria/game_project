@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Публикации — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Публикации</h1>
+<p class="lede">Материалы юристов HAEIL &amp; PARTNERS.</p>
+
+<ul class="pub-list pub-list--full">
+  {% for p in publications %}
+    <li>
+      <span class="pub-list__date">{{ p.date }}</span>
+      <a href="{{ url_for('publication', slug=p.slug) }}">{{ p.title }}</a>
+      <span class="pub-list__author">— {{ p.author }}</span>
+      {% if p.featured %}<span class="tag">важное</span>{% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

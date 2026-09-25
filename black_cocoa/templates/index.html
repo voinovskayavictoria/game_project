@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero">
+  <img class="hero__img" src="{{ url_for('static', filename='img/hero.jpg') }}" alt="">
+  <div class="hero__overlay">
+    <div class="hero__label">с 2021 года</div>
+    <h1 class="hero__title">Кофе, какао<br>и немного тишины</h1>
+    <a class="btn" href="{{ url_for('booking') }}">Забронировать столик</a>
+  </div>
+</section>
+
+<section class="strip">
+  <div class="strip__item">
+    <div class="strip__label">Адрес</div>
+    <div class="strip__value">{{ SITE.address_new }}</div>
+  </div>
+  <div class="strip__item">
+    <div class="strip__label">Сегодня</div>
+    <div class="strip__value">08:00 — 23:00</div>
+  </div>
+  <div class="strip__item">
+    <div class="strip__label">Instagram</div>
+    <a class="strip__value" href="{{ SITE.instagram }}" target="_blank" rel="noopener">@blackcacao</a>
+  </div>
+</section>
+
+<section class="block">
+  <h2 class="h-script">Наш фирменный напиток</h2>
+  <div class="signature">
+    <div class="signature__badge">17:04</div>
+    <div>
+      <div class="signature__name">{{ signature.name }}</div>
+      <div class="signature__note">{{ signature.note }}</div>
+      <div class="signature__price">{{ signature.price }}</div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2 class="h-script">Что у нас происходит</h2>
+  <ul class="news-mini">
+    {% for n in latest_news %}
+      <li>
+        <span class="news-mini__date">{{ n.date }}</span>
+        <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+  <a class="link-more" href="{{ url_for('news') }}">Все новости →</a>
+</section>
+
+<section class="block">
+  <h2 class="h-script">Фотографии</h2>
+  <div class="photo-strip">
+    {% for g in featured %}
+      <figure class="photo-strip__item">
+        <img src="{{ url_for('static', filename=g.file) }}" alt="">
+        <figcaption>{{ g.caption }}</figcaption>
+      </figure>
+    {% endfor %}
+  </div>
+  <a class="link-more" href="{{ url_for('gallery') }}">Смотреть галерею →</a>
+</section>
+
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Архив — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Архив</h1>
+
+<div class="yearbar">
+  <a href="{{ url_for('archive') }}" class="{% if not current %}is-active{% endif %}">Все</a>
+  {% for y in years %}
+    <a href="{{ url_for('archive', year=y) }}"
+       class="{% if current == y %}is-active{% endif %}">{{ y }}</a>
+  {% endfor %}
+</div>
+
+{% if current %}
+  <section class="block">
+    <h2>{{ current }}</h2>
+    <ul class="plain plain--dashed">
+      {% for e in archive[current] %}
+        <li>
+          <span class="date">{{ e.date }}</span>
+          {% if e.link %}
+            <a href="{{ url_for('document_c17') }}">{{ e.title }}</a>
+          {% else %}
+            {{ e.title }}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% else %}
+  <p class="body">Выберите год.</p>
+{% endif %}
+{% endblock %}

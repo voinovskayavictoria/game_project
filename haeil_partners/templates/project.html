@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="project-page">
+  <header>
+    <h1>{{ project.title }} — юридическое сопровождение</h1>
+    <div class="project-page__meta">
+      {{ project.year }} · {{ project.client }} · Ответственный: {{ project.responsible }}
+    </div>
+  </header>
+
+  <p class="lede">{{ project.summary }}</p>
+
+  {% if documents %}
+    <section class="block">
+      <h2>Документы</h2>
+      <table class="ledger ledger--docs">
+        <thead>
+          <tr><th>Документ</th><th>Дата</th><th>Статус</th></tr>
+        </thead>
+        <tbody>
+          {% for d in documents %}
+            <tr class="{% if d.status == 'archived' %}row--archived{% endif %}">
+              <td>
+                {% if d.link and d.status == 'open' %}
+                  <a href="{{ url_for('document_c17') }}">{{ d.title }}</a>
+                {% else %}
+                  {{ d.title }}
+                {% endif %}
+              </td>
+              <td>{{ d.date }}</td>
+              <td>
+                {% if d.status == 'archived' %}
+                  <span class="stamp stamp--small">Документ архивирован</span>
+                {% else %}
+                  доступен
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
+  {% if project.slug == 'c17' %}
+    <p class="footnote">Reference: 17/04 — 1704</p>
+  {% endif %}
+
+  <a class="link-arrow" href="{{ url_for('projects') }}">← Все проекты</a>
+</article>
+{% endblock %}

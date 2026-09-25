@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ client.name }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="client-page">
+  <header>
+    <h1>{{ client.name }}</h1>
+    <div class="client-page__meta">Период сотрудничества: {{ client.period }}</div>
+  </header>
+
+  <p class="lede">{{ client.summary }}</p>
+
+  <section class="block">
+    <h2>Направления работы</h2>
+    <ul class="plain">
+      {% for d in client.directions %}<li>{{ d }}</li>{% endfor %}
+    </ul>
+  </section>
+
+  {% if client.projects %}
+    <section class="block">
+      <h2>Проекты</h2>
+      <ul class="project-list">
+        {% for p in client.projects %}
+          <li>
+            <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
+            <div class="project-list__note">{{ p.note }}</div>
+            <div class="project-list__resp">Ответственный: {{ p.responsible }}</div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if client.external %}
+    <p class="footnote">
+      Внешний сайт клиента:
+      <a href="{{ external_url(client.external) }}">{{ EXTERNAL_LINKS[client.external].name }} →</a>
+    </p>
+  {% endif %}
+</article>
+{% endblock %}

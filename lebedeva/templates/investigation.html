@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="article">
+  <div class="article__meta">
+    <span class="article__date">{{ item.date }}</span>
+    <span class="article__author">· {{ SITE.name }}</span>
+  </div>
+  <h1 class="article__title">{{ item.title }}</h1>
+  <p class="article__lead">{{ item.lead }}</p>
+
+  {% if item.body %}
+    <div class="article__body">
+      {% for p in item.body.split('\n\n') %}
+        <p>{{ p }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if item.links %}
+    <aside class="article__links">
+      <div class="article__links-label">Связанные материалы</div>
+      {% for k in item.links %}
+        <a href="{{ external_url(k) }}">{{ EXTERNAL_LINKS[k].name }} →</a>
+      {% endfor %}
+    </aside>
+  {% endif %}
+
+  <a class="marker-link" href="{{ url_for('investigations') }}">← Все расследования</a>
+</article>
+{% endblock %}

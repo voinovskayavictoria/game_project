@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <img src="{{ url_for('static', filename='img/hero.jpg') }}" alt="" class="hero-img">
+  <div class="hero-overlay">
+    <h1>LUMEN FORUM</h1>
+    <p class="lead">{{ SITE.tagline }}</p>
+    <a class="btn" href="{{ url_for('about') }}">О форуме →</a>
+  </div>
+</section>
+
+{% if upcoming %}
+<section class="section banner">
+  <div>
+    <span class="banner-tag">Скоро</span>
+    <h2>LUMEN FORUM {{ upcoming.theme }}</h2>
+    <p class="muted">Ближайший форум — осень 2026. Регистрация открыта.</p>
+  </div>
+  <a class="btn btn--outline" href="{{ url_for('program_year', year=2026) }}">Программа →</a>
+</section>
+{% endif %}
+
+<section class="section">
+  <h2>Ключевые участники</h2>
+  <div class="people-grid">
+    {% for p in participants %}
+      <article class="person">
+        <img src="{{ url_for('static', filename=p.photo) }}"
+             alt="{{ p.name }}" class="person-photo">
+        <h3>{{ p.name }}</h3>
+        <div class="person-role">{{ p.role }} · {{ p.company }}</div>
+        <a href="{{ url_for('participant', slug=p.slug) }}">Подробнее →</a>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section two-col">
+  <div>
+    <h2>Последние новости</h2>
+    <ul class="news-list">
+      {% for n in news %}
+        <li>
+          <time>{{ n.date }}</time>
+          <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div>
+    <h2>Партнёры</h2>
+    <ul class="plain-list">
+      {% for p in PARTNERS %}
+        <li><a href="{{ external_url(p.key) }}">{{ p.name }}</a> — {{ p.desc }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Фотографии с форума</h2>
+  <div class="gallery gallery--preview">
+    {% for ph in photos %}
+      <figure>
+        <img src="{{ url_for('static', filename='img/' + ph.file) }}" alt="">
+        <figcaption>{{ ph.caption }}</figcaption>
+      </figure>
+    {% endfor %}
+  </div>
+  <a class="back-link" href="{{ url_for('gallery') }}">Все фотографии →</a>
+</section>
+{% endblock %}

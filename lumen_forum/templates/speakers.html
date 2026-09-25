@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Спикеры — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Спикеры</h1>
+<p class="lead">Выступления в рамках программы LUMEN FORUM.</p>
+
+<div class="speakers-grid">
+  {% for s in speakers %}
+    <article class="speaker">
+      <img src="{{ url_for('static', filename=s.photo) }}"
+           alt="{{ s.name }}" class="speaker-photo">
+      <h3>{{ s.name }}</h3>
+      <div class="person-role">{{ s.role }}</div>
+      <div class="speaker-talk">«{{ s.talk }}»</div>
+      <div class="muted">LUMEN {{ s.year }}</div>
+    </article>
+  {% endfor %}
+</div>
+{% endblock %}

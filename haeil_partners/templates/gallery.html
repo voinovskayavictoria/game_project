@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Фото — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Фотогалерея</h1>
+
+<div class="photo-grid">
+  {% for ph in photos %}
+    <figure class="photo">
+      <img src="{{ url_for('static', filename='img/' + ph.file) }}" alt="">
+      <figcaption>
+        <span class="photo__year">{{ ph.year }}</span>
+        {{ ph.caption }}
+      </figcaption>
+    </figure>
+  {% endfor %}
+</div>
+{% endblock %}

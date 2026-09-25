@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="feature">
+  <div class="feature__label">Последнее расследование</div>
+  <h1 class="feature__title">
+    <a href="{{ url_for('investigation', slug=latest.slug) }}">{{ latest.title }}</a>
+  </h1>
+  <p class="feature__lead">{{ latest.lead }}</p>
+  <div class="feature__meta">
+    <span class="feature__date">{{ latest.date }}</span>
+    <a class="feature__more" href="{{ url_for('investigation', slug=latest.slug) }}">Читать целиком →</a>
+  </div>
+</section>
+
+<section class="archive-list">
+  <h2 class="section-label">Более ранние материалы</h2>
+  <ul>
+    {% for item in others %}
+      <li>
+        <span class="archive-list__date">{{ item.date }}</span>
+        <a href="{{ url_for('investigation', slug=item.slug) }}">{{ item.title }}</a>
+        <p class="archive-list__lead">{{ item.lead }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="about-strip">
+  <h2 class="section-label">Обо мне</h2>
+  <p>{{ BIO.intro }}</p>
+  <a class="marker-link" href="{{ url_for('about') }}">Подробнее →</a>
+</section>
+
+<section class="about-strip">
+  <h2 class="section-label">Свежие документы</h2>
+  <ul class="doc-mini">
+    {% for d in [1,2,3] %}
+      {# захардкожено для краткости; в шаблоне documents.html — полный список #}
+    {% endfor %}
+  </ul>
+  <p>В разделе «Документы» — материалы, полученные от источников.</p>
+  <a class="marker-link" href="{{ url_for('documents') }}">Все документы →</a>
+</section>
+
+{% endblock %}

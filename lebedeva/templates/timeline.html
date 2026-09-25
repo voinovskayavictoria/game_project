@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Хронология — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Хронология</h1>
+<p class="lede">Всё, что мне удалось собрать по датам.</p>
+
+<div class="timeline">
+  {% for year in timeline %}
+    <div class="timeline__year">
+      <div class="timeline__year-label">{{ year.year }}</div>
+      <ul>
+        {% for e in year.entries %}
+          <li class="{% if e.hot %}is-hot{% endif %}{% if e.muted %} is-muted{% endif %}{% if e.current %} is-current{% endif %}">
+            <span class="timeline__date">{{ e.date }}</span>
+            <span class="timeline__text">{{ e.text }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

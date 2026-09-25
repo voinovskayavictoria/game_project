@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Архив — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1>Архив</h1>
+<p class="lead">Материалы PRIME SYSTEMS по годам.</p>
+
+<div class="filter-bar">
+  <a href="{{ url_for('archive') }}" class="{% if not current %}is-active{% endif %}">Все</a>
+  {% for y in years %}
+    <a href="{{ url_for('archive', year=y) }}"
+       class="{% if current == y %}is-active{% endif %}">{{ y }}</a>
+  {% endfor %}
+</div>
+
+{% if current %}
+  <section class="archive-block">
+    <h2>{{ current }}</h2>
+    {% if current == "2019" %}
+      <ul class="plain-list">
+        <li><a href="{{ url_for('project', slug='c17') }}">C-17</a> — архив проекта</li>
+        <li><a href="http://localhost:5002/">Lumen Forum</a> — участие в конференции</li>
+        <li>Корпоративные мероприятия 2019</li>
+      </ul>
+    {% elif current == "2020" %}
+      <ul class="plain-list">
+        <li>Изменения структуры компании</li>
+        <li>Уход некоторых сотрудников</li>
+      </ul>
+    {% elif current == "2021" %}
+      <ul class="plain-list">
+        <li>Новые партнёры</li>
+      </ul>
+    {% else %}
+      <p class="muted">Материалы за этот год будут добавлены позже.</p>
+    {% endif %}
+  </section>
+{% else %}
+  <p class="muted">Выберите год, чтобы посмотреть материалы.</p>
+{% endif %}
+{% endblock %}

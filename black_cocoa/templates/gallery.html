@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Галерея — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Галерея</h1>
+<p class="lead">Немного наших вечеров, утр и просто так.</p>
+
+<div class="gallery">
+  {% for g in photos %}
+    <figure class="gallery__item">
+      <img src="{{ url_for('static', filename=g.file) }}" alt="">
+      <figcaption>
+        {{ g.caption }}
+        {% if g.date %}<span class="gallery__date">{{ g.date }}</span>{% endif %}
+      </figcaption>
+    </figure>
+  {% endfor %}
+</div>
+{% endblock %}

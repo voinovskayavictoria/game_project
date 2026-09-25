@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Private event — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="article article--private">
+  <time class="article__date">17.04</time>
+  <h1 class="article__title">Private event</h1>
+  <p class="lead">
+    Раз в год мы закрываем кафе и проводим очень тихий
+    вечер. Только для своих.
+  </p>
+
+  <figure class="article__figure">
+    <img src="{{ url_for('static', filename='img/events/private-1704.jpg') }}" alt="">
+    <figcaption>Небольшая встреча в старом зале.</figcaption>
+  </figure>
+
+  <p class="muted">
+    Список гостей не публикуется.
+  </p>
+</article>
+{% endblock %}

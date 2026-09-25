@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="intro">
+  <div class="intro__left">
+    <h1>Юридическая фирма<br>для технологических компаний</h1>
+    <p class="lede">{{ SITE.slogan }}</p>
+    <p class="body">{{ SITE.description }}</p>
+    <a class="link-arrow" href="{{ url_for('about') }}">О компании →</a>
+  </div>
+  <div class="intro__right">
+    <div class="seal">
+      <div class="seal__inner">
+        <div class="seal__mark">H&amp;P</div>
+        <div class="seal__line">{{ SITE.founded }}</div>
+        <div class="seal__sub">Attorneys at Law</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Направления</h2>
+  <ul class="numbered">
+    <li><strong>Корпоративное право.</strong> Сделки, реорганизации, корпоративные споры.</li>
+    <li><strong>Интеллектуальная собственность.</strong> Защита ИС в IT и R&amp;D.</li>
+    <li><strong>Технологические проекты.</strong> Сопровождение разработки и передачи.</li>
+    <li><strong>Конфиденциальные соглашения.</strong> NDA, режим коммерческой тайны.</li>
+  </ul>
+</section>
+
+<section class="block">
+  <h2>Избранные клиенты</h2>
+  <div class="client-row">
+    {% for c in clients %}
+      <a class="client-card" href="{{ url_for('client', slug=c.slug) }}">
+        <div class="client-card__name">{{ c.name }}</div>
+        <div class="client-card__period">{{ c.period }}</div>
+        <div class="client-card__summary">{{ c.summary }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="block">
+  <h2>Партнёры фирмы</h2>
+  <div class="partner-grid">
+    {% for m in team %}
+      <article class="partner-card">
+        <img src="{{ url_for('static', filename=m.photo) }}" alt="" class="partner-card__photo">
+        <div class="partner-card__name">{{ m.name }}</div>
+        <div class="partner-card__role">{{ m.role }}</div>
+        <a class="link-arrow" href="{{ url_for('team_member', slug=m.slug) }}">Профиль →</a>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="block">
+  <h2>Последние публикации</h2>
+  <ul class="pub-list">
+    {% for p in latest_publications %}
+      <li>
+        <span class="pub-list__date">{{ p.date }}</span>
+        <a href="{{ url_for('publication', slug=p.slug) }}">{{ p.title }}</a>
+        <span class="pub-list__author">— {{ p.author }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+  <a class="link-arrow" href="{{ url_for('publications') }}">Все публикации →</a>
+</section>
+{% endblock %}

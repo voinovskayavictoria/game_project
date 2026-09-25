@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}OD-17 — {{ SITE.name }}{% endblock %}
+
+{% block content %}
+<article class="od17">
+  <div class="od17__kicker">
+    <span class="badge badge--archived">ARCHIVED</span>
+    <span class="muted">{{ od.period }}</span>
+  </div>
+
+  <h1 class="od17__title">{{ od.title }}</h1>
+  <p class="lead">{{ od.description }}</p>
+
+  <div class="kv-grid">
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Lead engineer</div>
+      <div class="kv-grid__value">{{ od.lead }}</div>
+    </div>
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Period</div>
+      <div class="kv-grid__value">{{ od.period }}</div>
+    </div>
+    <div class="kv-grid__item">
+      <div class="kv-grid__label">Status</div>
+      <div class="kv-grid__value">{{ od.status }}</div>
+    </div>
+  </div>
+
+  <section class="block">
+    <h2 class="section-title">Команда</h2>
+    <ul class="team-rows">
+      {% for t in od.team %}
+        <li class="team-row">
+          <span class="team-row__name">{{ t.name }}</span>
+          <span class="team-row__role">{{ t.role }}</span>
+          {% if t.external %}
+            <a class="team-row__ext" href="{{ external_url(t.external) }}">
+              {{ EXTERNAL_LINKS[t.external].name }} →
+            </a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="block">
+    <h2 class="section-title">Документы</h2>
+    <ul class="docs">
+      {% for d in od.documents %}
+        <li class="doc">
+          <div class="doc__name">{{ d.name }}</div>
+          <div class="doc__date">{{ d.date }}</div>
+          <div class="doc__note">{{ d.note }}</div>
+          {% if d.clue %}
+            <div class="doc__clue">{{ d.clue }}</div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    <a class="link-more" href="{{ url_for('od17_documents') }}">Все документы →</a>
+  </section>
+
+  <p class="footnote">
+    Смежные записи доступны в <a href="{{ url_for('system_log') }}">/system-log</a>.
+  </p>
+</article>
+{% endblock %}
