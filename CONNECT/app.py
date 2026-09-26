@@ -19,6 +19,8 @@ app.secret_key = "replace-this-with-a-random-secret-key"
 
 CHAT_STATE = {}
 
+# Набор разрешённых SKU — собирается автоматически из DRESSES
+ALLOWED_SKUS = {d["sku"] for d in DRESSES}
 
 
 # ------------------------------------------------------------------
@@ -66,8 +68,7 @@ def shutdown(reason="breach"):
 
 
 # ------------------------------------------------------------------
-# Глобальная проверка. Если shutdown — редирект на /shutdown.
-# Белый список: /, /login, /logout, /reset, /shutdown, статика.
+# Глобальная проверка shutdown
 # ------------------------------------------------------------------
 @app.before_request
 def enforce_shutdown():
@@ -104,12 +105,10 @@ def _find_chat(chat_id, chats):
 
 
 # ------------------------------------------------------------------
-# МАСТЕР-СБРОС (для тебя)
+# МАСТЕР-СБРОС
 # ------------------------------------------------------------------
 @app.route("/reset")
 def reset_magic():
-    """Полный сброс: чистит сессию и историю чатов. Открывай этот URL,
-    чтобы после shutdown вернуться к тестированию."""
     session.clear()
     CHAT_STATE.clear()
     return redirect(url_for("login"))
@@ -120,7 +119,6 @@ def reset_magic():
 # ------------------------------------------------------------------
 @app.route("/", methods=["GET"])
 def root():
-    # Любой заход на / сбрасывает shutdown — чтобы можно было перезайти
     if session.get("shutdown"):
         session.clear()
         CHAT_STATE.clear()
@@ -131,7 +129,6 @@ def root():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # GET /login всегда сбрасывает shutdown — мастер-вход
     if request.method == "GET" and session.get("shutdown"):
         session.clear()
         CHAT_STATE.clear()
@@ -268,7 +265,7 @@ def dress(sku):
     if not is_secret():
         return redirect(url_for("inbox"))
 
-    if not re.fullmatch(r"DR-17(0[1-9]|[1-4][0-9]|50)", sku):
+    if sku not in ALLOWED_SKUS:
         return shutdown(reason="breach")
 
     item = next((d for d in DRESSES if d["sku"] == sku), None)
@@ -282,6 +279,7 @@ def dress(sku):
         chats=SECRET_CHATS,
     )
 
+
 # ------------------------------------------------------------------
 # Заказ
 # ------------------------------------------------------------------
@@ -290,7 +288,7 @@ def order(sku):
     if not is_secret():
         return redirect(url_for("inbox"))
 
-    if not re.fullmatch(r"DR-17(0[1-9]|[1-4][0-9]|50)", sku):
+    if sku not in ALLOWED_SKUS:
         return shutdown(reason="breach")
 
     item = next((d for d in DRESSES if d["sku"] == sku), None)
@@ -375,8 +373,9 @@ def not_found(_e):
             return shutdown(reason="breach")
     return render_template("404.html"), 404
 
+
 # ------------------------------------------------------------------
-# THE HUNT — расписание выездов
+# THE HUNT
 # ------------------------------------------------------------------
 @app.route("/hunt")
 def hunt():
@@ -402,12 +401,10 @@ def hunt_item(hid):
     if not item:
         return shutdown(reason="breach")
 
-    # --- POST: попытка записаться ---
     if request.method == "POST":
         callsign = request.form.get("callsign", "").strip()
         slot_id  = request.form.get("slot", "").strip()
 
-        # Триггеры на позывной
         if is_suspicious_text(callsign):
             return shutdown(reason="keyword")
 
@@ -419,7 +416,6 @@ def hunt_item(hid):
             if w in low:
                 return shutdown(reason="breach")
 
-        # Выезд закрыт/заблокирован — отказ
         if item["status"] != "OPEN":
             return render_template(
                 "hunt_reject.html",
@@ -428,7 +424,6 @@ def hunt_item(hid):
                 reason="ВЫЕЗД НЕ ПРИНИМАЕТ НОВЫЕ ПОЗИЦИИ",
             )
 
-        # Открыт — запускаем фейковый трейс
         return render_template(
             "hunt_trace.html",
             hunt=item,
@@ -437,7 +432,6 @@ def hunt_item(hid):
             slot=slot_id or "S-03",
         )
 
-    # --- GET: показать карточку ---
     return render_template(
         "hunt_item.html",
         hunt=item,
@@ -447,8 +441,9 @@ def hunt_item(hid):
         chats=SECRET_CHATS,
     )
 
+
 # ------------------------------------------------------------------
-# PANOPTICON — наблюдение
+# PANOPTICON
 # ------------------------------------------------------------------
 @app.route("/panopticon")
 def panopticon():
@@ -473,14 +468,13 @@ def panopticon_events():
 
 
 # ------------------------------------------------------------------
-# SANITIZER — терминал зачистки
+# SANITIZER
 # ------------------------------------------------------------------
 @app.route("/sanitizer", methods=["GET", "POST"])
 def sanitizer():
     if not is_secret():
         return redirect(url_for("inbox"))
 
-    # Живая история терминала в сессии
     if "san_log" not in session:
         session["san_log"] = list(SANITIZER["banner"])
         session["san_cwd"] = "/"
@@ -496,7 +490,6 @@ def sanitizer():
         cmd = request.form.get("cmd", "").strip()
         out = []
 
-        # Триггер-слова → shutdown
         if is_suspicious_text(cmd):
             return shutdown(reason="keyword")
 
@@ -586,7 +579,7 @@ def sanitizer():
 
 
 # ------------------------------------------------------------------
-# THE DEAD DROP — крипто-депозитарий
+# DEAD DROP
 # ------------------------------------------------------------------
 @app.route("/dead-drop", methods=["GET", "POST"])
 def dead_drop():
