@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>PANOPTICON // EVENTS</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-user">
+    <a href="{{ url_for('panopticon') }}" class="s-nav-link">← panopticon</a>
+  </div>
+</header>
+
+<main class="pan">
+
+  <header class="pan__head">
+    <div class="pan__kicker">EVENT STREAM · RETENTION 17 DAYS</div>
+    <h1 class="pan__title">СИСТЕМНЫЕ ЛОГИ</h1>
+  </header>
+
+  <div class="pan-log">
+    {% for t, lvl, msg in p.events %}
+      <div class="pan-log__row pan-log__row--{{ lvl|lower }}">
+        <span class="pan-log__t">{{ t }}</span>
+        <span class="pan-log__lvl">{{ lvl }}</span>
+        <span class="pan-log__msg">{{ msg }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="pan__foot">
+    <a href="{{ url_for('panopticon') }}" class="dress-btn dress-btn--ghost">← к сетке камер</a>
+  </div>
+
+</main>
+
+</body>
+</html>

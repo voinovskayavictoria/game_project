@@ -8,6 +8,7 @@
 </head>
 <body class="s-app s-app--catalog">
 
+  
 <header class="s-topbar">
   <div class="s-brand">
     <span class="s-mark">C</span>
@@ -19,10 +20,15 @@
   </div>
 
   <div class="s-user">
-    <span class="s-session">uid: <b>anon</b></span>
-    <a href="{{ url_for('inbox') }}" class="s-nav-link">// inbox</a>
-    <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
-  </div>
+  <span class="s-session">uid: <b>anon</b></span>
+  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+</div>
+
 </header>
 
 <main class="catalog">

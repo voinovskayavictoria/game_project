@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>SANITIZER — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      background: #000; color: #d8dee7;
+      font-family: "JetBrains Mono", "Courier New", monospace;
+      font-size: 13.5px; line-height: 1.55;
+      min-height: 100vh;
+    }
+    body::after {
+      content: ""; position: fixed; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+        rgba(0,0,0,.25) 2px, rgba(0,0,0,.25) 3px);
+      z-index: 999; opacity: .4;
+    }
+    .san {
+      max-width: 960px; margin: 0 auto;
+      padding: 40px 28px 120px;
+      position: relative; z-index: 1;
+    }
+    .san__head {
+      border-bottom: 1px solid #1e2632;
+      padding-bottom: 12px; margin-bottom: 22px;
+      display: flex; justify-content: space-between;
+      align-items: center;
+      font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; color: #4a5364;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .san__head a { padding: 0 6px; }
+    .san__head a:hover { color: #d8dee7 !important; }
+    .san__out {
+      white-space: pre-wrap;
+      font-size: 13.5px;
+      color: #d8dee7;
+    }
+    .san__out div { opacity: 0; animation: sanFade .15s forwards; }
+    .san__out .err { color: #ff2a3d; }
+    .san__form {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 12px;
+      border-top: 1px dashed #1e2632;
+      padding-top: 14px;
+    }
+    .san__prompt { color: #ff2a3d; font-weight: 700; white-space: nowrap; }
+    .san__form input {
+      flex: 1; background: transparent; border: 0; outline: none;
+      color: #d8dee7; font-family: inherit; font-size: 13.5px;
+      letter-spacing: .5px;
+    }
+    .san__form input::placeholder { color: #4a5364; }
+    .san__lock {
+      margin-top: 30px; padding: 22px 24px;
+      border: 1px solid #ff2a3d;
+      background: rgba(255, 42, 61, .08);
+      color: #ff2a3d; text-align: center;
+      letter-spacing: 4px; font-weight: 700;
+      animation: sanPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes sanFade { to { opacity: 1; } }
+    @keyframes sanPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(255,42,61,0); }
+      50%      { box-shadow: 0 0 24px rgba(255,42,61,.35); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="san">
+    <div class="san__head">
+    <span>{{ s.title }} · {{ s.subtitle }}</span>
+    <span>
+      <a href="{{ url_for('inbox') }}"     style="color:#4a5364;text-decoration:none;">// inbox</a>
+      <a href="{{ url_for('catalog') }}"   style="color:#4a5364;text-decoration:none;">// catalog</a>
+      <a href="{{ url_for('hunt') }}"      style="color:#4a5364;text-decoration:none;">// hunt</a>
+      <a href="{{ url_for('panopticon') }}" style="color:#4a5364;text-decoration:none;">// panopticon</a>
+      <a href="{{ url_for('dead_drop') }}" style="color:#4a5364;text-decoration:none;">// dead-drop</a>
+      <a href="{{ url_for('logout') }}"    style="color:#ff2a3d;text-decoration:none;">terminate</a>
+    </span>
+  </div>
+
+  <div class="san__out">
+    {% for line in output %}
+      <div{% if 'not found' in line or 'Permission' in line or 'denied' in line or 'LOCKING' in line %} class="err"{% endif %}>{{ line }}</div>
+    {% endfor %}
+  </div>
+
+  {% if locked %}
+    <div class="san__lock">/// IP LOCKED · CONNECTION CLOSED ///</div>
+  {% else %}
+    <form class="san__form" method="post" autocomplete="off">
+      <span class="san__prompt">{{ s.prompt }}</span>
+      <input type="text" name="cmd" autofocus autocomplete="off"
+             spellcheck="false" placeholder="type help">
+    </form>
+  {% endif %}
+</div>
+
+</body>
+</html>

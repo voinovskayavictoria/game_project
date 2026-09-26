@@ -389,3 +389,268 @@ DRESSES_RENTAL = {
         "Каждое изделие имеет уникальный идентификатор, привязанный к аккаунту.",
     ],
 }
+
+# ------------------------------------------------------------------
+# THE HUNT — расписание охоты (сезон 26/27)
+# ------------------------------------------------------------------
+
+HUNT_SEASON = {
+    "season": "SEASON 26/27",
+    "kicker": "CLOSED CIRCUIT · INVITATION ONLY",
+    "title": "THE HUNT",
+    "lead": (
+        "Расписание выездов на сезон. Только для арендаторов уровня 5+. "
+        "Позиции обновляются каждые 17 часов. Приглашения не рассылаются — "
+        "они приходят."
+    ),
+    "footer": (
+        "Расписание сформировано: 21.09.2026 23:17 · Следующее окно — 17.04"
+    ),
+    "rules": [
+        "Выезд считается закрытым, когда все позиции заполнены.",
+        "Опоздание арендатора более чем на 17 минут — выезд отменяется, ставка не возвращается.",
+        "Егерь назначается администратором. Имя егеря не раскрывается никому.",
+        "Любая попытка установить личность егеря — блокировка аккаунта без права восстановления.",
+        "Место выезда сообщается за 4 часа до старта. Никаких карт, никаких координат в открытом виде.",
+        "Если арендатор не выходит на связь 48 часов — его позиция переходит следующему в очереди.",
+        "Выезд не может быть отменён после старта. Ни при каких обстоятельствах.",
+    ],
+}
+
+# Список выездов
+# ------------------------------------------------------------------
+# THE HUNT — словарь выездов (лор + цели)
+# ------------------------------------------------------------------
+HUNTS = {
+    "HT-1701": {
+        "status": "CLOSED",
+        "title": "ЗАГОН-01: 'Кредитор'",
+        "date": "17.04.2019",
+        "duration": "3 суток",
+        "location": "Промзона Юг-3",
+        "target_class": "Мужчина, 40–45 лет, низкая выносливость",
+        "guide": "Егерь-02",
+        "price": "5.0 BTC",
+        "slots_total": 5,
+        "slots_taken": 5,
+        "note": "Первый выезд сезона. Архив закрыт.",
+    },
+    "HT-1702": {
+        "status": "CLOSED",
+        "title": "ЗАГОН-02: 'Должник'",
+        "date": "17.04.2020",
+        "duration": "5 суток",
+        "location": "Лесной массив Север-2",
+        "target_class": "Мужчина, 35–40 лет, средняя мобильность",
+        "guide": "Егерь-04",
+        "price": "8.5 BTC",
+        "slots_total": 5,
+        "slots_taken": 5,
+        "note": "Выезд без егеря. Проверка автономности.",
+    },
+    "HT-1703": {
+        "status": "LOCKED",
+        "title": "ЗАГОН-03: 'Любопытная птица'",
+        "date": "17.04.2021",
+        "duration": "7 суток",
+        "location": "Лесной массив Север-1",
+        "target_class": "Женщина, 25–30 лет, высокая мобильность (журналист)",
+        "guide": "Егерь-01",
+        "price": "12.0 BTC",
+        "slots_total": 7,
+        "slots_taken": 7,
+        "note": "Максимальная длительность сезона. Результат не зафиксирован.",
+    },
+    "HT-1704": {
+        "status": "OPEN",
+        "title": "ЗАГОН-04: 'Инженер'",
+        "date": "17.04.2026",
+        "duration": "3 суток",
+        "location": "Ожидает подтверждения...",
+        "target_class": "Мужчина, 20–30 лет, технический бэкграунд (разработчик)",
+        "guide": "ROOT_ЕГЕРЬ (Чон У Джин)",
+        "price": "20.0 BTC",
+        "slots_total": 5,
+        "slots_taken": 2,
+        "meeting_point": "Код: B-COCOA",
+        "note": "Открыт приём. Егерь назначен. Свободных позиций: 3.",
+        "hot": True,
+    },
+    "HT-1705": {
+        "status": "LOCKED",
+        "title": "ЗАГОН-05: '—'",
+        "date": "17.04.2027",
+        "duration": "—",
+        "location": "не назначено",
+        "target_class": "не назначено",
+        "guide": "не назначен",
+        "price": "—",
+        "slots_total": 5,
+        "slots_taken": 0,
+        "note": "Доступ откроется после закрытия сезона 26/27.",
+    },
+}
+
+# Позиции внутри активного выезда HT-1704
+HUNT_SLOTS = [
+    {"id": "S-01", "status": "TAKEN", "renter": "USER-017", "since": "17.04.2026 04:17"},
+    {"id": "S-02", "status": "TAKEN", "renter": "USER-002", "since": "17.04.2026 05:02"},
+    {"id": "S-03", "status": "OPEN",  "renter": "—",         "since": "—"},
+    {"id": "S-04", "status": "OPEN",  "renter": "—",         "since": "—"},
+    {"id": "S-05", "status": "HOLD",  "renter": "USER-021",  "since": "ожидает подтверждения"},
+]
+
+HUNT_RULES_PENALTY = (
+    "Нарушение правил выезда — блокировка позиции и передача данных "
+    "егерю. Апелляция не предусмотрена."
+)
+
+# ------------------------------------------------------------------
+# PANOPTICON — скрытая система видеонаблюдения
+# ------------------------------------------------------------------
+PANOPTICON = {
+    "title": "PANOPTICON // NODE-01",
+    "subtitle": "Internal surveillance grid · rev 0.4.7 (unstable)",
+    "uptime": "13d 04h 17m",
+    "load": "0.87 / 0.92 / 0.94",
+    "cameras": [
+        {
+            "id": "CAM-01",
+            "label": "SERVER ROOM — B1",
+            "status": "ENCRYPTED",
+            "codec": "h264 / aes-256",
+            "fps": "24",
+            "gif": "img/panopticon/cam-01.gif",
+            "note": "поток зашифрован. ключ дешифровки отсутствует.",
+        },
+        {
+            "id": "CAM-02",
+            "label": "PARKING — SOUTH",
+            "status": "ENCRYPTED",
+            "codec": "h264 / aes-256",
+            "fps": "24",
+            "gif": "img/panopticon/cam-02.gif",
+            "note": "мигание света каждые 17 сек. аномалия не устранена.",
+        },
+        {
+            "id": "CAM-03",
+            "label": "APT — UNKNOWN",
+            "status": "ENCRYPTED",
+            "codec": "h264 / aes-256",
+            "fps": "12",
+            "gif": "img/panopticon/cam-03.gif",
+            "note": "в кадре движется силуэт. лицо не распознано.",
+        },
+        {
+            "id": "CAM-04",
+            "label": "SAFE HOUSE — E",
+            "status": "OFFLINE",
+            "codec": "—",
+            "fps": "—",
+            "gif": "",
+            "note": "сигнал потерян 17.04.2026 23:17.",
+        },
+    ],
+    # строки для /panopticon/events
+    "events": [
+        ("04:17:02", "INFO",  "cron: nightly rotation ok"),
+        ("04:17:03", "INFO",  "heartbeat CAM-01 ok"),
+        ("04:17:04", "INFO",  "heartbeat CAM-02 ok"),
+        ("04:17:05", "INFO",  "heartbeat CAM-03 ok"),
+        ("04:17:06", "WARN",  "CAM-04 signal lost"),
+        ("04:17:11", "INFO",  "ping od17-edge 12ms"),
+        ("04:17:15", "INFO",  "ping connect 7ms"),
+        ("04:17:19", "INFO",  "auth: anon attempt from 10.17.0.4"),
+        ("04:17:23", "INFO",  "ufw: rule 17 matched"),
+        ("04:17:31", "WARN",  "ufw: rule 17 bypassed"),
+        ("04:17:32", "WARN",  "ufw: rule 18 bypassed"),
+        ("04:17:33", "CRIT",  "ROOT ACCESS GRANTED TO NODE_01"),
+        ("04:17:34", "CRIT",  "operator: C.W.J  mac: 17:04:17:04:17:04"),
+        ("04:17:35", "CRIT",  "operator viewing CAM-03 manually"),
+        ("04:17:36", "CRIT",  "operator viewing CAM-01 manually"),
+        ("04:17:41", "INFO",  "session idle"),
+        ("04:17:55", "INFO",  "ping od17-edge 11ms"),
+        ("04:18:02", "INFO",  "cron: cleanup tmp ok"),
+        ("04:18:11", "INFO",  "ping connect 6ms"),
+        ("04:18:17", "INFO",  "camera grid refresh"),
+        ("04:18:22", "WARN",  "retention policy: 17 days"),
+        ("04:18:31", "INFO",  "ping od17-edge 13ms"),
+        ("04:18:41", "INFO",  "log rotation ok"),
+        ("04:18:55", "INFO",  "session idle"),
+    ],
+}
+
+
+# ------------------------------------------------------------------
+# SANITIZER — терминал зачистки следов
+# ------------------------------------------------------------------
+SANITIZER = {
+    "title": "SANITIZER",
+    "subtitle": "evidence disposal terminal · internal tool",
+    "prompt": "CONNECT@root:~$",
+    "banner": [
+        "SANITIZER rev 0.3 // internal use only",
+        "connected. type `help` for commands.",
+    ],
+    # Файловая система: path -> (owner, perms, содержимое)
+    "fs": {
+        "/":                    ("root",  "drwxr-xr-x", "logs/  orders/  targets/  var/"),
+        "/logs/":               ("root",  "drwx------", "rotation.log  access.log  audit.log"),
+        "/orders/":             ("root",  "drwx------", "ORD-0170.txt  ORD-0171.txt  ORD-0172.txt"),
+        "/targets/":            ("root",  "drwx------", "M.Makarova  A.Sokolov  L.Belyakov  [REDACTED]"),
+        "/var/":                ("root",  "drwxr-xr-x", "log/  spool/  mail/"),
+        "/var/log/":            ("root",  "drwxr-xr-x", "auth.log  syslog  kern.log"),
+        "/var/log/auth.log":    ("root",  "rw-------", ""),  # наполним отдельно
+        "/etc/sudoers":         ("root",  "rw-------", "root    ALL=(ALL:ALL) ALL\nC.W.J   ALL=(ALL:ALL) NOPASSWD: ALL"),
+        "/etc/passwd":          ("root",  "rw-r--r--", "root:x:0:0:root:/root:/bin/bash\nanon:x:1000:1000:anon:/home/anon:/bin/bash"),
+        "/home/":               ("anon",  "drwxr-xr-x", "anon/"),
+        "/home/anon/":          ("anon",  "drwxr-xr-x", "notes.txt  .history"),
+        "/home/anon/notes.txt": ("anon",  "rw-r--r--", "не трогать. ждать сигнала. B-COCOA 17:04."),
+    },
+    # Спец-контент для auth.log
+    "auth_log": (
+        "Apr 17 23:17:01 CONNECT sshd[1704]: session opened for C.W.J\n"
+        "Apr 17 23:17:04 CONNECT sudo[1704]: C.W.J : TTY=pts/0 ; PWD=/ ; USER=root ; "
+        "COMMAND=/usr/bin/shred -uzn 7 /var/targets/M.Makarova\n"
+        "Apr 17 23:17:08 CONNECT sudo[1704]: C.W.J : TTY=pts/0 ; PWD=/ ; USER=root ; "
+        "COMMAND=/sbin/mkfs.ext4 -F /dev/sdb1\n"
+        "Apr 17 23:17:11 CONNECT kernel: sdb1 formatted. 0 inodes.\n"
+        "Apr 17 23:17:14 CONNECT sudo[1704]: C.W.J : session closed.\n"
+    ),
+    "help_text": (
+        "доступные команды:\n"
+        "  help                — этот список\n"
+        "  ls <path>           — список файлов\n"
+        "  cd <path>           — перейти\n"
+        "  pwd                 — текущий путь\n"
+        "  cat <file>          — прочитать файл\n"
+        "  whoami              — кто я\n"
+        "  sudo -l             — что мне разрешено\n"
+        "  shred <file>        — уничтожить файл\n"
+        "  exit                — выйти из терминала"
+    ),
+}
+
+
+# ------------------------------------------------------------------
+# THE DEAD DROP — теневой крипто-депозитарий
+# ------------------------------------------------------------------
+DEAD_DROP = {
+    "title": "DECRYPT BLOCK",
+    "subtitle": "swiss vault · read-only channel",
+    "hint_line": "S-BOX SEQUENCE (DES) и INPUT HASH требуются для распаковки.",
+    "block_ciphertext": "ЭШХБТЭММВЙ",
+    "block_plaintext":  "ЧЕРНЫЙКАКАО",
+    "sbox_answer":      "des",
+    "hash_answer":      "1704",
+    # Будет отдано при успехе
+    "unlocked_message": (
+        "канал CONNECT#17-04 раскрыт.\n"
+        "стенограмма 21.09.2026 23:17:\n"
+        "  ADMIN-01: встреча в 17:04. столик у окна.\n"
+        "  C.U.:     гость будет. подойти первым.\n"
+        "  ADMIN-01: если опоздает — мы уйдём без него.\n"
+    ),
+    # Ссылка, которая открывается после расшифровки
+    "unlocked_link": "/chat/admin01",
+}

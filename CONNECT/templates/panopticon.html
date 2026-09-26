@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>PANOPTICON — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-user">
+  <span class="s-session">uid: <b>anon</b></span>
+  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+</div>
+</header>
+
+<main class="pan">
+
+  <header class="pan__head">
+    <div class="pan__kicker">SURVEILLANCE GRID · INTERNAL USE ONLY</div>
+    <h1 class="pan__title">{{ p.title }}</h1>
+    <p class="pan__sub">{{ p.subtitle }}</p>
+    <div class="pan__stats">
+      <span>uptime <b>{{ p.uptime }}</b></span>
+      <span>load <b>{{ p.load }}</b></span>
+      <span>cameras <b>{{ p.cameras|length }}</b></span>
+    </div>
+  </header>
+
+  <div class="pan__grid">
+    {% for c in p.cameras %}
+      <div class="cam cam--{{ c.status|lower }}">
+        <div class="cam__feed">
+          {% if c.gif %}
+            <img src="{{ url_for('static', filename=c.gif) }}" alt=""
+                 onerror="this.style.display='none'">
+          {% endif %}
+          <div class="cam__noise"></div>
+          <div class="cam__stamp">{{ c.id }} // {{ c.status }}</div>
+        </div>
+        <div class="cam__meta">
+          <div class="cam__label">{{ c.label }}</div>
+          <div class="cam__row"><span>codec</span><b>{{ c.codec }}</b></div>
+          <div class="cam__row"><span>fps</span><b>{{ c.fps }}</b></div>
+          <div class="cam__note">{{ c.note }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="pan__foot">
+    <a href="{{ url_for('panopticon_events') }}" class="dress-btn">// открыть системные логи</a>
+    <span class="pan__warn">
+      поток зашифрован. ключ дешифровки отсутствует.
+    </span>
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/secret.js') }}"></script>
+</body>
+</html>

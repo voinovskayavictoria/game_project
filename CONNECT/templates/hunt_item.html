@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ hunt_id }} — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-user">
+  <span class="s-session">uid: <b>anon</b></span>
+  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+</div>
+</header>
+
+<main class="hunt-page">
+
+  <a class="hunt-page__back" href="{{ url_for('hunt') }}">← back to season</a>
+
+  <header class="hunt-page__head">
+    <div class="hunt-page__id">{{ hunt_id }}</div>
+    <h1 class="hunt-page__title">{{ hunt.title }}</h1>
+    <div class="hunt-page__meta">
+      статус: <b>{{ hunt.status }}</b> ·
+      дата: <b>{{ hunt.date }}</b> ·
+      длительность: <b>{{ hunt.duration }}</b> ·
+      ставка: <b>{{ hunt.price }}</b>
+    </div>
+  </header>
+
+  <div class="hunt-page__grid">
+
+    <div class="hunt-page__block">
+      <div class="hunt-page__block-label">DOSSIER</div>
+      <div class="hunt-slot">
+        <span class="hunt-slot__id">ЕГЕРЬ</span>
+        <span class="hunt-slot__renter">{{ hunt.guide }}</span>
+      </div>
+      <div class="hunt-slot">
+        <span class="hunt-slot__id">ЦЕЛЬ</span>
+        <span class="hunt-slot__renter">{{ hunt.target_class }}</span>
+      </div>
+      <div class="hunt-slot">
+        <span class="hunt-slot__id">ЛОКАЦИЯ</span>
+        <span class="hunt-slot__renter">{{ hunt.location }}</span>
+      </div>
+      <div class="hunt-slot">
+        <span class="hunt-slot__id">ВЗНОС</span>
+        <span class="hunt-slot__renter">{{ hunt.price }}</span>
+      </div>
+      {% if hunt.meeting_point %}
+      <div class="hunt-slot">
+        <span class="hunt-slot__id">СБОР</span>
+        <span class="hunt-slot__renter">{{ hunt.meeting_point }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="hunt-page__block">
+      <div class="hunt-page__block-label">POSITIONS</div>
+      {% for s in slots %}
+        {% set cls = 'hunt-slot' %}
+        {% if s.status == 'OPEN' %}{% set cls = cls + ' hunt-slot--open' %}{% endif %}
+        {% if s.status == 'HOLD' %}{% set cls = cls + ' hunt-slot--hold' %}{% endif %}
+        <div class="{{ cls }}">
+          <span class="hunt-slot__id">{{ s.id }}</span>
+          <span class="hunt-slot__renter">{{ s.renter }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  {% if hunt.status == 'OPEN' %}
+    <form class="hunt-join" method="post" action="{{ url_for('hunt_item', hid=hunt_id) }}">
+      <div class="hunt-page__block-label">JOIN THE HUNT</div>
+
+      <label class="hunt-join__field">
+        <span>ПОЗЫВНОЙ</span>
+        <input type="text" name="callsign" maxlength="32"
+               placeholder="anon-####" autocomplete="off" required>
+      </label>
+
+      <label class="hunt-join__field">
+        <span>ПОЗИЦИЯ</span>
+        <select name="slot">
+          {% for s in slots %}
+            {% if s.status == 'OPEN' %}
+              <option value="{{ s.id }}">{{ s.id }} — свободна</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="hunt-join__check">
+        <input type="checkbox" required>
+        <span>Я принимаю правила выезда и понимаю, что отмена невозможна.</span>
+      </label>
+
+      <button class="dress-btn" type="submit">// оплатить и занять позицию</button>
+    </form>
+  {% elif hunt.status == 'LOCKED' %}
+    <button class="dress-btn" disabled>// позиция недоступна</button>
+  {% else %}
+    <button class="dress-btn" disabled>// выезд закрыт</button>
+    <a class="dress-btn dress-btn--ghost" href="{{ url_for('hunt') }}">// другой выезд</a>
+  {% endif %}
+
+</main>
+
+<script src="{{ url_for('static', filename='js/secret.js') }}"></script>
+</body>
+</html>

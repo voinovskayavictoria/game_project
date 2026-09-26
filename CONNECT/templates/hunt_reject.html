@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>REJECT // {{ hunt_id }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-user">
+  <span class="s-session">uid: <b>anon</b></span>
+  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+</div>
+</header>
+
+<main class="hunt-page">
+  <a class="hunt-page__back" href="{{ url_for('hunt') }}">← back to season</a>
+
+  <header class="hunt-page__head">
+    <div class="hunt-page__id">{{ hunt_id }}</div>
+    <h1 class="hunt-page__title">{{ hunt.title }}</h1>
+    <div class="hunt-page__meta">статус: <b>{{ hunt.status }}</b></div>
+  </header>
+
+  <div class="hunt-page__block" style="border-left:2px solid #ff2a3d;">
+    <div class="hunt-page__block-label">REJECTED</div>
+    <p class="hunt-page__note" style="color:#ff2a3d;">
+      {{ reason }}
+    </p>
+    <p class="hunt-page__note">
+      Попытка зафиксирована. Позывной внесён в журнал наблюдения.
+    </p>
+  </div>
+
+  <div class="hunt-page__cta">
+    <a class="dress-btn dress-btn--ghost" href="{{ url_for('hunt') }}">// вернуться к сезону</a>
+  </div>
+</main>
+
+</body>
+</html>

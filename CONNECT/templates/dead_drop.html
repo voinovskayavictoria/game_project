@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>DECRYPT BLOCK — DEAD DROP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      background: #eef0f3; color: #1a202c;
+      font-family: "Inter", -apple-system, "Segoe UI", sans-serif;
+      font-size: 15px; line-height: 1.55;
+      min-height: 100vh;
+    }
+    .dd {
+      max-width: 720px; margin: 0 auto;
+      padding: 80px 40px;
+    }
+    .dd__head {
+      padding-bottom: 22px; margin-bottom: 40px;
+      border-bottom: 1px solid #d8dde5;
+    }
+        .dd__nav {
+      display: flex; gap: 4px; flex-wrap: wrap;
+      margin-bottom: 40px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #d8dde5;
+      font-family: "JetBrains Mono", "Courier New", monospace;
+      font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .dd__nav a {
+      color: #8b96a8; text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid transparent;
+      transition: all .12s ease;
+    }
+    .dd__nav a:hover {
+      color: #0d1117;
+      border-color: #d8dde5;
+      background: #fff;
+    }
+    .dd__nav--warn { color: #b91c1c !important; }
+    .dd__nav--warn:hover {
+      color: #fff !important;
+      background: #b91c1c !important;
+      border-color: #b91c1c !important;
+    }
+    .dd__kicker {
+      font-size: 11px; letter-spacing: 3px;
+      color: #8b96a8; text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .dd__title {
+      font-size: 28px; letter-spacing: 2px;
+      margin: 0 0 12px; font-weight: 600;
+      color: #0d1117;
+    }
+    .dd__sub {
+      font-size: 13px; color: #4a5568; margin: 0;
+    }
+    .dd__block {
+      background: #fff;
+      border: 1px solid #d8dde5;
+      padding: 34px 36px;
+      margin-bottom: 26px;
+    }
+    .dd__label {
+      font-size: 10.5px; letter-spacing: 2px;
+      text-transform: uppercase; color: #8b96a8;
+      margin-bottom: 10px;
+    }
+    .dd__cipher {
+      font-family: "JetBrains Mono", "Courier New", monospace;
+      font-size: 22px; letter-spacing: 8px;
+      color: #0d1117; padding: 20px 0;
+      text-align: center;
+      background: #f7f9fc;
+      border: 1px dashed #d8dde5;
+    }
+    .dd__form {
+      background: #fff;
+      border: 1px solid #d8dde5;
+      padding: 30px 36px 34px;
+    }
+    .dd__field {
+      margin-bottom: 22px;
+    }
+    .dd__field > span {
+      display: block;
+      font-size: 10.5px; letter-spacing: 2px;
+      text-transform: uppercase; color: #8b96a8;
+      margin-bottom: 8px;
+    }
+    .dd__field input {
+      width: 100%;
+      font-family: "JetBrains Mono", "Courier New", monospace;
+      font-size: 15px;
+      color: #0d1117;
+      background: #fff;
+      border: 1px solid #d8dde5;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .dd__field input:focus { border-color: #0d1117; }
+    .dd__btn {
+      width: 100%;
+      background: #0d1117; color: #fff;
+      border: 0; padding: 15px 20px;
+      font-family: inherit; font-size: 14px;
+      letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; font-weight: 500;
+    }
+    .dd__btn:hover { background: #1a202c; }
+    .dd__err {
+      background: #fef2f2; border: 1px solid #fecaca;
+      color: #b91c1c;
+      padding: 12px 16px;
+      font-size: 13px;
+      margin-bottom: 22px;
+    }
+    .dd__ok {
+      background: #f0fdf4; border: 1px solid #86efac;
+      color: #166534;
+      padding: 20px 24px;
+      font-size: 13.5px;
+      white-space: pre-wrap;
+      font-family: "JetBrains Mono", "Courier New", monospace;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .dd__hint {
+      font-size: 12px; color: #8b96a8;
+      margin-top: 24px; line-height: 1.8;
+    }
+    .dd__cta {
+      display: inline-block; margin-top: 8px;
+      color: #0d1117; font-weight: 600;
+      border-bottom: 1px solid #0d1117;
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+    .dd__cta:hover { color: #2563eb; border-color: #2563eb; }
+  </style>
+</head>
+<body>
+
+<div class="s-user">
+  <span class="s-session">uid: <b>anon</b></span>
+  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+</div>
+
+<div class="dd">
+
+  <nav class="dd__nav">
+    <a href="{{ url_for('inbox') }}">// inbox</a>
+    <a href="{{ url_for('catalog') }}">// catalog</a>
+    <a href="{{ url_for('hunt') }}">// hunt</a>
+    <a href="{{ url_for('panopticon') }}">// panopticon</a>
+    <a href="{{ url_for('sanitizer') }}">// sanitizer</a>
+    <a href="{{ url_for('logout') }}" class="dd__nav--warn">terminate</a>
+  </nav>
+
+  <header class="dd__head">
+    <div class="dd__kicker">DEAD DROP · READ-ONLY CHANNEL</div>
+    <h1 class="dd__title">{{ d.title }}</h1>
+    <p class="dd__sub">{{ d.subtitle }}</p>
+  </header>
+
+  <div class="dd__block">
+    <div class="dd__label">ЗАШИФРОВАННЫЙ БЛОК</div>
+    <div class="dd__cipher">{{ d.block_ciphertext }}</div>
+    <div class="dd__hint">{{ d.hint_line }}</div>
+  </div>
+
+  {% if unlocked %}
+    <div class="dd__ok">{{ d.unlocked_message }}</div>
+    <a class="dd__cta" href="{{ d.unlocked_link }}">→ открыть канал {{ d.unlocked_link }}</a>
+  {% else %}
+
+    {% if error %}<div class="dd__err">{{ error }}</div>{% endif %}
+
+    <form class="dd__form" method="post" autocomplete="off">
+      <div class="dd__field">
+        <span>S-BOX SEQUENCE</span>
+        <input type="text" name="sbox" autofocus autocomplete="off"
+               spellcheck="false" placeholder="…">
+      </div>
+      <div class="dd__field">
+        <span>INPUT HASH</span>
+        <input type="text" name="hash" autocomplete="off"
+               spellcheck="false" placeholder="…">
+      </div>
+      <button class="dd__btn" type="submit">DECRYPT BLOCK</button>
+    </form>
+
+  {% endif %}
+
+</div>
+
+</body>
+</html>

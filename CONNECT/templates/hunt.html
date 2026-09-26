@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>THE HUNT — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+
+  <div class="s-search">
+    <input type="text" placeholder="search /hunt" readonly>
+  </div>
+
+  <div class="s-user">
+  <span class="s-session">uid: <b>anon</b></span>
+  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+</div>
+</header>
+
+<main class="hunt">
+
+  <header class="hunt__head">
+    <div class="hunt__kicker">{{ season.kicker }}</div>
+    <h1 class="hunt__title" data-glitch>{{ season.title }}</h1>
+    <p class="hunt__lead">{{ season.lead }}</p>
+  </header>
+
+  <pre class="hunt__ascii">
+▓▒░ SEASON ACTIVE · 1 OUTING OPEN · 3 SLOTS FREE ░▒▓
+  </pre>
+
+  <div class="hunt__list">
+    {% for hid, h in hunts.items() %}
+      {% set cls = 'hunt-row' %}
+      {% if h.status == 'OPEN' %}{% set cls = cls + ' hunt-row--open' %}{% endif %}
+      {% if h.status == 'LOCKED' %}{% set cls = cls + ' hunt-row--locked' %}{% endif %}
+
+      {% if h.status == 'LOCKED' %}
+        <div class="{{ cls }}">
+      {% else %}
+        <a class="{{ cls }}" href="{{ url_for('hunt_item', hid=hid) }}">
+      {% endif %}
+
+        <div class="hunt-row__id">{{ hid }}</div>
+
+        <div>
+          <div class="hunt-row__title">{{ h.title }}</div>
+          <div class="hunt-row__meta">{{ h.duration }} · {{ h.slots_taken }}/{{ h.slots_total }} позиций · {{ h.target_class }}</div>
+        </div>
+
+        <div class="hunt-row__date">{{ h.date }}</div>
+        <div class="hunt-row__price">{{ h.price }}</div>
+
+        <div class="hunt-row__status hunt-row__status--{{ h.status|lower }}">
+          {{ h.status }}
+        </div>
+
+      {% if h.status == 'LOCKED' %}
+        </div>
+      {% else %}
+        </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <section class="hunt__rules">
+    <div class="hunt__rules-label">RULES OF ENGAGEMENT</div>
+    <ul>
+      {% for r in season.rules %}
+        <li>{{ r }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <div class="hunt__footer">
+    {{ season.footer }}
+  </div>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/secret.js') }}"></script>
+</body>
+</html>
