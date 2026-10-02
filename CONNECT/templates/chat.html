@@ -64,10 +64,23 @@
       {% endfor %}
     </div>
 
-    <form class="conversation__input" method="post" autocomplete="off" id="chat-form">
-      <input type="text" name="text" placeholder="Написать сообщение..." autofocus autocomplete="off">
-      <button type="submit">Отправить</button>
-    </form>
+    {% if chat.writable %}
+      <form class="reply" method="post" autocomplete="off">
+        <div class="reply__title">Что ответить</div>
+        <div class="reply__grid">
+          {% for c in chat.choices %}
+            <button type="submit" name="choice" value="{{ c.id }}" class="reply__btn">
+              <span class="reply__btn-text">{{ c.text }}</span>
+              {% if c.hint %}
+                <span class="reply__btn-hint">{{ c.hint }}</span>
+              {% endif %}
+            </button>
+          {% endfor %}
+        </div>
+      </form>
+    {% else %}
+      <div class="reply-disabled">Чат только для чтения</div>
+    {% endif %}
   </main>
 
 </div>

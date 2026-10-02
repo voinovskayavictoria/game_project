@@ -19,7 +19,6 @@ app.secret_key = "replace-this-with-a-random-secret-key"
 
 CHAT_STATE = {}
 
-# Набор разрешённых SKU — собирается автоматически из DRESSES
 ALLOWED_SKUS = {d["sku"] for d in DRESSES}
 
 
@@ -67,9 +66,6 @@ def shutdown(reason="breach"):
     return redirect(url_for("shutdown_page", reason=reason))
 
 
-# ------------------------------------------------------------------
-# Глобальная проверка shutdown
-# ------------------------------------------------------------------
 @app.before_request
 def enforce_shutdown():
     if not session.get("shutdown"):
@@ -105,7 +101,60 @@ def _find_chat(chat_id, chats):
 
 
 # ------------------------------------------------------------------
-# МАСТЕР-СБРОС
+# OPAQUE URL
+# ------------------------------------------------------------------
+RESERVED = {
+    "login", "logout", "inbox", "chat", "catalog", "hunt",
+    "panopticon", "sanitizer", "dead_drop", "control",
+    "shutdown", "reset", "transition", "static", "favicon.ico",
+}
+
+
+def _remember(kind, arg=None):
+    session["page_kind"] = kind
+    if arg is None:
+        session.pop("page_arg", None)
+    else:
+        session["page_arg"] = arg
+
+
+@app.route("/<slug>", methods=["GET", "POST"])
+def opaque(slug):
+    if slug in RESERVED:
+        abort(404)
+    if not is_secret():
+        return redirect(url_for("login"))
+
+    kind = session.get("page_kind")
+    arg = session.get("page_arg")
+
+    if not kind:
+        return redirect(url_for("inbox"))
+
+    if kind == "inbox":
+        return inbox()
+    if kind == "chat":
+        return chat(arg)
+    if kind == "catalog":
+        return catalog()
+    if kind == "hunt":
+        return hunt()
+    if kind == "hunt_item":
+        return hunt_item(arg)
+    if kind == "panopticon":
+        return panopticon()
+    if kind == "panopticon_events":
+        return panopticon_events()
+    if kind == "sanitizer":
+        return sanitizer()
+    if kind == "dead_drop":
+        return dead_drop()
+
+    return redirect(url_for("inbox"))
+
+
+# ------------------------------------------------------------------
+# RESET
 # ------------------------------------------------------------------
 @app.route("/reset")
 def reset_magic():
@@ -184,35 +233,46 @@ def transition():
 def inbox():
     if not is_authed():
         return redirect(url_for("login"))
+    _remember("inbox")
     if is_secret():
         return render_template("inbox_secret.html", chats=SECRET_CHATS)
     return render_template("inbox.html", chats=PUBLIC_CHATS)
 
 
 # ------------------------------------------------------------------
-# Чат
+# ЧАТ — только выбор из готовых фраз
 # ------------------------------------------------------------------
 @app.route("/chat/<chat_id>", methods=["GET", "POST"])
 def chat(chat_id):
     if not is_authed():
         return redirect(url_for("login"))
 
+    _remember("chat", chat_id)
+
     if chat_id in FORBIDDEN_CHAT_IDS:
         return shutdown(reason="breach")
 
+    # ---------- СЕКРЕТНЫЙ РАЗДЕЛ ----------
     if is_secret():
         item = _find_chat(chat_id, SECRET_CHATS)
         if not item:
             return shutdown(reason="breach")
 
         if request.method == "POST":
-            text = request.form.get("text", "").strip()
-            if is_suspicious_text(text):
-                return shutdown(reason="keyword")
-            if text:
-                now = _now_time()
+            if not item.get("writable"):
+                return redirect(url_for("chat", chat_id=chat_id))
+
+            choice_id = request.form.get("choice", "").strip()
+            story = (item.get("stories") or {}).get(choice_id)
+            if not story:
+                return redirect(url_for("chat", chat_id=chat_id))
+
+            now = _now_time()
+            for line in story:
                 CHAT_STATE.setdefault(chat_id, []).append(
-                    {"from": "me", "text": text, "time": now}
+                    {"from": line.get("from", "them"),
+                     "text": line.get("text", ""),
+                     "time": now}
                 )
             return redirect(url_for("chat", chat_id=chat_id))
 
@@ -222,19 +282,60 @@ def chat(chat_id):
             chat=item, chats=SECRET_CHATS, extra=extra,
         )
 
+    # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
     item = _find_chat(chat_id, PUBLIC_CHATS)
     if not item:
         return shutdown(reason="breach")
 
     if request.method == "POST":
-        text = request.form.get("text", "").strip()
-        if is_suspicious_text(text):
-            return shutdown(reason="keyword")
-        if text:
-            now = _now_time()
+        if not item.get("writable"):
+            return redirect(url_for("chat", chat_id=chat_id))
+
+        choice_id = request.form.get("choice", "").strip()
+        story = (item.get("stories") or {}).get(choice_id)
+        if not story:
+            return redirect(url_for("chat", chat_id=chat_id))
+
+        now = _now_time()
+        for line in story:
             CHAT_STATE.setdefault(chat_id, []).append(
-                {"from": "me", "text": text, "time": now}
+                {"from": line.get("from", "them"),
+                 "text": line.get("text", ""),
+                 "time": now}
             )
+        return redirect(url_for("chat", chat_id=chat_id))
+
+    extra = CHAT_STATE.get(chat_id, [])
+    return render_template(
+        "chat.html",
+        chat=item, chats=PUBLIC_CHATS, extra=extra,
+    )
+
+    # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
+    item = _find_chat(chat_id, PUBLIC_CHATS)
+    if not item:
+        return shutdown(reason="breach")
+
+    if request.method == "POST":
+        if not item.get("writable"):
+            return redirect(url_for("chat", chat_id=chat_id))
+
+        choice_id = request.form.get("choice", "").strip()
+        chosen = next(
+            (c for c in item.get("choices", []) if c["id"] == choice_id),
+            None,
+        )
+        if not chosen:
+            return redirect(url_for("chat", chat_id=chat_id))
+
+        now = _now_time()
+        CHAT_STATE.setdefault(chat_id, []).append(
+            {"from": "me", "text": chosen["text"], "time": now}
+        )
+        pool = item.get("replies", {}).get(choice_id) or ["..."]
+        CHAT_STATE[chat_id].append(
+            {"from": "them", "text": random.choice(pool), "time": now}
+        )
         return redirect(url_for("chat", chat_id=chat_id))
 
     extra = CHAT_STATE.get(chat_id, [])
@@ -251,6 +352,7 @@ def chat(chat_id):
 def catalog():
     if not is_secret():
         return redirect(url_for("inbox"))
+    _remember("catalog")
     return render_template(
         "catalog.html",
         dresses=DRESSES,
@@ -272,6 +374,7 @@ def dress(sku):
     if not item:
         return shutdown(reason="breach")
 
+    _remember("catalog")
     return render_template(
         "dress.html",
         dress=item,
@@ -280,9 +383,6 @@ def dress(sku):
     )
 
 
-# ------------------------------------------------------------------
-# Заказ
-# ------------------------------------------------------------------
 @app.route("/catalog/<sku>/order", methods=["GET", "POST"])
 def order(sku):
     if not is_secret():
@@ -294,6 +394,8 @@ def order(sku):
     item = next((d for d in DRESSES if d["sku"] == sku), None)
     if not item:
         return shutdown(reason="breach")
+
+    _remember("catalog")
 
     if request.method == "POST":
         form = {
@@ -341,9 +443,6 @@ def order(sku):
     )
 
 
-# ------------------------------------------------------------------
-# Shutdown
-# ------------------------------------------------------------------
 @app.route("/shutdown")
 def shutdown_page():
     reason = request.args.get("reason") or session.get("shutdown_reason") or "breach"
@@ -352,19 +451,14 @@ def shutdown_page():
     return render_template("shutdown.html", reason=reason)
 
 
-# ------------------------------------------------------------------
-# Control
-# ------------------------------------------------------------------
 @app.route("/control")
 def control():
     if not is_secret():
         return shutdown(reason="breach")
+    _remember("inbox")
     return render_template("control.html", control=CONTROL, chats=SECRET_CHATS)
 
 
-# ------------------------------------------------------------------
-# 404
-# ------------------------------------------------------------------
 @app.errorhandler(404)
 def not_found(_e):
     path = (request.path or "").lower()
@@ -381,6 +475,7 @@ def not_found(_e):
 def hunt():
     if not is_secret():
         return redirect(url_for("inbox"))
+    _remember("hunt")
     return render_template(
         "hunt.html",
         season=HUNT_SEASON,
@@ -400,6 +495,8 @@ def hunt_item(hid):
     item = HUNTS.get(hid)
     if not item:
         return shutdown(reason="breach")
+
+    _remember("hunt_item", hid)
 
     if request.method == "POST":
         callsign = request.form.get("callsign", "").strip()
@@ -449,6 +546,7 @@ def hunt_item(hid):
 def panopticon():
     if not is_secret():
         return redirect(url_for("inbox"))
+    _remember("panopticon")
     return render_template(
         "panopticon.html",
         p=PANOPTICON,
@@ -460,6 +558,7 @@ def panopticon():
 def panopticon_events():
     if not is_secret():
         return redirect(url_for("inbox"))
+    _remember("panopticon_events")
     return render_template(
         "panopticon_events.html",
         p=PANOPTICON,
@@ -474,6 +573,8 @@ def panopticon_events():
 def sanitizer():
     if not is_secret():
         return redirect(url_for("inbox"))
+
+    _remember("sanitizer")
 
     if "san_log" not in session:
         session["san_log"] = list(SANITIZER["banner"])
@@ -585,6 +686,8 @@ def sanitizer():
 def dead_drop():
     if not is_secret():
         return redirect(url_for("inbox"))
+
+    _remember("dead_drop")
 
     unlocked = session.get("dd_unlocked", False)
     error = None
