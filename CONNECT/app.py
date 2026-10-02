@@ -100,7 +100,24 @@ def _now_time():
 def _find_chat(chat_id, chats):
     return next((c for c in chats if c["id"] == chat_id), None)
 
+def _mark_read(chat_id):
+    """Запомнить, что чат прочитан (для текущей сессии)."""
+    read = set(session.get("read_chats", []))
+    read.add(chat_id)
+    session["read_chats"] = list(read)
+    session.modified = True
 
+
+def _with_read_state(chats):
+    """Вернуть копию списка чатов с обнулённым unread у прочитанных."""
+    read = set(session.get("read_chats", []))
+    out = []
+    for c in chats:
+        c2 = dict(c)
+        if c2["id"] in read:
+            c2["unread"] = 0
+        out.append(c2)
+    return out
 # ------------------------------------------------------------------
 # OPAQUE URL
 # ------------------------------------------------------------------
@@ -239,8 +256,8 @@ def inbox():
         return redirect(url_for("login"))
     _remember("inbox")
     if is_secret():
-        return render_template("inbox_secret.html", chats=SECRET_CHATS)
-    return render_template("inbox.html", chats=PUBLIC_CHATS)
+        return render_template("inbox_secret.html", chats=_with_read_state(SECRET_CHATS))
+    return render_template("inbox.html", chats=_with_read_state(PUBLIC_CHATS))
 
 
 # ------------------------------------------------------------------
@@ -280,10 +297,11 @@ def chat(chat_id):
                 )
             return redirect(url_for("chat", chat_id=chat_id))
 
+        _mark_read(chat_id)
         extra = CHAT_STATE.get(chat_id, [])
         return render_template(
             "chat_secret.html",
-            chat=item, chats=SECRET_CHATS, extra=extra,
+            chat=item, chats=_with_read_state(SECRET_CHATS), extra=extra,
         )
 
     # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
@@ -309,10 +327,11 @@ def chat(chat_id):
             )
         return redirect(url_for("chat", chat_id=chat_id))
 
+    _mark_read(chat_id)
     extra = CHAT_STATE.get(chat_id, [])
     return render_template(
         "chat.html",
-        chat=item, chats=PUBLIC_CHATS, extra=extra,
+        chat=item, chats=_with_read_state(PUBLIC_CHATS), extra=extra,
     )
 
     # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
