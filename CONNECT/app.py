@@ -5,6 +5,7 @@ from flask import (
 )
 from data import (
     SITE, PASSWORD_PUBLIC, PASSWORD_SECRET,
+    LOGIN_PUBLIC, LOGIN_SECRET,
     PUBLIC_CHATS, SECRET_CHATS, CONTROL,
     DRESSES, DRESSES_NOTE, DRESSES_FOOTER, DRESSES_RENTAL,
     HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
@@ -183,21 +184,24 @@ def login():
         CHAT_STATE.clear()
 
     if request.method == "POST":
-        pwd = request.form.get("password", "").strip()
+        user = request.form.get("login", "").strip().lower()
+        pwd  = request.form.get("password", "").strip()
 
-        if len(pwd) > 100:
+        if len(user) > 100 or len(pwd) > 100:
             return shutdown(reason="breach")
 
         if is_suspicious_text(pwd) and pwd not in (PASSWORD_SECRET, PASSWORD_PUBLIC):
             return shutdown(reason="keyword")
 
-        if pwd == PASSWORD_SECRET:
+        # --- секретный вход ---
+        if user == LOGIN_SECRET and pwd == PASSWORD_SECRET:
             session["authed"] = True
             session["secret"] = True
             session["fails"] = 0
             return redirect(url_for("transition"))
 
-        if pwd == PASSWORD_PUBLIC:
+        # --- публичный вход ---
+        if user == LOGIN_PUBLIC and pwd == PASSWORD_PUBLIC:
             session["authed"] = True
             session["secret"] = False
             session["fails"] = 0
