@@ -24,9 +24,9 @@
 
   <aside class="sidebar">
     <div class="sidebar__search">
-      <input type="text" placeholder="Поиск чатов">
+  <input type="text" id="chat-search" placeholder="Поиск чатов" autocomplete="off">
     </div>
-    <nav class="sidebar__list">
+    <nav class="sidebar__list" id="chat-list">
       {% for c in chats %}
         <a class="chat-item" href="{{ url_for('chat', chat_id=c.id) }}">
           <div class="chat-item__avatar" style="background: {{ c.color }}">{{ c.avatar }}</div>

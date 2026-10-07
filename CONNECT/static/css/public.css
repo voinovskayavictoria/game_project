@@ -282,3 +282,144 @@ a:hover { text-decoration: underline; }
 @media (max-width: 720px) {
   .reply__grid { grid-template-columns: 1fr; }
 }
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+.msg--system {
+  align-self: center !important;
+  max-width: 90% !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: none !important;
+}
+.msg--system .msg__text { color: #b91c1c; }
+.msg--system .msg__time { display: none; }
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+.msg--system {
+  align-self: center !important;
+  max-width: 90% !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: none !important;
+}
+.msg--system .msg__text { color: #b91c1c; }
+.msg--system .msg__time { display: none; }
+
+/* ---------- Онлайн / офлайн ---------- */
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ---------- Системная плашка ---------- */
+
+.msg--system {
+  align-self: center !important;
+  max-width: 90% !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: none !important;
+}
+.msg--system .msg__text { color: #b91c1c; }
+.msg--system .msg__time { display: none; }
+
+/* ---------- Индикатор «печатает…» ---------- */
+
+.msg--typing {
+  align-self: flex-start;
+  background: #fff;
+  border-radius: 14px 14px 14px 4px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  display: inline-flex;
+  gap: 4px;
+}
+.msg--typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  display: inline-block;
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.msg--typing span:nth-child(2) { animation-delay: .15s; }
+.msg--typing span:nth-child(3) { animation-delay: .30s; }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+  30%           { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ---------- Read-only заглушка ---------- */
+
+.reply-disabled {
+  padding: 18px 24px;
+  background: #fff;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-align: center;
+}

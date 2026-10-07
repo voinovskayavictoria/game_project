@@ -261,6 +261,22 @@ def inbox():
 
 
 # ------------------------------------------------------------------
+# Каталог
+# ------------------------------------------------------------------
+@app.route("/catalog")
+def catalog():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+    _remember("catalog")
+    return render_template(
+        "catalog.html",
+        dresses=DRESSES,
+        note=DRESSES_NOTE,
+        footer=DRESSES_FOOTER,
+        chats=SECRET_CHATS,
+    )
+
+# ------------------------------------------------------------------
 # ЧАТ — только выбор из готовых фраз
 # ------------------------------------------------------------------
 @app.route("/chat/<chat_id>", methods=["GET", "POST"])
@@ -282,18 +298,11 @@ def chat(chat_id):
         if request.method == "POST":
             if not item.get("writable"):
                 return redirect(url_for("chat", chat_id=chat_id))
-
-            choice_id = request.form.get("choice", "").strip()
-            story = (item.get("stories") or {}).get(choice_id)
-            if not story:
-                return redirect(url_for("chat", chat_id=chat_id))
-
-            now = _now_time()
-            for line in story:
+            text = request.form.get("text", "").strip()
+            if text:
+                now = _now_time()
                 CHAT_STATE.setdefault(chat_id, []).append(
-                    {"from": line.get("from", "them"),
-                     "text": line.get("text", ""),
-                     "time": now}
+                    {"from": "me", "text": text, "time": now}
                 )
             return redirect(url_for("chat", chat_id=chat_id))
 
@@ -301,7 +310,8 @@ def chat(chat_id):
         extra = CHAT_STATE.get(chat_id, [])
         return render_template(
             "chat_secret.html",
-            chat=item, chats=_with_read_state(SECRET_CHATS), extra=extra,
+            chat=item, chats=_with_read_state(SECRET_CHATS),
+            extra=extra, animate=False,
         )
 
     # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
@@ -309,79 +319,65 @@ def chat(chat_id):
     if not item:
         return shutdown(reason="breach")
 
+    is_director = bool(item.get("director"))
+
+    # АККАУНТ-УРОВЕНЬ: деактивирован ли аккаунт целиком
+    account_deactivated = bool(session.get("account_deactivated"))
+
+    state = CHAT_STATE.setdefault(chat_id, [])
+
     if request.method == "POST":
+        # писать нельзя никуда, если аккаунт деактивирован
+        if account_deactivated:
+            return redirect(url_for("chat", chat_id=chat_id))
+
         if not item.get("writable"):
             return redirect(url_for("chat", chat_id=chat_id))
 
-        choice_id = request.form.get("choice", "").strip()
-        story = (item.get("stories") or {}).get(choice_id)
-        if not story:
-            return redirect(url_for("chat", chat_id=chat_id))
+        text = request.form.get("text", "").strip()
+        if text:
+            now = _now_time()
+            state.append({"from": "me", "text": text, "time": now})
 
-        now = _now_time()
-        for line in story:
-            CHAT_STATE.setdefault(chat_id, []).append(
-                {"from": line.get("from", "them"),
-                 "text": line.get("text", ""),
-                 "time": now}
-            )
+            # Первое сообщение Сергею → угрозы, отсчёт, деактивация ВСЕГО аккаунта
+            if is_director and not session.get("account_deactivated"):
+                threats = [
+                    "КТО ЭТО БЛЯТЬ ТУТ",
+                    "Кто сидит за аккаунтом Миланы Макаровой?",
+                    "Макарова задержана час назад.",
+                    "Аккаунт будет деактивирован.",
+                ]
+                for t in threats:
+                    state.append({
+                        "from": "them", "text": t, "time": now, "pending": True
+                    })
+
+                state.append({
+                    "from": "system", "text": "ACCOUNT DEACTIVATED",
+                    "time": "", "pending": True
+                })
+
+                session["account_deactivated"] = True
+                session["anim_pending_" + chat_id] = True
+                session.modified = True
+
         return redirect(url_for("chat", chat_id=chat_id))
 
     _mark_read(chat_id)
-    extra = CHAT_STATE.get(chat_id, [])
+
+    animate = bool(session.pop("anim_pending_" + chat_id, False))
+    session.modified = True
+
+    # для отображения статуса Сергея
+    director_online = is_director and account_deactivated
+
     return render_template(
         "chat.html",
-        chat=item, chats=_with_read_state(PUBLIC_CHATS), extra=extra,
-    )
-
-    # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
-    item = _find_chat(chat_id, PUBLIC_CHATS)
-    if not item:
-        return shutdown(reason="breach")
-
-    if request.method == "POST":
-        if not item.get("writable"):
-            return redirect(url_for("chat", chat_id=chat_id))
-
-        choice_id = request.form.get("choice", "").strip()
-        chosen = next(
-            (c for c in item.get("choices", []) if c["id"] == choice_id),
-            None,
-        )
-        if not chosen:
-            return redirect(url_for("chat", chat_id=chat_id))
-
-        now = _now_time()
-        CHAT_STATE.setdefault(chat_id, []).append(
-            {"from": "me", "text": chosen["text"], "time": now}
-        )
-        pool = item.get("replies", {}).get(choice_id) or ["..."]
-        CHAT_STATE[chat_id].append(
-            {"from": "them", "text": random.choice(pool), "time": now}
-        )
-        return redirect(url_for("chat", chat_id=chat_id))
-
-    extra = CHAT_STATE.get(chat_id, [])
-    return render_template(
-        "chat.html",
-        chat=item, chats=PUBLIC_CHATS, extra=extra,
-    )
-
-
-# ------------------------------------------------------------------
-# Каталог
-# ------------------------------------------------------------------
-@app.route("/catalog")
-def catalog():
-    if not is_secret():
-        return redirect(url_for("inbox"))
-    _remember("catalog")
-    return render_template(
-        "catalog.html",
-        dresses=DRESSES,
-        note=DRESSES_NOTE,
-        footer=DRESSES_FOOTER,
-        chats=SECRET_CHATS,
+        chat=item, chats=_with_read_state(PUBLIC_CHATS),
+        extra=state,
+        director_online=director_online,
+        deactivated=account_deactivated,
+        animate=animate,
     )
 
 

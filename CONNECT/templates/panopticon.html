@@ -25,14 +25,14 @@
     <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
   </div>
   <div class="s-user">
-  <span class="s-session">uid: <b>anon</b></span>
-  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
-  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
-  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
-  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
-  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
-  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
-</div>
+    <span class="s-session">uid: <b>anon</b></span>
+    <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+    <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+    <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+    <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+    <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+    <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+  </div>
 </header>
 
 <main class="pan">
@@ -52,13 +52,25 @@
     {% for c in p.cameras %}
       <div class="cam cam--{{ c.status|lower }}">
         <div class="cam__feed">
-          {% if c.gif %}
+
+          {% if c.broken %}
+            <div class="cam__broken">
+              <div class="cam__broken-text">NO SIGNAL</div>
+              <div class="cam__broken-sub">camera offline</div>
+            </div>
+          {% elif c.video %}
+            <video class="cam__video" autoplay muted loop playsinline>
+              <source src="{{ url_for('static', filename=c.video) }}" type="video/mp4">
+            </video>
+          {% elif c.gif %}
             <img src="{{ url_for('static', filename=c.gif) }}" alt=""
                  onerror="this.style.display='none'">
           {% endif %}
+
           <div class="cam__noise"></div>
           <div class="cam__stamp">{{ c.id }} // {{ c.status }}</div>
         </div>
+
         <div class="cam__meta">
           <div class="cam__label">{{ c.label }}</div>
           <div class="cam__row"><span>codec</span><b>{{ c.codec }}</b></div>
