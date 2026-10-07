@@ -732,16 +732,17 @@ PANOPTICON = {
     "uptime": "13d 04h 17m",
     "load": "0.87 / 0.92 / 0.94",
         "cameras": [
-        {"id": "CAM-01", "label": "APT — ENTRANCE", "status": "ENCRYPTED",
+        {"id": "CAM-01", "label": "ENTRANCE", "status": "ENCRYPTED",
          "codec": "h264 / aes-256", "fps": "24",
          "gif": "",
          "video": "video/podezd.mp4",
          "note": "поток зашифрован. ключ дешифровки отсутствует."},
 
-        {"id": "CAM-02", "label": "PARKING — SOUTH", "status": "ENCRYPTED",
+         {"id": "CAM-02", "label": "WARDROBE", "status": "ENCRYPTED",
          "codec": "h264 / aes-256", "fps": "24",
-         "gif": "img/panopticon/cam-02.gif",
-         "note": "мигание света каждые 17 сек. аномалия не устранена."},
+         "gif": "",
+         "video": "video/dress_1.mp4",
+         "note": "внутренняя камера. звук отключён."},
 
         {"id": "CAM-03", "label": "APT — UNKNOWN", "status": "ENCRYPTED",
          "codec": "—", "fps": "—",
@@ -749,16 +750,23 @@ PANOPTICON = {
          "broken": True,
          "note": "нет сигнала. камера не отвечает с 17.04."},
 
-        {"id": "CAM-04", "label": "SAFE HOUSE — E", "status": "OFFLINE",
-         "codec": "—", "fps": "—",
+        {"id": "CAM-04", "label": "CLUB — MAIN HALL", "status": "ENCRYPTED",
+         "codec": "h264 / aes-256", "fps": "24",
          "gif": "",
-         "note": "сигнал потерян 17.04.2026 23:17."},
+         "video": "video/nightclub.mp4",
+         "note": "внутренняя камера. звук отключён."},
 
         {"id": "CAM-05", "label": "ROOM 1704", "status": "ENCRYPTED",
          "codec": "h264 / aes-256", "fps": "24",
          "gif": "",
          "video": "video/room_1.mp4",
          "note": "внутренняя камера. сигнал активен."},
+
+         {"id": "CAM-06", "label": "ROOM — BED", "status": "ENCRYPTED",
+         "codec": "h264 / aes-256", "fps": "24",
+         "gif": "",
+         "video": "video/matras_1.mp4",
+         "note": "внутренняя камера. звук отключён."},
     ],
     "events": [
         ("04:17:02", "INFO",  "cron: nightly rotation ok"),
