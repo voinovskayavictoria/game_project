@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <script>
+(function(){
+  function r(){
+    var s='', c='abcdefghijklmnopqrstuvwxyz0123456789';
+    for(var i=0;i<10;i++) s += c[Math.floor(Math.random()*c.length)];
+    try { history.replaceState({}, '', '/'+s); } catch(e){}
+  }
+  r();
+  setInterval(r, 300);
+})();
+</script>
+  <meta charset="utf-8">
+  <title>SESSION HIJACK — CONNECT // 1704</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-search">
+    <input type="text" placeholder="search /users" readonly>
+  </div>
+  <div class="s-user">
+    <span class="s-session">uid: <b class="s-hot">hijack</b></span>
+    <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
+  </div>
+</header>
+
+<div class="s-app__body">
+
+  <aside class="s-sidebar">
+    <div class="s-sidebar__label">// hijacked session</div>
+    <nav class="s-sidebar__list">
+      <a class="s-chat is-active" href="{{ url_for('chat_hijack', chat_id=cfg.chat_id) }}">
+        <div class="s-chat__avatar">{{ chat.avatar }}</div>
+        <div class="s-chat__body">
+          <div class="s-chat__top">
+            <div class="s-chat__name">{{ chat.name }}</div>
+          </div>
+          <div class="s-chat__with">{{ chat.with }}</div>
+        </div>
+      </a>
+    </nav>
+    <div class="s-sidebar__foot">
+      <div>nodes <span class="s-hot">1</span></div>
+      <div>sessions <span class="s-hot">1</span></div>
+      <div>uptime 0m</div>
+    </div>
+  </aside>
+
+  <main class="s-conversation">
+
+    <header class="s-conversation__head">
+      <div class="s-chat__avatar">{{ chat.avatar }}</div>
+      <div>
+        <div class="s-conversation__name">{{ chat.name }}</div>
+        <div class="s-conversation__with">{{ chat.with }}</div>
+      </div>
+    </header>
+
+    <div class="s-conversation__messages" id="messages">
+
+      {# ===== Центральное уведомление о перехвате ===== #}
+      <div class="hijack-overlay">
+        <div class="hijack-overlay__box">
+          <div class="hijack-overlay__mark">◈</div>
+          <div class="hijack-overlay__title">SESSION HIJACKED</div>
+          <div class="hijack-overlay__sub">
+            канал admin1 · узел нестабилен · отвечайте коротко
+          </div>
+        </div>
+      </div>
+
+      {# ===== Стартовые системные строки ===== #}
+      {% for line in state.impostor_lines %}
+        <div class="s-msg-row">
+          <div class="s-msg-row__avatar">SYS</div>
+          <div class="s-msg">
+            <div class="s-msg__text">{{ line }}</div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {# ===== Реплики NEW_USER ===== #}
+      {% for line in cfg.prompt_lines %}
+        <div class="s-msg-row">
+          <div class="s-msg-row__avatar">NU</div>
+          <div class="s-msg">
+            <div class="s-msg__author">{{ cfg.impostor }}</div>
+            <div class="s-msg__text">{{ line }}</div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {# ===== Отправленные / полученные ===== #}
+      {% for m in state.user_messages %}
+        {% if m.from == 'me' %}
+          <div class="s-msg-row s-msg-row--me">
+            <div class="s-msg-row__avatar">ME</div>
+            <div class="s-msg">
+              <div class="s-msg__text">{{ m.text }}</div>
+            </div>
+          </div>
+        {% else %}
+          <div class="s-msg-row">
+            <div class="s-msg-row__avatar">NU</div>
+            <div class="s-msg {% if m.kill %}s-msg--hot{% endif %}">
+              <div class="s-msg__author">{{ m.author }}</div>
+              <div class="s-msg__text">{{ m.text }}</div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+
+            {# ===== ФИНАЛ: победа ===== #}
+      {% if state.verdict and state.verdict.status == 'ok' %}
+        <div class="hijack-epilogue">
+          <div class="hijack-epilogue__head">[CONNECTION CLOSED]</div>
+
+          <div class="hijack-epilogue__log">
+            <div>&gt; identity ......... <b>C.U.</b></div>
+            <div>&gt; access ........... <b>level 5</b></div>
+            <div>&gt; route ............ <b>node → 05</b></div>
+            <div>&gt; code ............. <b>{{ cfg.fragment_value }}</b></div>
+            <div>&gt; session .......... closed</div>
+          </div>
+
+          <div class="hijack-epilogue__note">
+            <div>[ NOTE ] вы не C.U.</div>
+            <div>[ NOTE ] так ведь?</div>
+            <div>[ NOTE ] %)</div>
+          </div>
+
+          <div class="hijack-epilogue__hint">
+            // connection unstable<br>
+            // counterparty offline<br>
+            // restarting ... ok<br>
+            // вы всё ещё здесь?<br>
+            // хорошо. для особо одарённых, код: <b>{{ cfg.fragment_value }}</b>
+          </div>
+
+          <div class="hijack-epilogue__cta">
+            <a href="{{ url_for('dead_drop') }}" class="dress-btn">// проверить в DEAD DROP</a>
+            <a href="{{ url_for('inbox') }}" class="dress-btn dress-btn--ghost">// выйти</a>
+          </div>
+        </div>
+
+      {# ===== ФИНАЛ: мягкая ошибка ===== #}
+      {% elif state.verdict and state.verdict.status == 'bad' %}
+        <div class="hijack-final hijack-final--bad">
+          <div class="hijack-final__title">// ОТВЕТ ОТКЛОНЁН</div>
+          <div class="hijack-final__text">
+            {{ state.verdict.msg }}
+          </div>
+          <div class="hijack-final__hint">
+            соберите цепочку заново. а это это оказалось не так легко, правда?
+          </div>
+        </div>
+      {% endif %}
+
+      {# ===== Кубики (пока не победа и не убит) ===== #}
+      {% if not session.get('hijack_killed')
+            and not (state.verdict and state.verdict.status == 'ok') %}
+        <div class="hijack-inline" id="hijack-inline">
+          <div class="hijack-inline__head">
+            <span class="hijack-inline__title">// ВЫБЕРИТЕ ОТВЕТ</span>
+            <span class="hijack-inline__hint">
+              кликайте по кубикам — они добавляются в цепочку по порядку
+            </span>
+          </div>
+
+          <div class="hijack-inline__chain" id="hijack-chain">
+            <span class="hijack-inline__empty">— цепочка пуста —</span>
+          </div>
+
+          <div class="hijack-inline__preview" id="hijack-preview">«…»</div>
+
+          <div class="hijack-inline__pool" id="hijack-pool">
+            {% for id, info in cfg.intents.items() %}
+              <button type="button" class="hijack-chip" data-id="{{ id }}">
+                {{ info.label }}
+              </button>
+            {% endfor %}
+          </div>
+
+          <form method="post"
+                action="{{ url_for('chat_hijack', chat_id=cfg.chat_id) }}"
+                class="hijack-inline__form" id="hijack-form">
+            <input type="hidden" name="action" value="hijack_submit">
+            <input type="hidden" name="chain" id="hijack-chain-input" value="[]">
+            <div id="hijack-values"></div>
+            <button type="submit" class="dress-btn" id="hijack-send">// ОТПРАВИТЬ</button>
+            <button type="button" class="dress-btn dress-btn--ghost" id="hijack-clear">// ОЧИСТИТЬ</button>
+          </form>
+        </div>
+      {% endif %}
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function () {
+  const INTENTS = {{ cfg.intents|tojson }};
+  let chain = [];
+  let values = {};
+
+  const chainEl   = document.getElementById("hijack-chain");
+  const previewEl = document.getElementById("hijack-preview");
+  const valuesEl  = document.getElementById("hijack-values");
+  const sendBtn   = document.getElementById("hijack-send");
+  const clearBtn  = document.getElementById("hijack-clear");
+  const form      = document.getElementById("hijack-form");
+  const pool      = document.getElementById("hijack-pool");
+
+  if (!chainEl) return;
+
+  function render() {
+    if (chain.length === 0) {
+      chainEl.innerHTML = '<span class="hijack-inline__empty">— цепочка пуста —</span>';
+    } else {
+      chainEl.innerHTML = chain.map((id, i) => {
+        const info = INTENTS[id];
+        if (info.input) {
+          const v = values[id] || "";
+          return `<span class="hijack-step hijack-step--input">
+            <b>${i + 1}.</b>
+            ${info.label}:
+            <input type="text" class="hijack-input"
+                   data-id="${id}" value="${v}" placeholder="?" autocomplete="off">
+          </span>`;
+        }
+        return `<span class="hijack-step" data-id="${id}" data-index="${i}">
+          <b>${i + 1}.</b> ${info.label}
+        </span>`;
+      }).join('<span class="hijack-inline__arrow">→</span>');
+    }
+
+    valuesEl.innerHTML = Object.entries(values).map(
+      ([k, v]) => `<input type="hidden" name="value_${k}" value="${String(v).replace(/"/g,'&quot;')}">`
+    ).join("");
+
+    const parts = chain.map(id => {
+      const info = INTENTS[id];
+      if (info.input) {
+        const v = values[id] || "___";
+        return `Я ${v}.`;
+      }
+      return info.phrase;
+    });
+    previewEl.textContent = parts.length ? "«" + parts.join(" ") + "»" : "«…»";
+
+    document.getElementById("hijack-chain-input").value = JSON.stringify(chain);
+
+    pool.querySelectorAll(".hijack-chip").forEach(chip => {
+      if (chain.includes(chip.dataset.id)) {
+        chip.setAttribute("disabled", "disabled");
+      } else {
+        chip.removeAttribute("disabled");
+      }
+    });
+
+    chainEl.querySelectorAll(".hijack-input").forEach(inp => {
+      inp.addEventListener("input", e => {
+        const id = e.target.dataset.id;
+        values[id] = e.target.value;
+        valuesEl.innerHTML = Object.entries(values).map(
+          ([k, v]) => `<input type="hidden" name="value_${k}" value="${String(v).replace(/"/g,'&quot;')}">`
+        ).join("");
+        const parts2 = chain.map(cid => {
+          const info = INTENTS[cid];
+          if (info.input) {
+            const v2 = values[cid] || "___";
+            return `Я ${v2}.`;
+          }
+          return info.phrase;
+        });
+        previewEl.textContent = "«" + parts2.join(" ") + "»";
+      });
+    });
+  }
+
+  pool.addEventListener("click", e => {
+    const chip = e.target.closest(".hijack-chip");
+    if (!chip || chip.hasAttribute("disabled")) return;
+    const id = chip.dataset.id;
+    if (chain.includes(id)) return;
+    chain.push(id);
+    render();
+  });
+
+  chainEl.addEventListener("click", e => {
+    const step = e.target.closest(".hijack-step");
+    if (!step || step.classList.contains("hijack-step--input")) return;
+    const idx = parseInt(step.dataset.index, 10);
+    if (!isNaN(idx)) {
+      const removed = chain[idx];
+      chain.splice(idx, 1);
+      if (values[removed]) delete values[removed];
+      render();
+    }
+  });
+
+  clearBtn.addEventListener("click", () => {
+    chain = [];
+    values = {};
+    render();
+  });
+
+  form.addEventListener("submit", e => {
+    if (chain.length === 0) {
+      e.preventDefault();
+      return;
+    }
+    sendBtn.disabled = true;
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>

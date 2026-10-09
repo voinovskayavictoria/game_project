@@ -692,6 +692,49 @@ SANITIZER = {
         "  exit                — выйти из терминала"
     ),
 }
+CHAT_HIJACK = {
+    "chat_id": "admin1",
+    "impostor": "NEW_USER",
+    "prompt_lines": ["ты кто", "милана тут?"],
+    "intro_system": [
+        "[SYSTEM] session anomaly detected",
+        "[SYSTEM] impersonation check: FAILED",
+        "[SYSTEM] NEW_USER has joined the chat",
+    ],
+    "intents": {
+        "name_self":  {"label": "назвать себя",                     "order": 1, "input": True},
+        "from_node":  {"label": "сказать что зашёл с другого узла", "phrase": "Зашёл с другого узла.", "order": 2},
+        "what_need":  {"label": "спросить что нужно",               "phrase": "Что нужно?",            "order": 3},
+        "ready":      {"label": "сказать что готов",                "phrase": "Готов работать.",       "order": 4},
+        "status":     {"label": "спросить статус",                  "phrase": "Статус?",  "order": 0},
+        "when":       {"label": "спросить время",                   "phrase": "Когда?",   "order": 0},
+        "where":      {"label": "спросить где",                     "phrase": "Где?",     "order": 0},
+        "im_me":      {"label": "сказать что я милана",             "phrase": "Я Милана.",       "order": -1, "kill": True},
+        "looking":    {"label": "сказать что ищу её",               "phrase": "Я ищу её.",       "order": -1, "kill": True},
+        "what_hap":   {"label": "спросить что случилось",           "phrase": "Что случилось?",  "order": -1, "kill": True},
+        "threat":     {"label": "угрожать",                         "phrase": "В себя поверил?", "order": 0, "conditional": True},
+    },
+    "valid_id": "C.U.",
+    "required_chain": ["name_self", "from_node", "what_need"],
+    "reactions": {
+        "correct":         "принял\nмилана выпала\n04 закрыт. переходишь на 05\nкод перехода — 04-M\nне подведи",
+        "correct_threat":  "принял.\nизвините. я подумал...\n04 закрыт. переходите на 05.\nкод перехода — 04-M.\nпростите еще раз.",
+        "wrong_order": "не тяни. говори по делу",
+        "missing":     "мало информации. я не понимаю, кто ты",
+        "wrong_id":    "такого не знаю. ты не из наших",
+        "too_many":    "слишком много слов. C.U. пишет коротко",
+        "threat_no_name": "ты сначала представься.\nпотом угрожай.",        
+    },
+    "kill_reactions": {
+        "im_me":   "милана мертва\nя сам её вычеркнул\nкто ты\nне отвечай. я уже знаю",
+        "looking": "зачем чужому искать её\nты не из наших\nя тебя вычислю",
+        "what_hap":"зачем чужому знать, что случилось\nты не из наших\nя тебя вычислю",
+        "threat":  "ты мне угрожаешь? значит точно чужой\nя тебя найду",
+        "wrong_id":"такого не знаю\nты не свой\nя тебя вычислю",
+    },
+    "fragment_id": "FRAG-04",
+    "fragment_value": "04-M",
+}
 
 # ------------------------------------------------------------------
 # DEAD DROP
