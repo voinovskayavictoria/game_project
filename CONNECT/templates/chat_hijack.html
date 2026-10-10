@@ -120,47 +120,66 @@
       {% endfor %}
 
             {# ===== ФИНАЛ: победа ===== #}
-      {% if state.verdict and state.verdict.status == 'ok' %}
-        <div class="hijack-epilogue">
-          <div class="hijack-epilogue__head">[CONNECTION CLOSED]</div>
+            {% if state.verdict and state.verdict.status == 'ok' %}
+  <div class="hijack-epilogue">
+    <div class="hijack-epilogue__head">[CONNECTION CLOSED]</div>
 
-          <div class="hijack-epilogue__log">
-            <div>&gt; identity ......... <b>C.U.</b></div>
-            <div>&gt; access ........... <b>level 5</b></div>
-            <div>&gt; route ............ <b>node → 05</b></div>
-            <div>&gt; code ............. <b>{{ cfg.fragment_value }}</b></div>
-            <div>&gt; session .......... closed</div>
-          </div>
+    <div class="hijack-epilogue__log">
+      <div>&gt; identity ......... <b>{{ state.verdict.given_id or 'anonymous' }}</b></div>
+      <div>&gt; access ........... <b>level 5</b></div>
+      <div>&gt; route ............ <b>node → 05</b></div>
+      <div>&gt; code ............. <b>{{ cfg.fragment_value }}</b></div>
+      <div>&gt; session .......... closed</div>
+    </div>
 
-          <div class="hijack-epilogue__note">
-            <div>[ NOTE ] вы не C.U.</div>
-            <div>[ NOTE ] так ведь?</div>
-            <div>[ NOTE ] %)</div>
-          </div>
+    <div class="hijack-epilogue__note">
+      {% if state.verdict.key == 'correct' %}
+        <div>[ NOTE ] вы не C.U.</div>
+        <div>[ NOTE ] так ведь?</div>
+        <div>[ NOTE ] %)</div>
+      {% elif state.verdict.key == 'correct_threat' %}
+        <div>[ NOTE ] напугали.</div>
+        <div>[ NOTE ] почти поверил.</div>
+        <div>[ NOTE ] %)</div>
+      {% elif state.verdict.key == 'correct_admin_bluff' %}
+        <div>[ NOTE ] ADMIN-01 — это я.</div>
+        <div>[ NOTE ] но ты мне нравишься.</div>
+        <div>[ NOTE ] посмотрим, что ты сможешь.</div>
+      {% elif state.verdict.key == 'correct_other_id' %}
+        <div>[ NOTE ] ого.</div>
+        <div>[ NOTE ] а это уже становится интересным.</div>
+        <div>[ NOTE ] кто вы такой?</div>
+      {% elif state.verdict.key == 'correct_no_name' %}
+        <div>[ NOTE ] без имени?</div>
+        <div>[ NOTE ] скромно.</div>
+        <div>[ NOTE ] ладно. проверим позже.</div>
+      {% endif %}
+    </div>
 
-          <div class="hijack-epilogue__hint">
-            // connection unstable<br>
-            // counterparty offline<br>
-            // restarting ... ok<br>
-            // вы всё ещё здесь?<br>
-            // хорошо. для особо одарённых, код: <b>{{ cfg.fragment_value }}</b>
-          </div>
+    <div class="hijack-epilogue__hint">
+      // connection unstable<br>
+      // counterparty offline<br>
+      // restarting ... ok<br>
+      // вы всё ещё здесь?<br>
+      // хорошо. для особо одарённых, код: <b>{{ cfg.fragment_value }}</b>
+    </div>
 
-          <div class="hijack-epilogue__cta">
-            <a href="{{ url_for('dead_drop') }}" class="dress-btn">// проверить в DEAD DROP</a>
-            <a href="{{ url_for('inbox') }}" class="dress-btn dress-btn--ghost">// выйти</a>
-          </div>
-        </div>
+    <div class="hijack-epilogue__cta">
+      <a href="{{ url_for('dead_drop') }}" class="dress-btn">// проверить в DEAD DROP</a>
+      <a href="{{ url_for('inbox') }}" class="dress-btn dress-btn--ghost">// выйти</a>
+    </div>
+  </div>
+{% endif %}
 
-      {# ===== ФИНАЛ: мягкая ошибка ===== #}
-      {% elif state.verdict and state.verdict.status == 'bad' %}
+            {# ===== ФИНАЛ: мягкая ошибка ===== #}
+      {% if state.verdict and state.verdict.status == 'bad' %}
         <div class="hijack-final hijack-final--bad">
           <div class="hijack-final__title">// ОТВЕТ ОТКЛОНЁН</div>
           <div class="hijack-final__text">
             {{ state.verdict.msg }}
           </div>
           <div class="hijack-final__hint">
-            соберите цепочку заново. а это это оказалось не так легко, правда?
+            соберите цепочку заново. а это оказалось не так легко, правда?
           </div>
         </div>
       {% endif %}

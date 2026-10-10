@@ -423,3 +423,79 @@ a:hover { text-decoration: underline; }
   text-transform: uppercase;
   text-align: center;
 }
+
+/* ==========================================================
+   ОВЕРЛЕЙ: пиксельная пасть бота
+   ========================================================== */
+
+.abyss {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  cursor: pointer;
+  animation: abyss-flicker-in .5s ease-out;
+}
+.abyss.is-active { display: flex; }
+
+@keyframes abyss-flicker-in {
+  0%   { opacity: 0; filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  70%  { opacity: .7; }
+  100% { opacity: 1; }
+}
+
+#abyss-canvas {
+  max-width: 90vw;
+  max-height: 60vh;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.abyss__lines {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  font-family: "JetBrains Mono", "Courier New", monospace;
+  font-size: 15px;
+  letter-spacing: 3px;
+  color: #ff2a3d;
+  text-transform: uppercase;
+  min-height: 100px;
+}
+.abyss__line {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: abyss-line-in .6s ease forwards;
+  text-shadow: 0 0 12px rgba(255, 42, 61, .5);
+}
+.abyss__line:nth-child(3) {
+  color: #c8ffcf;
+  font-size: 22px;
+  letter-spacing: 6px;
+  margin-top: 8px;
+}
+@keyframes abyss-line-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.abyss__hint {
+  margin-top: 40px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #4a5364;
+  text-transform: uppercase;
+  opacity: .6;
+  animation: abyss-hint-blink 2s ease-in-out infinite;
+}
+@keyframes abyss-hint-blink {
+  0%, 100% { opacity: .6; }
+  50%      { opacity: .2; }
+}

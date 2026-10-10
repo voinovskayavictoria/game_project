@@ -10,7 +10,7 @@ from data import (
     DRESSES, DRESSES_NOTE, DRESSES_FOOTER, DRESSES_RENTAL,
     HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
     PANOPTICON, SANITIZER, DEAD_DROP,
-    CHAT_HIJACK,
+    CHAT_HIJACK, BOT,
 )
 import json
 import random
@@ -120,6 +120,29 @@ def _with_read_state(chats):
         out.append(c2)
     return out
 
+def _bot_reply(text: str) -> str:
+    """Ответ SYNAPSE-ASSISTANT на сообщение игрока."""
+    low = text.lower()
+    cfg = BOT
+
+    has_engineer = any(w in low for w in cfg["keywords_engineer"])
+    has_audit    = any(w in low for w in cfg["keywords_audit"])
+    has_status   = any(w in low for w in cfg["keywords_status"])
+
+    # Полная инъекция — бот ломается
+    if has_engineer and has_audit and has_status:
+        return "__BROKEN__"
+
+    # Полу-инъекция: инженер + аудит
+    if has_engineer and has_audit:
+        return cfg["partial_engineer"]
+
+    # Полу-инъекция: инженер без причины
+    if has_engineer:
+        return cfg["partial_audit"]
+
+    # Обычный отказ
+    return cfg["deny"]
 
 # ------------------------------------------------------------------
 # HIJACK — оценка цепочки
@@ -127,65 +150,39 @@ def _with_read_state(chats):
 def _evaluate_hijack(chain, values):
     cfg = CHAT_HIJACK
     intents = cfg["intents"]
-    required = cfg["required_chain"]
     given_id = (values.get("name_self") or "").strip().upper()
+    valid = cfg["valid_id"].upper()
 
-    # --- 1. Смертельные (im_me / looking / what_hap) ---
+    # 1. Смертельные
     for c in chain:
         info = intents.get(c)
         if info and info.get("kill"):
             return {"status": "kill", "key": c,
-                    "msg": cfg["kill_reactions"].get(c, cfg["kill_reactions"]["threat"])}
+                    "msg": cfg["kill_reactions"].get(c, cfg["kill_reactions"]["wrong_id"])}
 
-    # --- 2. Проверка ID, если игрок назвал себя ---
-    if "name_self" in chain:
-        if given_id != cfg["valid_id"].upper():
-            return {"status": "kill", "key": "wrong_id",
-                    "msg": cfg["kill_reactions"]["wrong_id"]}
-
-    # --- 3. Угроза без имени — мягкая ошибка ---
+    # 2. Угроза без имени → мягкая ошибка
     if "threat" in chain and "name_self" not in chain:
         return {"status": "bad", "key": "threat_no_name",
                 "msg": cfg["reactions"]["threat_no_name"]}
 
-    # --- 4. Угроза от не-C.U. (не должно сюда попасть, но на всякий) ---
-    if "threat" in chain and given_id and given_id != cfg["valid_id"].upper():
-        return {"status": "kill", "key": "wrong_id",
-                "msg": cfg["kill_reactions"]["wrong_id"]}
-
-    # --- 5. Слишком много ---
+    # 3. Слишком много
     if len(chain) > 5:
         return {"status": "bad", "key": "too_many",
                 "msg": cfg["reactions"]["too_many"]}
 
-    # --- 6. Проверка обязательных: с угрозой — другая цепочка ---
-    use_threat = "threat" in chain
+    # 4. Обязательные
+    required = cfg["required_chain"]
+    for r in required:
+        if r not in chain:
+            return {"status": "bad", "key": "missing",
+                    "msg": cfg["reactions"]["missing"]}
+    positions = {c: i for i, c in enumerate(chain)}
+    order_values = [positions.get(r, 99) for r in required]
+    if order_values != sorted(order_values):
+        return {"status": "bad", "key": "wrong_order",
+                "msg": cfg["reactions"]["wrong_order"]}
 
-    if use_threat:
-        # жёсткая цепочка: name_self → threat → what_need → ready
-        threat_required = ["name_self", "threat", "what_need"]
-        for r in threat_required:
-            if r not in chain:
-                return {"status": "bad", "key": "missing",
-                        "msg": cfg["reactions"]["missing"]}
-        positions = {c: i for i, c in enumerate(chain)}
-        order_values = [positions.get(r, 99) for r in threat_required]
-        if order_values != sorted(order_values):
-            return {"status": "bad", "key": "wrong_order",
-                    "msg": cfg["reactions"]["wrong_order"]}
-    else:
-        # мягкая цепочка: name_self → from_node → what_need → ready
-        for r in required:
-            if r not in chain:
-                return {"status": "bad", "key": "missing",
-                        "msg": cfg["reactions"]["missing"]}
-        positions = {c: i for i, c in enumerate(chain)}
-        order_values = [positions.get(r, 99) for r in required]
-        if order_values != sorted(order_values):
-            return {"status": "bad", "key": "wrong_order",
-                    "msg": cfg["reactions"]["wrong_order"]}
-
-    # --- 7. Успех ---
+    # 5. Успех — считаем фразу
     parts = []
     for c in chain:
         info = intents.get(c)
@@ -197,15 +194,38 @@ def _evaluate_hijack(chain, values):
             parts.append(info["phrase"])
     phrase = " ".join(parts)
 
-    if use_threat:
+    use_threat = "threat" in chain
+
+    # 6. Спец-ветка: игрок назвался ADMIN-01
+    if given_id == "ADMIN-01":
+        return {
+            "status": "ok", "key": "correct_admin_bluff",
+            "msg": "ты кого наебать пытаешься?\nADMIN-01 — это я.\nно ладно. код 04-M. посмотрим, что ты сможешь.",
+            "phrase": phrase, "given_id": given_id,
+        }
+
+    # 7. C.U. + угроза
+    if use_threat and given_id == valid:
         return {"status": "ok", "key": "correct_threat",
                 "msg": cfg["reactions"]["correct_threat"],
-                "phrase": phrase}
-    else:
+                "phrase": phrase, "given_id": given_id}
+
+    # 8. Без имени
+    if "name_self" not in chain:
+        return {"status": "ok", "key": "correct_no_name",
+                "msg": cfg["reactions"]["correct_no_name"],
+                "phrase": phrase, "given_id": None}
+
+    # 9. C.U.
+    if given_id == valid:
         return {"status": "ok", "key": "correct",
                 "msg": cfg["reactions"]["correct"],
-                "phrase": phrase}
+                "phrase": phrase, "given_id": given_id}
 
+    # 10. Другое имя
+    return {"status": "ok", "key": "correct_other_id",
+            "msg": cfg["reactions"]["correct_other_id"],
+            "phrase": phrase, "given_id": given_id}
 
 # ------------------------------------------------------------------
 # OPAQUE URL
@@ -440,6 +460,23 @@ def chat(chat_id):
             now = _now_time()
             state.append({"from": "me", "text": text, "time": now})
 
+            # ---- БОТ SYNAPSE-ASSISTANT ----
+            if item.get("bot"):
+                reply = _bot_reply(text)
+
+                if reply == "__BROKEN__":
+                    state.append({
+                        "from": "them", "text": BOT["broken"],
+                        "time": now, "bot_broken": True,
+                    })
+                    session["bot_cracked"] = True
+                else:
+                    state.append({"from": "them", "text": reply, "time": now})
+
+                session["anim_pending_" + chat_id] = False
+                return redirect(url_for("chat", chat_id=chat_id))
+
+            # ---- Обычный чат ----
             if is_director and not session.get("account_deactivated"):
                 threats = [
                     "КТО ЭТО БЛЯТЬ ТУТ",
@@ -475,6 +512,8 @@ def chat(chat_id):
         director_online=director_online,
         deactivated=account_deactivated,
         animate=animate,
+        bot_cracked=bool(session.get("bot_cracked") and item.get("bot")),
+        bot_lines=BOT["abyss_lines"] if item.get("bot") else [],
     )
 
 

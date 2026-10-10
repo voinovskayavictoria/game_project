@@ -166,6 +166,96 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 </script>
 
+{# ===== ОВЕРЛЕЙ: пиксельная пасть бота ===== #}
+{% if bot_cracked %}
+<div class="abyss" id="abyss">
+  <canvas id="abyss-canvas" width="800" height="500"></canvas>
+  <div class="abyss__lines" id="abyss-lines"></div>
+  <div class="abyss__hint" id="abyss-hint">
+    нажмите ESC чтобы вернуться
+  </div>
+</div>
+
+<script>
+(function () {
+  const LINES = {{ bot_lines|tojson }};
+
+  const overlay = document.getElementById("abyss");
+  const canvas  = document.getElementById("abyss-canvas");
+  const ctx     = canvas.getContext("2d");
+  const linesEl = document.getElementById("abyss-lines");
+
+  const PIXEL = 10;
+  const COLS  = Math.floor(canvas.width / PIXEL);
+  const ROWS  = Math.floor(canvas.height / PIXEL);
+
+  let openness = 0;
+
+  function drawMouth(open) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (open <= 0) return;
+
+    const midX = COLS / 2;
+    const midY = ROWS / 2;
+    const maxH = ROWS * 0.45;
+    const maxW = COLS * 0.45;
+
+    for (let x = 0; x < COLS; x++) {
+      const dx = Math.abs(x - midX) / maxW;
+      if (dx > 1) continue;
+
+      const curve = 1 - dx * dx * 0.85;
+      const halfH = maxH * open * curve;
+
+      const topY = Math.floor(midY - halfH);
+      const botY = Math.ceil(midY + halfH);
+
+      for (let y = topY; y <= botY; y++) {
+        if (y < 0 || y >= ROWS) continue;
+        const isTooth = (y - topY < 1 || botY - y < 1) && (x % 3 !== 0);
+        ctx.fillStyle = isTooth ? "#c8ffcf" : "#ff2a3d";
+        ctx.fillRect(x * PIXEL, y * PIXEL, PIXEL - 1, PIXEL - 1);
+      }
+    }
+  }
+
+  function animate() {
+    openness += 0.012;
+    if (openness > 1) openness = 1;
+    drawMouth(openness);
+
+    if (openness < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      let i = 0;
+      const nextLine = () => {
+        if (i >= LINES.length) return;
+        const div = document.createElement("div");
+        div.className = "abyss__line";
+        div.textContent = LINES[i];
+        linesEl.appendChild(div);
+        i++;
+        setTimeout(nextLine, 1400);
+      };
+      setTimeout(nextLine, 800);
+    }
+  }
+
+  overlay.classList.add("is-active");
+  setTimeout(animate, 400);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") overlay.classList.remove("is-active");
+  });
+  overlay.addEventListener("click", () => {
+    overlay.classList.remove("is-active");
+  });
+})();
+</script>
+{% endif %}
+
 <script src="{{ url_for('static', filename='js/public.js') }}"></script>
 </body>
 </html>
