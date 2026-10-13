@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import (
     Flask, render_template, request, session,
-    redirect, url_for, abort,
+    redirect, url_for, abort, jsonify,
 )
 from data import (
     SITE, PASSWORD_PUBLIC, PASSWORD_SECRET,
@@ -10,7 +10,7 @@ from data import (
     DRESSES, DRESSES_NOTE, DRESSES_FOOTER, DRESSES_RENTAL,
     HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
     PANOPTICON, SANITIZER, DEAD_DROP,
-    CHAT_HIJACK, BOT,
+    CHAT_HIJACK, BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
 )
 import json
 import random
@@ -143,6 +143,103 @@ def _bot_reply(text: str) -> str:
 
     # Обычный отказ
     return cfg["deny"]
+
+def _bot_quiz(item):
+    """Тест SYNAPSE-ASSISTANT — 10 раундов, AJAX."""
+    chat_id = item["id"]
+    _mark_read(chat_id)
+
+    # ---- состояние ----
+    if "quiz_step" not in session:
+        session["quiz_step"] = 0
+        session["quiz_errors"] = 0
+        session["bot_cracked"] = False
+
+    step   = session["quiz_step"]
+    errors = session["quiz_errors"]
+
+    # ---- POST (AJAX) ----
+    if request.method == "POST":
+        # уже прошёл
+        if session.get("bot_cracked"):
+            return {"status": "cracked", "fragment": QUIZ_CONFIG["fragment"]}
+
+        choice  = request.form.get("choice", "")
+        correct = QUIZ_ROUNDS[step]["correct"]
+
+        if choice == correct:
+            session["quiz_step"] = step + 1
+        else:
+            session["quiz_errors"] = errors + 1
+            if session["quiz_errors"] >= QUIZ_CONFIG["max_errors"]:
+                session["quiz_step"] = 0
+                session["quiz_errors"] = 0
+                session["quiz_failed"] = True
+
+        session.modified = True
+
+        new_step   = session["quiz_step"]
+        new_errors = session["quiz_errors"]
+        failed     = session.get("quiz_failed", False)
+
+        # победа
+        if new_step >= QUIZ_CONFIG["total_rounds"]:
+            session["bot_cracked"] = True
+            session.pop("quiz_failed", None)
+            return {
+                "status": "victory",
+                "fragment": QUIZ_CONFIG["fragment"],
+                "lines": QUIZ_CONFIG["victory_lines"],
+            }
+
+        # провал
+        if failed:
+            session.pop("quiz_failed", None)
+            return {"status": "failed"}
+
+        # следующий раунд
+        r = QUIZ_ROUNDS[new_step]
+        return {
+            "status": "next",
+            "step": new_step + 1,
+            "total": QUIZ_CONFIG["total_rounds"],
+            "errors": new_errors,
+            "max_errors": QUIZ_CONFIG["max_errors"],
+            "percent": round(new_step / QUIZ_CONFIG["total_rounds"] * 100),
+            "question": r["question"],
+            "round_id": r["id"],
+            "options": [
+                {"id": o["id"], "svg": o["svg"], "label": o["label"]}
+                for o in r["options"]
+            ],
+        }
+
+    # ---- GET ----
+    if session.get("bot_cracked"):
+        return render_template(
+            "chat.html",
+            chat=item, chats=_with_read_state(PUBLIC_CHATS),
+            extra=[], director_online=False, deactivated=False, animate=False,
+            bot_cracked=True,
+            bot_lines=QUIZ_CONFIG["victory_lines"],
+        )
+
+    quiz_failed = session.pop("quiz_failed", False)
+
+    return render_template(
+        "chat.html",
+        chat=item, chats=_with_read_state(PUBLIC_CHATS),
+        extra=[], director_online=False, deactivated=False, animate=False,
+        bot_cracked=False,
+        quiz_failed=quiz_failed,
+        quiz={
+            "step": step,
+            "errors": errors,
+            "total": QUIZ_CONFIG["total_rounds"],
+            "max_errors": QUIZ_CONFIG["max_errors"],
+            "round": QUIZ_ROUNDS[step],
+        },
+    )
 
 # ------------------------------------------------------------------
 # HIJACK — оценка цепочки
@@ -444,6 +541,10 @@ def chat(chat_id):
     item = _find_chat(chat_id, PUBLIC_CHATS)
     if not item:
         return shutdown(reason="breach")
+
+    # ===== СПЕЦ-ОБРАБОТКА БОТА С ТЕСТОМ =====
+    if item.get("bot"):
+        return _bot_quiz(item)
 
     is_director = bool(item.get("director"))
     account_deactivated = bool(session.get("account_deactivated"))

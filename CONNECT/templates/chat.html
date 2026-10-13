@@ -42,45 +42,387 @@
 
   <main class="conversation">
 
-    <header class="conversation__head">
-      <div class="chat-item__avatar" style="background: {{ chat.color }}">{{ chat.avatar }}</div>
-      <div>
-        <div class="conversation__name">{{ chat.name }}</div>
-        <div class="conversation__with" id="status-line">
-          {% if chat.director and director_online %}
-            <span class="online-badge">● онлайн</span>
-          {% else %}
+    {# ==========================================================
+       РЕЖИМ 1 — БОТ, ТЕСТ ЕЩЁ НЕ ПРОЙДЕН
+       ========================================================== #}
+    {% if chat.bot and not bot_cracked %}
+      {% import "_bot_quiz.html" as quiz_macros %}
+
+      <header class="conversation__head">
+        <div class="chat-item__avatar" style="background: {{ chat.color }}">{{ chat.avatar }}</div>
+        <div>
+          <div class="conversation__name">{{ chat.name }}</div>
+          <div class="conversation__with" id="status-line">
             <span class="offline-badge">● офлайн</span>
-          {% endif %}
+          </div>
         </div>
+      </header>
+
+      <div class="conversation__messages" id="messages">
+
+        {% for m in chat.messages %}
+          <div class="msg {% if m.from == 'me' %}msg--me{% endif %}">
+            <div class="msg__text">{{ m.text }}</div>
+            {% if m.time %}<div class="msg__time">{{ m.time }}</div>{% endif %}
+          </div>
+        {% endfor %}
+
+        <div id="quiz-trigger" style="display:none;">
+          <div class="msg msg--system">
+            <div class="msg__text">⚠️ ОБНАРУЖЕНА АНОМАЛИЯ ПОВЕДЕНИЯ. ЗАПУСК ПРОВЕРКИ БИОЛОГИЧЕСКОЙ СУЩНОСТИ...</div>
+          </div>
+        </div>
+
+        <div class="msg msg--typing" id="bot-typing" style="display:none;">
+          <span></span><span></span><span></span>
+        </div>
+
       </div>
-    </header>
 
-    <div class="conversation__messages" id="messages">
-      {% for m in chat.messages %}
-        <div class="msg {% if m.from == 'me' %}msg--me{% endif %} {% if m.hot %}msg--hot{% endif %} {% if m.from == 'system' %}msg--system{% endif %}">
-          <div class="msg__text">{{ m.text }}</div>
-          {% if m.time %}<div class="msg__time">{{ m.time }}</div>{% endif %}
+      <div class="quiz-fullscreen" id="quiz-fullscreen">
+        <div class="quiz-fullscreen__inner" id="quiz-fullscreen-inner"></div>
+      </div>
+
+      <div id="svg-templates" style="display:none;">
+        <div id="svg-server">{{ quiz_macros.svg_icon('server') }}</div>
+        <div id="svg-camera">{{ quiz_macros.svg_icon('camera') }}</div>
+        <div id="svg-monitor">{{ quiz_macros.svg_icon('monitor') }}</div>
+        <div id="svg-keyboard">{{ quiz_macros.svg_icon('keyboard') }}</div>
+        <div id="svg-lamp">{{ quiz_macros.svg_icon('lamp') }}</div>
+        <div id="svg-door">{{ quiz_macros.svg_icon('door') }}</div>
+        <div id="svg-door_shadow">{{ quiz_macros.svg_icon('door_shadow') }}</div>
+        <div id="svg-window">{{ quiz_macros.svg_icon('window') }}</div>
+        <div id="svg-silhouette">{{ quiz_macros.svg_icon('silhouette') }}</div>
+        <div id="svg-silhouette_red">{{ quiz_macros.svg_icon('silhouette_red') }}</div>
+        <div id="svg-chair">{{ quiz_macros.svg_icon('chair') }}</div>
+        <div id="svg-face">{{ quiz_macros.svg_icon('face') }}</div>
+        <div id="svg-face_empty">{{ quiz_macros.svg_icon('face_empty') }}</div>
+        <div id="svg-eye">{{ quiz_macros.svg_icon('eye') }}</div>
+        <div id="svg-wall">{{ quiz_macros.svg_icon('wall') }}</div>
+        <div id="svg-mouth_closed">{{ quiz_macros.svg_icon('mouth_closed') }}</div>
+        <div id="svg-mouth_open">{{ quiz_macros.svg_icon('mouth_open') }}</div>
+      </div>
+
+      <script>
+      (function () {
+        var box          = document.getElementById("messages");
+        var trigger      = document.getElementById("quiz-trigger");
+        var typing       = document.getElementById("bot-typing");
+        var overlay      = document.getElementById("quiz-fullscreen");
+        var overlayInner = document.getElementById("quiz-fullscreen-inner");
+        var statusLine   = document.getElementById("status-line");
+        var svgSourceEl  = document.getElementById("svg-templates");
+
+        if (!box || !overlay || !overlayInner || !svgSourceEl) return;
+
+        var svgSource = svgSourceEl.innerHTML;
+        function getSvg(name) {
+          var tmp = document.createElement("div");
+          tmp.innerHTML = svgSource;
+          var el = tmp.querySelector("#svg-" + name);
+          return el ? el.innerHTML : "";
+        }
+
+        // Данные первого раунда (приходят из сервера при загрузке страницы)
+        var firstRound = {
+          step: {{ quiz.step + 1 }},
+          total: {{ quiz.total }},
+          errors: {{ quiz.errors }},
+          max_errors: {{ quiz.max_errors }},
+          percent: {{ (quiz.step / quiz.total * 100)|round }},
+          question: {{ quiz.round.question|tojson }},
+          options: [
+            {% for opt in quiz.round.options %}
+              { id: {{ opt.id|tojson }}, svg: {{ opt.svg|tojson }}, label: {{ opt.label|tojson }} }{% if not loop.last %},{% endif %}
+            {% endfor %}
+          ],
+        };
+
+        function renderRound(data) {
+          var html = '';
+          html += '<div class="quiz-fullscreen__progress">';
+          html += '  <div class="quiz-fullscreen__bar">';
+          html += '    <div class="quiz-fullscreen__fill" style="width:' + data.percent + '%;"></div>';
+          html += '  </div>';
+          html += '  <div class="quiz-fullscreen__label">';
+          html += '    раунд <b>' + data.step + '</b> / ' + data.total;
+          html += '    · ошибок: <b>' + data.errors + '</b> / ' + data.max_errors;
+          html += '  </div>';
+          html += '</div>';
+          html += '<div class="quiz-fullscreen__question">' + data.question + '</div>';
+          html += '<div class="quiz-fullscreen__options">';
+          data.options.forEach(function (opt) {
+            html += '<button type="button" class="quiz-fullscreen__card" data-choice="' + opt.id + '">';
+            html += getSvg(opt.svg);
+            html += '<div class="quiz-fullscreen__card-label">' + opt.label + '</div>';
+            html += '</button>';
+          });
+          html += '</div>';
+          overlayInner.innerHTML = html;
+
+          overlayInner.querySelectorAll(".quiz-fullscreen__card").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              sendChoice(btn.dataset.choice);
+            });
+          });
+        }
+
+        function sendChoice(choice) {
+          overlayInner.innerHTML =
+            '<div class="quiz-fullscreen__typing"><span></span><span></span><span></span></div>';
+
+          fetch(window.location.pathname, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "choice=" + encodeURIComponent(choice),
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data.status === "victory") {
+                sessionStorage.removeItem("bot_quiz_triggered");
+                window.location.reload();
+                return;
+              }
+              if (data.status === "failed") {
+                sessionStorage.removeItem("bot_quiz_triggered");
+                overlayInner.innerHTML =
+                  '<div class="quiz-fullscreen__fail">' +
+                  '  <div class="quiz-fullscreen__fail-title">[ACCESS REVOKED: NON-HUMAN ENTITY]</div>' +
+                  '  <div class="quiz-fullscreen__fail-text">тест провален.</div>' +
+                  '  <a href="' + window.location.pathname + '" class="quiz-fullscreen__restart">// начать заново</a>' +
+                  '</div>';
+                return;
+              }
+              renderRound(data);
+            })
+            .catch(function () {
+              overlayInner.innerHTML = '<div class="quiz-fullscreen__fail">ошибка сети</div>';
+            });
+        }
+
+        function openQuiz() {
+          overlay.classList.add("is-active");
+          renderRound(firstRound);
+          if (statusLine) {
+            statusLine.innerHTML =
+              '<span class="online-badge" style="color:#ff2a3d;">● ПРОВЕРКА ПОЛЬЗОВАТЕЛЯ</span>';
+          }
+        }
+
+        var triggered = sessionStorage.getItem("bot_quiz_triggered") === "1";
+        var quizOpened = false;
+
+        function fireQuiz() {
+  console.log("[BOT] fireQuiz вызван, triggered =", triggered);
+
+  if (quizOpened) return;
+
+          if (triggered) {
+            // Уже триггерили в этой сессии — показываем сообщение об аномалии,
+            // но quiz не открываем, пока игрок сам не долистает
+            trigger.style.display = "block";
+            return;
+          }
+
+          triggered = true;
+          sessionStorage.setItem("bot_quiz_triggered", "1");
+
+          // 1. Системное сообщение — мгновенно
+          trigger.style.display = "block";
+          box.scrollTop = box.scrollHeight;
+
+          // 2. Через 1.5 сек — три точки «печатает»
+          setTimeout(function () {
+            typing.style.display = "flex";
+            box.scrollTop = box.scrollHeight;
+
+            // 3. Через ещё 2 сек — открываем полноэкранный quiz
+            setTimeout(function () {
+              typing.style.display = "none";
+              quizOpened = true;
+              openQuiz();
+            }, 2000);
+          }, 1500);
+        }
+
+        // Кнопка «проверить» — на всякий случай, если игрок не понимает,
+        // что надо скроллить. Открывает quiz вручную.
+        // (Можно привязать к чему-то, если нужно.)
+
+        // Триггер срабатывает по скроллу вниз
+        box.addEventListener("scroll", function () {
+          var atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 40;
+          if (atBottom) fireQuiz();
+        });
+
+        // Если контента мало — сработает при первом же скролле.
+        // Но НЕ открываем quiz автоматически, чтобы игрок мог прочитать переписку.
+        // Если ты ХОЧЕШЬ автоматический старт — раскомментируй строчки ниже:
+        // if (box.scrollHeight <= box.clientHeight + 20) fireQuiz();
+
+// Автоскролл — НЕ делаем. Игрок сам листает вниз.
+// box.scrollTop = box.scrollHeight;
+
+// ========== ФИКС: если контента мало и скролла нет — триггерим сразу ==========
+setTimeout(function () {
+  if (box.scrollHeight <= box.clientHeight + 20 && !triggered) {
+    console.log("[BOT] контент короткий — fireQuiz");
+    fireQuiz();
+  }
+}, 800);
+
+// ========== ФИКС: клик по чату тоже триггерит (если игрок не понял, что делать) ==========
+box.addEventListener("click", function () {
+  if (!triggered) {
+    console.log("[BOT] клик по чату — fireQuiz");
+    fireQuiz();
+  }
+});
+})();
+      </script>
+
+    {# ==========================================================
+       РЕЖИМ 2 — БОТ СЛОМАН, ПОБЕДА
+       ========================================================== #}
+    {% elif chat.bot and bot_cracked %}
+
+      <header class="conversation__head">
+        <div class="chat-item__avatar" style="background: #ff2a3d">{{ chat.avatar }}</div>
+        <div>
+          <div class="conversation__name">{{ chat.name }}</div>
+          <div class="conversation__with">
+            <span class="offline-badge" style="color:#ff2a3d;">● CONNECTION LOST</span>
+          </div>
         </div>
-      {% endfor %}
+      </header>
 
-      {% for m in extra %}
-        <div class="msg {% if m.from == 'me' %}msg--me{% endif %} {% if m.hot %}msg--hot{% endif %} {% if m.from == 'system' %}msg--system{% endif %} {% if m.pending %}msg--pending{% endif %} {% if m.countdown %}msg--countdown{% endif %}">
-          <div class="msg__text">{{ m.text }}</div>
-          {% if m.time %}<div class="msg__time">{{ m.time }}</div>{% endif %}
-        </div>
-      {% endfor %}
-    </div>
+      <div class="abyss is-active" id="abyss">
+        <canvas id="abyss-canvas" width="800" height="500"></canvas>
+        <div class="abyss__lines" id="abyss-lines"></div>
+        <div class="abyss__hint">нажмите ESC или клик чтобы вернуться</div>
+      </div>
 
-    {% if chat.writable and not deactivated %}
-      <form class="conversation__input" method="post" autocomplete="off" id="reply-form">
-        <input type="text" name="text" placeholder="Написать сообщение..." autofocus>
-        <button type="submit">Отправить</button>
-      </form>
+      <script>
+      (function () {
+        var LINES = {{ bot_lines|tojson }};
+        var overlay = document.getElementById("abyss");
+        var canvas  = document.getElementById("abyss-canvas");
+        var ctx     = canvas.getContext("2d");
+        var linesEl = document.getElementById("abyss-lines");
+
+        var PIXEL = 10;
+        var COLS  = Math.floor(canvas.width / PIXEL);
+        var ROWS  = Math.floor(canvas.height / PIXEL);
+        var openness = 0;
+        var animId = null;
+
+        function drawMouth(open) {
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          if (open <= 0) return;
+
+          var midX = COLS / 2, midY = ROWS / 2;
+          var maxH = ROWS * 0.45, maxW = COLS * 0.45;
+
+          for (var x = 0; x < COLS; x++) {
+            var dx = Math.abs(x - midX) / maxW;
+            if (dx > 1) continue;
+
+            var curve = 1 - dx * dx * 0.85;
+            var halfH = maxH * open * curve;
+            var topY = Math.floor(midY - halfH);
+            var botY = Math.ceil(midY + halfH);
+
+            for (var y = topY; y <= botY; y++) {
+              if (y < 0 || y >= ROWS) continue;
+              var isTooth = (y - topY < 1 || botY - y < 1) && (x % 3 !== 0);
+              ctx.fillStyle = isTooth ? "#c8ffcf" : "#ff2a3d";
+              ctx.fillRect(x * PIXEL, y * PIXEL, PIXEL - 1, PIXEL - 1);
+            }
+          }
+        }
+
+        function animate() {
+          openness += 0.012;
+          if (openness > 1) openness = 1;
+          drawMouth(openness);
+
+          if (openness < 1) {
+            animId = requestAnimationFrame(animate);
+          } else {
+            var i = 0;
+            var nextLine = function () {
+              if (i >= LINES.length) return;
+              var div = document.createElement("div");
+              div.className = "abyss__line";
+              div.textContent = LINES[i];
+              linesEl.appendChild(div);
+              i++;
+              setTimeout(nextLine, 1400);
+            };
+            setTimeout(nextLine, 800);
+          }
+        }
+
+        function closeOverlay() {
+          overlay.classList.remove("is-active");
+          overlay.style.display = "none";
+          if (animId) cancelAnimationFrame(animId);
+        }
+
+        animId = requestAnimationFrame(animate);
+
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeOverlay();
+        });
+        overlay.addEventListener("click", closeOverlay);
+      })();
+      </script>
+
+    {# ==========================================================
+       РЕЖИМ 3 — ОБЫЧНЫЙ ЧАТ
+       ========================================================== #}
     {% else %}
-      <div class="reply-disabled" id="reply-disabled">
-        {% if deactivated %}аккаунт деактивирован{% else %}чат только для чтения{% endif %}
+      <header class="conversation__head">
+        <div class="chat-item__avatar" style="background: {{ chat.color }}">{{ chat.avatar }}</div>
+        <div>
+          <div class="conversation__name">{{ chat.name }}</div>
+          <div class="conversation__with" id="status-line">
+            {% if chat.director and director_online %}
+              <span class="online-badge">● онлайн</span>
+            {% else %}
+              <span class="offline-badge">● офлайн</span>
+            {% endif %}
+          </div>
+        </div>
+      </header>
+
+      <div class="conversation__messages" id="messages">
+        {% for m in chat.messages %}
+          <div class="msg {% if m.from == 'me' %}msg--me{% endif %} {% if m.hot %}msg--hot{% endif %} {% if m.from == 'system' %}msg--system{% endif %}">
+            <div class="msg__text">{{ m.text }}</div>
+            {% if m.time %}<div class="msg__time">{{ m.time }}</div>{% endif %}
+          </div>
+        {% endfor %}
+
+        {% for m in extra %}
+          <div class="msg {% if m.from == 'me' %}msg--me{% endif %} {% if m.hot %}msg--hot{% endif %} {% if m.from == 'system' %}msg--system{% endif %} {% if m.pending %}msg--pending{% endif %}">
+            <div class="msg__text">{{ m.text }}</div>
+            {% if m.time %}<div class="msg__time">{{ m.time }}</div>{% endif %}
+          </div>
+        {% endfor %}
       </div>
+
+      {% if chat.writable and not deactivated %}
+        <form class="conversation__input" method="post" autocomplete="off" id="reply-form">
+          <input type="text" name="text" placeholder="Написать сообщение..." autofocus>
+          <button type="submit">Отправить</button>
+        </form>
+      {% else %}
+        <div class="reply-disabled" id="reply-disabled">
+          {% if deactivated %}аккаунт деактивирован{% else %}чат только для чтения{% endif %}
+        </div>
+      {% endif %}
     {% endif %}
 
   </main>
@@ -165,96 +507,6 @@ document.addEventListener("DOMContentLoaded", function(){
   setTimeout(next, 500);
 });
 </script>
-
-{# ===== ОВЕРЛЕЙ: пиксельная пасть бота ===== #}
-{% if bot_cracked %}
-<div class="abyss" id="abyss">
-  <canvas id="abyss-canvas" width="800" height="500"></canvas>
-  <div class="abyss__lines" id="abyss-lines"></div>
-  <div class="abyss__hint" id="abyss-hint">
-    нажмите ESC чтобы вернуться
-  </div>
-</div>
-
-<script>
-(function () {
-  const LINES = {{ bot_lines|tojson }};
-
-  const overlay = document.getElementById("abyss");
-  const canvas  = document.getElementById("abyss-canvas");
-  const ctx     = canvas.getContext("2d");
-  const linesEl = document.getElementById("abyss-lines");
-
-  const PIXEL = 10;
-  const COLS  = Math.floor(canvas.width / PIXEL);
-  const ROWS  = Math.floor(canvas.height / PIXEL);
-
-  let openness = 0;
-
-  function drawMouth(open) {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    if (open <= 0) return;
-
-    const midX = COLS / 2;
-    const midY = ROWS / 2;
-    const maxH = ROWS * 0.45;
-    const maxW = COLS * 0.45;
-
-    for (let x = 0; x < COLS; x++) {
-      const dx = Math.abs(x - midX) / maxW;
-      if (dx > 1) continue;
-
-      const curve = 1 - dx * dx * 0.85;
-      const halfH = maxH * open * curve;
-
-      const topY = Math.floor(midY - halfH);
-      const botY = Math.ceil(midY + halfH);
-
-      for (let y = topY; y <= botY; y++) {
-        if (y < 0 || y >= ROWS) continue;
-        const isTooth = (y - topY < 1 || botY - y < 1) && (x % 3 !== 0);
-        ctx.fillStyle = isTooth ? "#c8ffcf" : "#ff2a3d";
-        ctx.fillRect(x * PIXEL, y * PIXEL, PIXEL - 1, PIXEL - 1);
-      }
-    }
-  }
-
-  function animate() {
-    openness += 0.012;
-    if (openness > 1) openness = 1;
-    drawMouth(openness);
-
-    if (openness < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      let i = 0;
-      const nextLine = () => {
-        if (i >= LINES.length) return;
-        const div = document.createElement("div");
-        div.className = "abyss__line";
-        div.textContent = LINES[i];
-        linesEl.appendChild(div);
-        i++;
-        setTimeout(nextLine, 1400);
-      };
-      setTimeout(nextLine, 800);
-    }
-  }
-
-  overlay.classList.add("is-active");
-  setTimeout(animate, 400);
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") overlay.classList.remove("is-active");
-  });
-  overlay.addEventListener("click", () => {
-    overlay.classList.remove("is-active");
-  });
-})();
-</script>
-{% endif %}
 
 <script src="{{ url_for('static', filename='js/public.js') }}"></script>
 </body>
