@@ -1,5 +1,4 @@
-import os
-app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key")
+
 
 # -*- coding: utf-8 -*-
 from flask import (
@@ -15,13 +14,15 @@ from data import (
     PANOPTICON, SANITIZER, DEAD_DROP,
     CHAT_HIJACK, BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
 )
+import os
 import json
 import random
 import datetime
 import re
 
+
 app = Flask(__name__)
-import os
+
 app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key")
 
 CHAT_STATE = {}
