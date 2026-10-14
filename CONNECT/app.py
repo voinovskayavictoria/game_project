@@ -1,3 +1,6 @@
+import os
+app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key")
+
 # -*- coding: utf-8 -*-
 from flask import (
     Flask, render_template, request, session,
@@ -1083,5 +1086,8 @@ def dead_drop():
     )
 
 
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5009, debug=True)
+    port = int(os.environ.get("PORT", 5009))
+    app.run(host="0.0.0.0", port=port, debug=False)
