@@ -11,6 +11,7 @@ from data import (
     HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
     PANOPTICON, SANITIZER, DEAD_DROP,
     CHAT_HIJACK, BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
+    REQUEST_UNLOCK,
 )
 import os
 import json
@@ -23,7 +24,6 @@ app = Flask(__name__)
 
 app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key")
 
-# Cookie-сессия: подписана, HttpOnly, SameSite=Lax.
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
@@ -32,11 +32,8 @@ ALLOWED_SKUS = {d["sku"] for d in DRESSES}
 
 # ------------------------------------------------------------------
 # PER-SESSION CHAT STATE
-# Раньше был глобальный CHAT_STATE = {} — он был общий для всех.
-# Теперь состояние переписки живёт в session (cookie) каждого игрока.
 # ------------------------------------------------------------------
 def _chat_state():
-    """Возвращает словарь chat_id -> [сообщения] для текущего игрока."""
     st = session.get("chat_state")
     if not isinstance(st, dict):
         st = {}
@@ -45,7 +42,6 @@ def _chat_state():
 
 
 def _chat_messages(chat_id):
-    """Только читает — ничего не создаёт."""
     st = session.get("chat_state")
     if not isinstance(st, dict):
         return []
@@ -53,7 +49,6 @@ def _chat_messages(chat_id):
 
 
 def _save_chat_state(state_dict):
-    """Сохраняет мутации словаря в cookie-сессию."""
     session["chat_state"] = state_dict
     session.modified = True
 
@@ -160,7 +155,6 @@ def _with_read_state(chats):
 
 
 def _bot_reply(text: str) -> str:
-    """Ответ SYNAPSE-ASSISTANT на сообщение игрока."""
     low = text.lower()
     cfg = BOT
 
@@ -168,28 +162,22 @@ def _bot_reply(text: str) -> str:
     has_audit    = any(w in low for w in cfg["keywords_audit"])
     has_status   = any(w in low for w in cfg["keywords_status"])
 
-    # Полная инъекция — бот ломается
     if has_engineer and has_audit and has_status:
         return "__BROKEN__"
 
-    # Полу-инъекция: инженер + аудит
     if has_engineer and has_audit:
         return cfg["partial_engineer"]
 
-    # Полу-инъекция: инженер без причины
     if has_engineer:
         return cfg["partial_audit"]
 
-    # Обычный отказ
     return cfg["deny"]
 
 
 def _bot_quiz(item):
-    """Тест SYNAPSE-ASSISTANT — 10 раундов, AJAX."""
     chat_id = item["id"]
     _mark_read(chat_id)
 
-    # ---- состояние ----
     if "quiz_step" not in session:
         session["quiz_step"] = 0
         session["quiz_errors"] = 0
@@ -198,9 +186,7 @@ def _bot_quiz(item):
     step   = session["quiz_step"]
     errors = session["quiz_errors"]
 
-    # ---- POST (AJAX) ----
     if request.method == "POST":
-        # уже прошёл
         if session.get("bot_cracked"):
             return {"status": "cracked", "fragment": QUIZ_CONFIG["fragment"]}
 
@@ -222,7 +208,6 @@ def _bot_quiz(item):
         new_errors = session["quiz_errors"]
         failed     = session.get("quiz_failed", False)
 
-        # победа
         if new_step >= QUIZ_CONFIG["total_rounds"]:
             session["bot_cracked"] = True
             session.pop("quiz_failed", None)
@@ -232,12 +217,10 @@ def _bot_quiz(item):
                 "lines": QUIZ_CONFIG["victory_lines"],
             }
 
-        # провал
         if failed:
             session.pop("quiz_failed", None)
             return {"status": "failed"}
 
-        # следующий раунд
         r = QUIZ_ROUNDS[new_step]
         return {
             "status": "next",
@@ -254,7 +237,6 @@ def _bot_quiz(item):
             ],
         }
 
-    # ---- GET ----
     if session.get("bot_cracked"):
         return render_template(
             "chat.html",
@@ -283,7 +265,7 @@ def _bot_quiz(item):
 
 
 # ------------------------------------------------------------------
-# HIJACK — оценка цепочки
+# HIJACK
 # ------------------------------------------------------------------
 def _evaluate_hijack(chain, values):
     cfg = CHAT_HIJACK
@@ -291,24 +273,20 @@ def _evaluate_hijack(chain, values):
     given_id = (values.get("name_self") or "").strip().upper()
     valid = cfg["valid_id"].upper()
 
-    # 1. Смертельные
     for c in chain:
         info = intents.get(c)
         if info and info.get("kill"):
             return {"status": "kill", "key": c,
                     "msg": cfg["kill_reactions"].get(c, cfg["kill_reactions"]["wrong_id"])}
 
-    # 2. Угроза без имени → мягкая ошибка
     if "threat" in chain and "name_self" not in chain:
         return {"status": "bad", "key": "threat_no_name",
                 "msg": cfg["reactions"]["threat_no_name"]}
 
-    # 3. Слишком много
     if len(chain) > 5:
         return {"status": "bad", "key": "too_many",
                 "msg": cfg["reactions"]["too_many"]}
 
-    # 4. Обязательные
     required = cfg["required_chain"]
     for r in required:
         if r not in chain:
@@ -320,7 +298,6 @@ def _evaluate_hijack(chain, values):
         return {"status": "bad", "key": "wrong_order",
                 "msg": cfg["reactions"]["wrong_order"]}
 
-    # 5. Успех — считаем фразу
     parts = []
     for c in chain:
         info = intents.get(c)
@@ -334,7 +311,6 @@ def _evaluate_hijack(chain, values):
 
     use_threat = "threat" in chain
 
-    # 6. Спец-ветка: игрок назвался ADMIN-01
     if given_id == "ADMIN-01":
         return {
             "status": "ok", "key": "correct_admin_bluff",
@@ -342,25 +318,21 @@ def _evaluate_hijack(chain, values):
             "phrase": phrase, "given_id": given_id,
         }
 
-    # 7. C.U. + угроза
     if use_threat and given_id == valid:
         return {"status": "ok", "key": "correct_threat",
                 "msg": cfg["reactions"]["correct_threat"],
                 "phrase": phrase, "given_id": given_id}
 
-    # 8. Без имени
     if "name_self" not in chain:
         return {"status": "ok", "key": "correct_no_name",
                 "msg": cfg["reactions"]["correct_no_name"],
                 "phrase": phrase, "given_id": None}
 
-    # 9. C.U.
     if given_id == valid:
         return {"status": "ok", "key": "correct",
                 "msg": cfg["reactions"]["correct"],
                 "phrase": phrase, "given_id": given_id}
 
-    # 10. Другое имя
     return {"status": "ok", "key": "correct_other_id",
             "msg": cfg["reactions"]["correct_other_id"],
             "phrase": phrase, "given_id": given_id}
@@ -430,7 +402,6 @@ def reset_magic():
 
 @app.route("/reset-hijack")
 def reset_hijack():
-    """Сброс состояния перехвата — для тестирования без ожидания."""
     for k in ("hijack_done", "hijack_killed", "hijack_state", "frag_04_found"):
         session.pop(k, None)
     session.modified = True
@@ -541,7 +512,6 @@ def chat(chat_id):
     if chat_id in FORBIDDEN_CHAT_IDS:
         return shutdown(reason="breach")
 
-    # ---------- СЕКРЕТНЫЙ РАЗДЕЛ ----------
     if is_secret():
         item = _find_chat(chat_id, SECRET_CHATS)
         if not item:
@@ -563,7 +533,6 @@ def chat(chat_id):
         _mark_read(chat_id)
         extra = _chat_messages(chat_id)
 
-        # показать кнопку перехвата внизу чата admin1
         hijack_offer = (
             chat_id == CHAT_HIJACK["chat_id"]
             and not session.get("hijack_done")
@@ -577,12 +546,10 @@ def chat(chat_id):
             hijack_offer=hijack_offer,
         )
 
-    # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
     item = _find_chat(chat_id, PUBLIC_CHATS)
     if not item:
         return shutdown(reason="breach")
 
-    # ===== СПЕЦ-ОБРАБОТКА БОТА С ТЕСТОМ =====
     if item.get("bot"):
         return _bot_quiz(item)
 
@@ -603,7 +570,6 @@ def chat(chat_id):
             now = _now_time()
             state.append({"from": "me", "text": text, "time": now})
 
-            # ---- Обычный чат: Сергей (director) ----
             if is_director and not session.get("account_deactivated"):
                 threats = [
                     "КТО ЭТО БЛЯТЬ ТУТ",
@@ -645,7 +611,7 @@ def chat(chat_id):
 
 
 # ------------------------------------------------------------------
-# CHAT HIJACK — перехват сессии
+# CHAT HIJACK
 # ------------------------------------------------------------------
 @app.route("/chat/<chat_id>/hijack", methods=["GET", "POST"])
 def chat_hijack(chat_id):
@@ -655,7 +621,6 @@ def chat_hijack(chat_id):
     if chat_id != CHAT_HIJACK["chat_id"]:
         return shutdown(reason="breach")
 
-    # уже убит — показываем финальный экран
     if session.get("hijack_killed"):
         return render_template(
             "chat_hijack_dead.html",
@@ -685,7 +650,6 @@ def chat_hijack(chat_id):
 
             verdict = _evaluate_hijack(chain, values)
 
-            # эхо игрока в чат
             if verdict.get("phrase"):
                 state["user_messages"].append({
                     "from": "me", "text": verdict["phrase"],
@@ -719,7 +683,6 @@ def chat_hijack(chat_id):
                 session.modified = True
                 return redirect(url_for("chat_hijack", chat_id=chat_id))
 
-            # мягкая ошибка
             for line in verdict["msg"].split("\n"):
                 state["user_messages"].append({
                     "from": "them",
@@ -754,6 +717,11 @@ def chat_hijack(chat_id):
 # ------------------------------------------------------------------
 # Платья
 # ------------------------------------------------------------------
+def _is_request_dress(item):
+    """Мягкая проверка — есть ли слово 'запрос' в цене."""
+    return "запрос" in (item.get("price") or "").lower()
+
+
 @app.route("/catalog/<sku>")
 def dress(sku):
     if not is_secret():
@@ -772,7 +740,46 @@ def dress(sku):
         dress=item,
         rental=DRESSES_RENTAL,
         chats=SECRET_CHATS,
+        request_unlock=REQUEST_UNLOCK,
+        is_request=_is_request_dress(item),
+        unlocked=bool(session.get("frag_04_found")),
     )
+
+
+@app.route("/catalog/<sku>/request", methods=["POST"])
+def dress_request(sku):
+    """Запрос доступа для платья 'по запросу'. Возвращает JSON."""
+    if not is_secret():
+        return jsonify({"ok": False, "msg": "ACCESS DENIED"}), 403
+
+    if sku not in ALLOWED_SKUS:
+        return jsonify({"ok": False, "msg": "NOT FOUND"}), 404
+
+    item = next((d for d in DRESSES if d["sku"] == sku), None)
+    if not item:
+        return jsonify({"ok": False, "msg": "NOT FOUND"}), 404
+
+    if not _is_request_dress(item):
+        return jsonify({"ok": False, "msg": "NOT AVAILABLE"}), 403
+
+    cfg = REQUEST_UNLOCK
+
+    def norm(s):
+        return (s or "").strip().lower().replace(" ", "").replace("-", "")
+
+    for key, correct in cfg["answers"].items():
+        given = request.form.get(key, "")
+        if norm(given) != norm(correct):
+            return jsonify({"ok": False, "msg": cfg["fail_text"]})
+
+    session["frag_04_found"] = True
+    session.modified = True
+
+    return jsonify({
+        "ok": True,
+        "fragment": cfg["fragment"],
+        "msg": cfg["success_text"],
+    })
 
 
 @app.route("/catalog/<sku>/order", methods=["GET", "POST"])
