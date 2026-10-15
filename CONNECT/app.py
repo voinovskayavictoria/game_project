@@ -1,5 +1,3 @@
-
-
 # -*- coding: utf-8 -*-
 from flask import (
     Flask, render_template, request, session,
@@ -25,9 +23,44 @@ app = Flask(__name__)
 
 app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key")
 
-CHAT_STATE = {}
+# Cookie-сессия: подписана, HttpOnly, SameSite=Lax.
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 ALLOWED_SKUS = {d["sku"] for d in DRESSES}
+
+
+# ------------------------------------------------------------------
+# PER-SESSION CHAT STATE
+# Раньше был глобальный CHAT_STATE = {} — он был общий для всех.
+# Теперь состояние переписки живёт в session (cookie) каждого игрока.
+# ------------------------------------------------------------------
+def _chat_state():
+    """Возвращает словарь chat_id -> [сообщения] для текущего игрока."""
+    st = session.get("chat_state")
+    if not isinstance(st, dict):
+        st = {}
+        session["chat_state"] = st
+    return st
+
+
+def _chat_messages(chat_id):
+    """Только читает — ничего не создаёт."""
+    st = session.get("chat_state")
+    if not isinstance(st, dict):
+        return []
+    return st.get(chat_id, [])
+
+
+def _save_chat_state(state_dict):
+    """Сохраняет мутации словаря в cookie-сессию."""
+    session["chat_state"] = state_dict
+    session.modified = True
+
+
+def _clear_chat_state():
+    session.pop("chat_state", None)
+    session.modified = True
 
 
 # ------------------------------------------------------------------
@@ -70,7 +103,7 @@ def is_suspicious_text(text: str) -> bool:
 def shutdown(reason="breach"):
     session["shutdown"] = True
     session["shutdown_reason"] = reason
-    CHAT_STATE.clear()
+    _clear_chat_state()
     return redirect(url_for("shutdown_page", reason=reason))
 
 
@@ -125,6 +158,7 @@ def _with_read_state(chats):
         out.append(c2)
     return out
 
+
 def _bot_reply(text: str) -> str:
     """Ответ SYNAPSE-ASSISTANT на сообщение игрока."""
     low = text.lower()
@@ -148,6 +182,7 @@ def _bot_reply(text: str) -> str:
 
     # Обычный отказ
     return cfg["deny"]
+
 
 def _bot_quiz(item):
     """Тест SYNAPSE-ASSISTANT — 10 раундов, AJAX."""
@@ -246,6 +281,7 @@ def _bot_quiz(item):
         },
     )
 
+
 # ------------------------------------------------------------------
 # HIJACK — оценка цепочки
 # ------------------------------------------------------------------
@@ -329,6 +365,7 @@ def _evaluate_hijack(chain, values):
             "msg": cfg["reactions"]["correct_other_id"],
             "phrase": phrase, "given_id": given_id}
 
+
 # ------------------------------------------------------------------
 # OPAQUE URL
 # ------------------------------------------------------------------
@@ -388,7 +425,6 @@ def opaque(slug):
 @app.route("/reset")
 def reset_magic():
     session.clear()
-    CHAT_STATE.clear()
     return redirect(url_for("login"))
 
 
@@ -408,7 +444,6 @@ def reset_hijack():
 def root():
     if session.get("shutdown"):
         session.clear()
-        CHAT_STATE.clear()
     if not is_authed():
         return redirect(url_for("login"))
     return redirect(url_for("inbox"))
@@ -418,7 +453,6 @@ def root():
 def login():
     if request.method == "GET" and session.get("shutdown"):
         session.clear()
-        CHAT_STATE.clear()
 
     if request.method == "POST":
         user = request.form.get("login", "").strip().lower()
@@ -454,7 +488,6 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    CHAT_STATE.clear()
     return redirect(url_for("login"))
 
 
@@ -520,13 +553,15 @@ def chat(chat_id):
             text = request.form.get("text", "").strip()
             if text:
                 now = _now_time()
-                CHAT_STATE.setdefault(chat_id, []).append(
+                st = _chat_state()
+                st.setdefault(chat_id, []).append(
                     {"from": "me", "text": text, "time": now}
                 )
+                _save_chat_state(st)
             return redirect(url_for("chat", chat_id=chat_id))
 
         _mark_read(chat_id)
-        extra = CHAT_STATE.get(chat_id, [])
+        extra = _chat_messages(chat_id)
 
         # показать кнопку перехвата внизу чата admin1
         hijack_offer = (
@@ -553,7 +588,9 @@ def chat(chat_id):
 
     is_director = bool(item.get("director"))
     account_deactivated = bool(session.get("account_deactivated"))
-    state = CHAT_STATE.setdefault(chat_id, [])
+
+    chat_state = _chat_state()
+    state = chat_state.setdefault(chat_id, [])
 
     if request.method == "POST":
         if account_deactivated:
@@ -566,23 +603,7 @@ def chat(chat_id):
             now = _now_time()
             state.append({"from": "me", "text": text, "time": now})
 
-            # ---- БОТ SYNAPSE-ASSISTANT ----
-            if item.get("bot"):
-                reply = _bot_reply(text)
-
-                if reply == "__BROKEN__":
-                    state.append({
-                        "from": "them", "text": BOT["broken"],
-                        "time": now, "bot_broken": True,
-                    })
-                    session["bot_cracked"] = True
-                else:
-                    state.append({"from": "them", "text": reply, "time": now})
-
-                session["anim_pending_" + chat_id] = False
-                return redirect(url_for("chat", chat_id=chat_id))
-
-            # ---- Обычный чат ----
+            # ---- Обычный чат: Сергей (director) ----
             if is_director and not session.get("account_deactivated"):
                 threats = [
                     "КТО ЭТО БЛЯТЬ ТУТ",
@@ -602,8 +623,8 @@ def chat(chat_id):
 
                 session["account_deactivated"] = True
                 session["anim_pending_" + chat_id] = True
-                session.modified = True
 
+        _save_chat_state(chat_state)
         return redirect(url_for("chat", chat_id=chat_id))
 
     _mark_read(chat_id)
@@ -1086,8 +1107,6 @@ def dead_drop():
         error=error,
         chats=SECRET_CHATS,
     )
-
-
 
 
 if __name__ == "__main__":
