@@ -273,21 +273,31 @@ def _evaluate_hijack(chain, values):
     given_id = (values.get("name_self") or "").strip().upper()
     valid = cfg["valid_id"].upper()
 
+    # 1. Смертельные
     for c in chain:
         info = intents.get(c)
         if info and info.get("kill"):
             return {"status": "kill", "key": c,
                     "msg": cfg["kill_reactions"].get(c, cfg["kill_reactions"]["wrong_id"])}
 
+    # 2. Угроза без имени
     if "threat" in chain and "name_self" not in chain:
         return {"status": "bad", "key": "threat_no_name",
                 "msg": cfg["reactions"]["threat_no_name"]}
 
+    # 3. Слишком много
     if len(chain) > 5:
         return {"status": "bad", "key": "too_many",
                 "msg": cfg["reactions"]["too_many"]}
 
-    required = cfg["required_chain"]
+    # 4. Обязательные — РАЗНЫЕ для обычной и жёсткой цепочки
+    use_threat = "threat" in chain
+
+    if use_threat:
+        required = ["name_self", "what_need"]
+    else:
+        required = cfg["required_chain"]
+
     for r in required:
         if r not in chain:
             return {"status": "bad", "key": "missing",
@@ -298,6 +308,7 @@ def _evaluate_hijack(chain, values):
         return {"status": "bad", "key": "wrong_order",
                 "msg": cfg["reactions"]["wrong_order"]}
 
+    # 5. Фраза
     parts = []
     for c in chain:
         info = intents.get(c)
@@ -309,30 +320,31 @@ def _evaluate_hijack(chain, values):
             parts.append(info["phrase"])
     phrase = " ".join(parts)
 
-    use_threat = "threat" in chain
-
+    # 6. ADMIN-01
     if given_id == "ADMIN-01":
-        return {
-            "status": "ok", "key": "correct_admin_bluff",
-            "msg": "ты кого наебать пытаешься?\nADMIN-01 — это я.\nно ладно. код 04-M. посмотрим, что ты сможешь.",
-            "phrase": phrase, "given_id": given_id,
-        }
+        return {"status": "ok", "key": "correct_admin_bluff",
+                "msg": "ты кого наебать пытаешься?\nADMIN-01 — это я.\nно ладно. код 04-M. посмотрим, что ты сможешь.",
+                "phrase": phrase, "given_id": given_id}
 
+    # 7. C.U. + угроза
     if use_threat and given_id == valid:
         return {"status": "ok", "key": "correct_threat",
                 "msg": cfg["reactions"]["correct_threat"],
                 "phrase": phrase, "given_id": given_id}
 
+    # 8. Без имени
     if "name_self" not in chain:
         return {"status": "ok", "key": "correct_no_name",
                 "msg": cfg["reactions"]["correct_no_name"],
                 "phrase": phrase, "given_id": None}
 
+    # 9. C.U.
     if given_id == valid:
         return {"status": "ok", "key": "correct",
                 "msg": cfg["reactions"]["correct"],
                 "phrase": phrase, "given_id": given_id}
 
+    # 10. Другое имя
     return {"status": "ok", "key": "correct_other_id",
             "msg": cfg["reactions"]["correct_other_id"],
             "phrase": phrase, "given_id": given_id}
