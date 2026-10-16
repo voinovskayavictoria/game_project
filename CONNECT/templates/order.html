@@ -13,126 +13,313 @@
 })();
 </script>
   <meta charset="utf-8">
-  <title>Заказ {{ dress.sku }} — CONNECT // 1704</title>
+  <title>Оформление — {{ dress.title }} — CONNECT // 1704</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+
+  <style>
+    .ord-wrap{ max-width:640px; margin:40px auto; padding:0 20px; }
+    .ord-head{ border-bottom:1px solid #222; padding-bottom:14px; margin-bottom:22px; }
+    .ord-head__kicker{
+      font-size:11px; letter-spacing:.14em; color:#666;
+      text-transform:uppercase; margin-bottom:6px;
+    }
+    .ord-head__title{ font-size:20px; color:#fff; margin:0 0 6px; }
+    .ord-head__sku{ font-size:12px; color:#ff3344; letter-spacing:.12em; }
+
+    .ord-emp{
+      display:inline-block; margin-top:8px; padding:4px 10px;
+      border:1px solid #00ff88; color:#00ff88;
+      font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    }
+
+    .ord-field{ display:block; margin-bottom:14px; }
+    .ord-field__label{
+      display:block; font-size:11px; letter-spacing:.1em;
+      color:#888; text-transform:uppercase; margin-bottom:6px;
+    }
+    .ord-field input,
+    .ord-field select,
+    .ord-field textarea{
+      width:100%; box-sizing:border-box;
+      background:#050505; border:1px solid #2a2a2a;
+      color:#e8e8e8; padding:10px 12px;
+      font-family:inherit; font-size:13px; outline:none;
+    }
+    .ord-field input:focus,
+    .ord-field select:focus,
+    .ord-field textarea:focus{ border-color:#ff3344; }
+    .ord-field input[readonly]{
+      color:#888; background:#0a0a0a; cursor:not-allowed;
+    }
+
+    .ord-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    .ord-total{
+      border:1px solid #2a2a2a; background:#080808;
+      padding:14px 16px; margin:18px 0;
+    }
+    .ord-total__row{
+      display:flex; justify-content:space-between;
+      font-size:13px; color:#aaa; padding:4px 0;
+    }
+    .ord-total__row--discount{
+      color:#00ff88;
+    }
+    .ord-total__row--sum{
+      border-top:1px solid #222; margin-top:8px; padding-top:12px;
+      font-size:15px; color:#fff; letter-spacing:.08em;
+    }
+    .ord-total__sum{ color:#00ff88; font-weight:700; }
+    .ord-total__strike{
+      color:#666; text-decoration:line-through; margin-right:8px;
+      font-size:12px;
+    }
+    .ord-total__note{
+      margin-top:10px; font-size:11px; color:#666; line-height:1.5;
+    }
+
+    .ord-pay{ margin-bottom:8px; }
+    .ord-pay__opt{
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px; margin-bottom:8px;
+      border:1px solid #2a2a2a; background:#080808;
+      cursor:pointer; transition:border-color .15s;
+    }
+    .ord-pay__opt:hover{ border-color:#444; }
+    .ord-pay__opt input{ accent-color:#ff3344; }
+    .ord-pay__opt span{ font-size:13px; color:#e8e8e8; }
+    .ord-pay__opt.is-active{
+      border-color:#ff3344;
+      box-shadow:0 0 0 1px rgba(255,51,68,.3) inset;
+    }
+
+    .ord-pay__warn{
+      display:none; margin-top:10px; padding:12px 14px;
+      border-left:3px solid #ff3344; background:#140000;
+      color:#ff3344; font-size:12px; letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+    .ord-pay__warn.is-on{ display:block; }
+
+    .ord-submit{
+      width:100%; margin-top:14px; padding:14px;
+      background:#ff3344; color:#000; border:0;
+      font-family:inherit; font-weight:700; letter-spacing:.14em;
+      text-transform:uppercase; font-size:13px; cursor:pointer;
+      transition:opacity .15s;
+    }
+    .ord-submit:hover{ background:#ff5566; }
+    .ord-submit:disabled{
+      opacity:.35; cursor:not-allowed; background:#444; color:#888;
+    }
+
+    .ord-back{
+      display:inline-block; margin-top:20px;
+      color:#888; text-decoration:none; font-size:12px;
+    }
+    .ord-back:hover{ color:#ff3344; }
+    .ord-note{
+      font-size:11px; color:#666; margin-top:16px; line-height:1.6;
+    }
+  </style>
 </head>
 <body class="s-app s-app--catalog">
 
-<header class="s-topbar">
-  <div class="s-brand">
-    <span class="s-mark">C</span>
-    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+<div class="ord-wrap">
+
+  <div class="ord-head">
+    <div class="ord-head__kicker">Оформление проката</div>
+    <h1 class="ord-head__title">{{ dress.title }}</h1>
+    <div class="ord-head__sku">{{ dress.sku }} · {{ dress.price }}</div>
+    <div class="ord-emp">сотрудник · скидка 20%</div>
   </div>
-  <div class="s-search">
-    <input type="text" placeholder="order /{{ dress.sku }}" readonly>
-  </div>
-  <div class="s-user">
-    <span class="s-session">item: <b>{{ dress.sku }}</b></span>
-    <a href="{{ url_for('dress', sku=dress.sku) }}" class="s-nav-link">← item</a>
-    <a href="{{ url_for('catalog') }}" class="s-nav-link">// catalog</a>
-    <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
-  </div>
-</header>
 
-<main class="order-page">
+  <form method="POST" action="{{ url_for('order', sku=dress.sku) }}" id="ord-form">
 
-  <header class="order-head">
-    <div class="order-head__kicker">RENTAL · ORDER FORM</div>
-    <h1 class="order-head__title">ОФОРМЛЕНИЕ ПРОКАТА</h1>
-    <p class="order-head__lead">
-      Изделие <strong>{{ dress.title }}</strong> · артикул
-      <strong>{{ dress.sku }}</strong> · тариф
-      <strong>{{ dress.price }}</strong>
-    </p>
-  </header>
+    <label class="ord-field">
+      <span class="ord-field__label">Точка получения</span>
+      <select name="address" required>
+        <option value="Точка 1">Точка 1 — Садовая, 17</option>
+        <option value="Точка 2">Точка 2 — Пресненская наб., 12</option>
+        <option value="Точка 3">Точка 3 — Лесная, 8</option>
+        <option value="Точка 4">Точка 4 — Курьер (Москва)</option>
+        <option value="Точка 5">Точка 5 — Курьер (МО)</option>
+      </select>
+    </label>
 
-  <form class="order-form" method="post">
+    <div class="ord-row">
+      <label class="ord-field">
+        <span class="ord-field__label">Дата</span>
+        <select name="date" id="ord-date" required></select>
+      </label>
 
-    <div class="order-form__section">
-      <div class="order-form__section-label">01 · Адрес доставки</div>
-      <label class="order-field">
-        <span class="order-field__label">Куда доставить изделие</span>
-        <select name="address" required>
-          <option value="" disabled selected>— выберите адрес —</option>
-          {% for a in rental.addresses %}
-            <option value="{{ a }}">{{ a }}</option>
-          {% endfor %}
-        </select>
+      <label class="ord-field">
+        <span class="ord-field__label">Время получения</span>
+        <input type="text" name="slot" id="ord-slot" value="19:00" readonly>
       </label>
     </div>
 
-    <div class="order-form__section">
-      <div class="order-form__section-label">02 · Время доставки</div>
-      <div class="order-form__grid">
-        <label class="order-field">
-          <span class="order-field__label">Дата</span>
-          <input type="date" name="date" required>
-        </label>
-        <label class="order-field">
-          <span class="order-field__label">Интервал</span>
-          <select name="slot" required>
-            <option value="" disabled selected>— выберите интервал —</option>
-            {% for s in rental.delivery_slots %}
-              <option value="{{ s }}">{{ s }}</option>
-            {% endfor %}
-          </select>
-        </label>
+    <label class="ord-field">
+      <span class="ord-field__label">Срок аренды (часов)</span>
+      <input type="number" name="hours" id="ord-hours"
+             min="2" max="72" value="3" required>
+    </label>
+
+    <label class="ord-field">
+      <span class="ord-field__label">Примечания (необязательно)</span>
+      <textarea name="notes" rows="3"
+                placeholder="Особые пожелания, комментарии"></textarea>
+    </label>
+
+    <!-- ===== РАСЧЁТ С УЧЁТОМ СКИДКИ ===== -->
+    <div class="ord-total">
+      <div class="ord-total__row">
+        <span>Цена за час</span>
+        <span id="ord-price-per-hour">{{ dress.price.split()[0] }} USDT</span>
+      </div>
+      <div class="ord-total__row">
+        <span>Часов аренды</span>
+        <span id="ord-hours-out">3</span>
+      </div>
+      <div class="ord-total__row">
+        <span>Подытог</span>
+        <span><span id="ord-subtotal">0</span> USDT</span>
+      </div>
+      <div class="ord-total__row ord-total__row--discount">
+        <span>Скидка сотрудника −20%</span>
+        <span>−<span id="ord-discount">0</span> USDT</span>
+      </div>
+      <div class="ord-total__row ord-total__row--sum">
+        <span>ИТОГО</span>
+        <span class="ord-total__sum"><span id="ord-total">0</span> USDT</span>
+      </div>
+      <div class="ord-total__note">
+        Оплата принимается только в криптовалюте. Курс фиксируется в момент подтверждения.
       </div>
     </div>
 
-    <div class="order-form__section">
-      <div class="order-form__section-label">03 · Срок проката</div>
-      <label class="order-field">
-        <span class="order-field__label">
-          Сколько часов изделие будет у вас
-          (от {{ rental.min_hours }} до {{ rental.max_hours }})
-        </span>
-        <input type="number" name="hours"
-               min="{{ rental.min_hours }}" max="{{ rental.max_hours }}"
-               value="{{ rental.min_hours }}" required>
+    <div class="ord-pay">
+      <label class="ord-pay__opt" data-pay="on_delivery">
+        <input type="radio" name="payment" value="on_delivery" checked>
+        <span>Оплата при получении</span>
       </label>
-    </div>
+      <label class="ord-pay__opt" data-pay="now">
+        <input type="radio" name="payment" value="now">
+        <span>Оплата сейчас</span>
+      </label>
 
-    <div class="order-form__section">
-      <div class="order-form__section-label">04 · Оплата</div>
-      <label class="order-field">
-        <span class="order-field__label">Валюта</span>
-        <select name="coin">
-          <option value="usdt_trc20">USDT · TRC-20</option>
-          <option value="btc">BTC · Bitcoin</option>
-          <option value="eth">ETH · Ethereum</option>
-        </select>
-      </label>
-      <div class="order-form__hint">
-        Оплата принимается только в криптовалюте. Адрес кошелька будет показан
-        на следующем шаге. Комиссия сети — на стороне арендатора.
+      <div class="ord-pay__warn" id="ord-pay-warn">
+        ● ОПЛАТА ВРЕМЕННО НЕДОСТУПНА
       </div>
     </div>
 
-    <div class="order-form__section">
-      <div class="order-form__section-label">05 · Комментарий</div>
-      <label class="order-field">
-        <span class="order-field__label">Дополнительно (необязательно)</span>
-        <textarea name="notes" rows="3"
-                  placeholder="Особые пожелания, контактное лицо, время для звонка..."></textarea>
-      </label>
-    </div>
-
-    <div class="order-penalty">
-      <div class="order-penalty__label">ВНИМАНИЕ</div>
-      <div class="order-penalty__text">{{ rental.penalty }}</div>
-    </div>
-
-    <div class="order-form__actions">
-      <button type="submit" class="dress-btn">Подтвердить заказ</button>
-      <a href="{{ url_for('dress', sku=dress.sku) }}" class="dress-btn dress-btn--ghost">Отмена</a>
-    </div>
-
+    <button type="submit" class="ord-submit" id="ord-submit">
+      Подтвердить заказ
+    </button>
   </form>
 
-</main>
+  <p class="ord-note">
+    Нажимая «Подтвердить заказ», вы соглашаетесь с условиями проката
+    и политикой возврата.
+  </p>
+
+  <a class="ord-back" href="{{ url_for('dress', sku=dress.sku) }}">
+    ← вернуться к платью
+  </a>
+
+</div>
 
 <script src="{{ url_for('static', filename='js/secret.js') }}"></script>
+
+<script>
+(function(){
+  var PRICE_PER_HOUR = parseFloat("{{ dress.price.split()[0] }}") || 0;
+  var DISCOUNT = 0.20;  // 20% скидка сотрудника
+
+  var hoursIn    = document.getElementById('ord-hours');
+  var hoursOut   = document.getElementById('ord-hours-out');
+  var subtotalEl = document.getElementById('ord-subtotal');
+  var discountEl = document.getElementById('ord-discount');
+  var totalEl    = document.getElementById('ord-total');
+  var dateIn     = document.getElementById('ord-date');
+  var slotIn     = document.getElementById('ord-slot');
+  var submit     = document.getElementById('ord-submit');
+  var warn       = document.getElementById('ord-pay-warn');
+  var payOpts    = document.querySelectorAll('.ord-pay__opt');
+
+  /* ---- 1. Дата: 3 варианта ---- */
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+  function fmtRu(d){
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+  }
+  var base = new Date();
+  var opts = [
+    { label: 'Сегодня',     offset: 0 },
+    { label: 'Завтра',      offset: 1 },
+    { label: 'Послезавтра', offset: 2 },
+  ];
+  opts.forEach(function(o){
+    var d = new Date();
+    d.setDate(base.getDate() + o.offset);
+    var opt = document.createElement('option');
+    opt.value = fmtRu(d);
+    opt.textContent = o.label + ' — ' + fmtRu(d);
+    dateIn.appendChild(opt);
+  });
+  dateIn.selectedIndex = 0;
+
+  /* ---- 2. Время: 19:00 ---- */
+  slotIn.value = '19:00';
+
+  /* ---- 3. Сумма: подытог − 20% = итог ---- */
+  function fmt(x){
+    return x.toFixed(2).replace(/\.00$/, '');
+  }
+  function recalc(){
+    var h = parseFloat(hoursIn.value) || 0;
+    if (h < 2) h = 2;
+    if (h > 72) h = 72;
+    hoursOut.textContent = h;
+
+    var subtotal = h * PRICE_PER_HOUR;
+    var discount = subtotal * DISCOUNT;
+    var total    = subtotal - discount;
+
+    subtotalEl.textContent = fmt(subtotal);
+    discountEl.textContent = fmt(discount);
+    totalEl.textContent    = fmt(total);
+  }
+  hoursIn.addEventListener('input', recalc);
+  hoursIn.addEventListener('change', function(){
+    var v = parseFloat(this.value) || 2;
+    if (v < 2) this.value = 2;
+    if (v > 72) this.value = 72;
+    recalc();
+  });
+  recalc();
+
+  /* ---- 4. Оплата ---- */
+  payOpts.forEach(function(opt){
+    var radio = opt.querySelector('input[type=radio]');
+    if (radio.checked) opt.classList.add('is-active');
+
+    radio.addEventListener('change', function(){
+      payOpts.forEach(function(o){ o.classList.remove('is-active'); });
+      opt.classList.add('is-active');
+
+      if (radio.value === 'now'){
+        warn.classList.add('is-on');
+        submit.disabled = true;
+        submit.textContent = 'Оплата недоступна';
+      } else {
+        warn.classList.remove('is-on');
+        submit.disabled = false;
+        submit.textContent = 'Подтвердить заказ';
+      }
+    });
+  });
+})();
+</script>
 </body>
 </html>

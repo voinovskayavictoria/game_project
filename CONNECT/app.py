@@ -815,7 +815,7 @@ def order(sku):
             "slot":    request.form.get("slot", "").strip(),
             "hours":   request.form.get("hours", "").strip(),
             "notes":   request.form.get("notes", "").strip(),
-            "coin":    request.form.get("coin", "usdt_trc20").strip(),
+            "payment": request.form.get("payment", "on_delivery").strip(),
         }
 
         for v in form.values():
@@ -824,17 +824,59 @@ def order(sku):
 
         order_id = f"ORD-{random.randint(1700, 1799)}"
 
-        price_str = item.get("price", "")
-        total = "по запросу"
+        # ---- Расчёт с учётом скидки сотрудника −20% ----
+        DISCOUNT = 0.20
+        subtotal = 0.0
+        discount = 0.0
+        total_val = 0.0
+
         try:
-            num = float(price_str.split()[0])
+            num = float(item.get("price", "").split()[0])
             hours = float(form["hours"] or 0)
-            total = f"{round(num * hours, 2)} USDT"
+            subtotal  = num * hours
+            discount  = subtotal * DISCOUNT
+            total_val = subtotal - discount
         except Exception:
             pass
 
-        session["shutdown"] = True
-        session["shutdown_reason"] = "order"
+        def fmt(x):
+            s = f"{x:.2f}"
+            return s.rstrip('0').rstrip('.') if '.' in s else s
+
+        subtotal_str = fmt(subtotal) + " USDT"
+        discount_str = "−" + fmt(discount) + " USDT"
+        total        = fmt(total_val) + " USDT"
+
+        # ---- Сообщение от ORDERS ----
+        now = _now_time()
+
+        pay_label = ("Оплата при получении"
+                     if form.get("payment") == "on_delivery"
+                     else "Оплата сейчас")
+
+        st = _chat_state()
+        st.setdefault("orders", []).append({
+            "from": "them",
+            "author": "ORDERS",
+            "time": now,
+            "hot": True,
+            "text": (
+                f"Заказ оформлен.\n"
+                f"Номер: {order_id}\n"
+                f"Позиция: {item['title']} ({sku})\n"
+                f"Точка: {form['address']}\n"
+                f"Дата: {form['date']} · {form['slot']}\n"
+                f"Срок: {form['hours']} ч.\n"
+                f"Подытог: {subtotal_str}\n"
+                f"Скидка сотрудника −20%: {discount_str}\n"
+                f"Сумма: {total}\n"
+                f"Оплата: {pay_label}"
+            ),
+        })
+        _save_chat_state(st)
+
+        session["last_order_id"] = order_id
+        session.modified = True
 
         return render_template(
             "order_success.html",
@@ -842,8 +884,9 @@ def order(sku):
             order=form,
             order_id=order_id,
             rental=DRESSES_RENTAL,
+            subtotal=subtotal_str,
+            discount=discount_str,
             total=total,
-            wallet=DRESSES_RENTAL["crypto"].get(form["coin"], ""),
         )
 
     return render_template(
