@@ -175,6 +175,9 @@ def _bot_reply(text: str) -> str:
 
 
 def _bot_quiz(item):
+    import getpass
+    import time as _time
+
     chat_id = item["id"]
     _mark_read(chat_id)
 
@@ -183,15 +186,44 @@ def _bot_quiz(item):
         session["quiz_errors"] = 0
         session["bot_cracked"] = False
 
+    # ---- МЕТА-ДАННЫЕ ----
+    try:
+        sys_user = getpass.getuser()
+    except Exception:
+        sys_user = "anon"
+
+    now = datetime.datetime.now().strftime("%H:%M")
+
+    login_ts = session.get("login_ts")
+    if not login_ts:
+        login_ts = _time.time()
+        session["login_ts"] = login_ts
+    elapsed = int(_time.time() - login_ts)
+
+    read_list = session.get("read_chats", [])
+    last_chat = read_list[-1] if read_list else "нет"
+
     step   = session["quiz_step"]
     errors = session["quiz_errors"]
 
+    def fill(text: str) -> str:
+        return (text
+                .replace("{user}", sys_user)
+                .replace("{time}", now)
+                .replace("{elapsed}", str(elapsed))
+                .replace("{chat}", last_chat))
+
+    # ---- POST (AJAX) ----
     if request.method == "POST":
         if session.get("bot_cracked"):
             return {"status": "cracked", "fragment": QUIZ_CONFIG["fragment"]}
 
         choice  = request.form.get("choice", "")
-        correct = QUIZ_ROUNDS[step]["correct"]
+        r_now   = QUIZ_ROUNDS[step]
+        correct = r_now["correct"]
+
+        voice_key = "voice_yes" if choice == "a" else "voice_no"
+        voice_text = r_now.get(voice_key, "")
 
         if choice == correct:
             session["quiz_step"] = step + 1
@@ -208,6 +240,8 @@ def _bot_quiz(item):
         new_errors = session["quiz_errors"]
         failed     = session.get("quiz_failed", False)
 
+        answered_ok = (choice == correct)
+
         if new_step >= QUIZ_CONFIG["total_rounds"]:
             session["bot_cracked"] = True
             session.pop("quiz_failed", None)
@@ -215,13 +249,14 @@ def _bot_quiz(item):
                 "status": "victory",
                 "fragment": QUIZ_CONFIG["fragment"],
                 "lines": QUIZ_CONFIG["victory_lines"],
+                "voice": voice_text,
             }
 
         if failed:
             session.pop("quiz_failed", None)
-            return {"status": "failed"}
+            return {"status": "failed", "voice": voice_text}
 
-        r = QUIZ_ROUNDS[new_step]
+        nxt = QUIZ_ROUNDS[new_step]
         return {
             "status": "next",
             "step": new_step + 1,
@@ -229,19 +264,23 @@ def _bot_quiz(item):
             "errors": new_errors,
             "max_errors": QUIZ_CONFIG["max_errors"],
             "percent": round(new_step / QUIZ_CONFIG["total_rounds"] * 100),
-            "question": r["question"],
-            "round_id": r["id"],
+            "question": fill(nxt["question"]),
+            "voice": voice_text,
+            "answered_ok": answered_ok,
             "options": [
-                {"id": o["id"], "svg": o["svg"], "label": o["label"]}
-                for o in r["options"]
+                {"id": o["id"], "label": o["label"]}
+                for o in nxt["options"]
             ],
         }
 
+    # ---- GET ----
     if session.get("bot_cracked"):
         return render_template(
             "chat.html",
             chat=item, chats=_with_read_state(PUBLIC_CHATS),
-            extra=[], director_online=False, deactivated=False, animate=False,
+            extra=[], director_online=False, deactivated=True,
+            deactivated_seen=bool(session.get("deactivated_seen")),
+            animate=False,
             bot_cracked=True,
             bot_lines=QUIZ_CONFIG["victory_lines"],
         )
@@ -251,7 +290,9 @@ def _bot_quiz(item):
     return render_template(
         "chat.html",
         chat=item, chats=_with_read_state(PUBLIC_CHATS),
-        extra=[], director_online=False, deactivated=False, animate=False,
+        extra=[], director_online=False, deactivated=True,
+        deactivated_seen=bool(session.get("deactivated_seen")),
+        animate=False,
         bot_cracked=False,
         quiz_failed=quiz_failed,
         quiz={
@@ -259,7 +300,11 @@ def _bot_quiz(item):
             "errors": errors,
             "total": QUIZ_CONFIG["total_rounds"],
             "max_errors": QUIZ_CONFIG["max_errors"],
-            "round": QUIZ_ROUNDS[step],
+            "round": {
+                "id": QUIZ_ROUNDS[step]["id"],
+                "question": fill(QUIZ_ROUNDS[step]["question"]),
+                "options": QUIZ_ROUNDS[step]["options"],
+            },
         },
     )
 
@@ -273,24 +318,20 @@ def _evaluate_hijack(chain, values):
     given_id = (values.get("name_self") or "").strip().upper()
     valid = cfg["valid_id"].upper()
 
-    # 1. Смертельные
     for c in chain:
         info = intents.get(c)
         if info and info.get("kill"):
             return {"status": "kill", "key": c,
                     "msg": cfg["kill_reactions"].get(c, cfg["kill_reactions"]["wrong_id"])}
 
-    # 2. Угроза без имени
     if "threat" in chain and "name_self" not in chain:
         return {"status": "bad", "key": "threat_no_name",
                 "msg": cfg["reactions"]["threat_no_name"]}
 
-    # 3. Слишком много
     if len(chain) > 5:
         return {"status": "bad", "key": "too_many",
                 "msg": cfg["reactions"]["too_many"]}
 
-    # 4. Обязательные — РАЗНЫЕ для обычной и жёсткой цепочки
     use_threat = "threat" in chain
 
     if use_threat:
@@ -308,7 +349,6 @@ def _evaluate_hijack(chain, values):
         return {"status": "bad", "key": "wrong_order",
                 "msg": cfg["reactions"]["wrong_order"]}
 
-    # 5. Фраза
     parts = []
     for c in chain:
         info = intents.get(c)
@@ -320,31 +360,26 @@ def _evaluate_hijack(chain, values):
             parts.append(info["phrase"])
     phrase = " ".join(parts)
 
-    # 6. ADMIN-01
     if given_id == "ADMIN-01":
         return {"status": "ok", "key": "correct_admin_bluff",
                 "msg": "ты кого наебать пытаешься?\nADMIN-01 — это я.\nно ладно. код 04-M. посмотрим, что ты сможешь.",
                 "phrase": phrase, "given_id": given_id}
 
-    # 7. C.U. + угроза
     if use_threat and given_id == valid:
         return {"status": "ok", "key": "correct_threat",
                 "msg": cfg["reactions"]["correct_threat"],
                 "phrase": phrase, "given_id": given_id}
 
-    # 8. Без имени
     if "name_self" not in chain:
         return {"status": "ok", "key": "correct_no_name",
                 "msg": cfg["reactions"]["correct_no_name"],
                 "phrase": phrase, "given_id": None}
 
-    # 9. C.U.
     if given_id == valid:
         return {"status": "ok", "key": "correct",
                 "msg": cfg["reactions"]["correct"],
                 "phrase": phrase, "given_id": given_id}
 
-    # 10. Другое имя
     return {"status": "ok", "key": "correct_other_id",
             "msg": cfg["reactions"]["correct_other_id"],
             "phrase": phrase, "given_id": given_id}
@@ -489,9 +524,23 @@ def inbox():
     if not is_authed():
         return redirect(url_for("login"))
     _remember("inbox")
+
+    deactivated      = bool(session.get("account_deactivated"))
+    deactivated_seen = bool(session.get("deactivated_seen"))
+
     if is_secret():
-        return render_template("inbox_secret.html", chats=_with_read_state(SECRET_CHATS))
-    return render_template("inbox.html", chats=_with_read_state(PUBLIC_CHATS))
+        return render_template(
+            "inbox_secret.html",
+            chats=_with_read_state(SECRET_CHATS),
+            deactivated=deactivated,
+            deactivated_seen=deactivated_seen,
+        )
+    return render_template(
+        "inbox.html",
+        chats=_with_read_state(PUBLIC_CHATS),
+        deactivated=deactivated,
+        deactivated_seen=deactivated_seen,
+    )
 
 
 # ------------------------------------------------------------------
@@ -524,6 +573,7 @@ def chat(chat_id):
     if chat_id in FORBIDDEN_CHAT_IDS:
         return shutdown(reason="breach")
 
+    # ---------- СЕКРЕТНЫЙ РАЗДЕЛ ----------
     if is_secret():
         item = _find_chat(chat_id, SECRET_CHATS)
         if not item:
@@ -558,11 +608,13 @@ def chat(chat_id):
             hijack_offer=hijack_offer,
         )
 
+    # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
     item = _find_chat(chat_id, PUBLIC_CHATS)
     if not item:
         return shutdown(reason="breach")
 
-    if item.get("bot"):
+    # Бот уходит в quiz ТОЛЬКО после деактивации аккаунта
+    if item.get("bot") and session.get("account_deactivated"):
         return _bot_quiz(item)
 
     is_director = bool(item.get("director"))
@@ -582,7 +634,15 @@ def chat(chat_id):
             now = _now_time()
             state.append({"from": "me", "text": text, "time": now})
 
-            if is_director and not session.get("account_deactivated"):
+            # Ответ SYNAPSE-ASSISTANT до деактивации
+            if item.get("bot"):
+                reply = _bot_reply(text)
+                if reply == "__BROKEN__":
+                    reply = BOT["deny"]
+                state.append({"from": "them", "text": reply, "time": now})
+
+            # Угрозы от директора → ACCOUNT DEACTIVATED
+            elif is_director and not session.get("account_deactivated"):
                 threats = [
                     "КТО ЭТО БЛЯТЬ ТУТ",
                     "Кто сидит за аккаунтом Миланы Макаровой?",
@@ -600,6 +660,7 @@ def chat(chat_id):
                 })
 
                 session["account_deactivated"] = True
+                session["deactivated_seen"] = True
                 session["anim_pending_" + chat_id] = True
 
         _save_chat_state(chat_state)
@@ -608,7 +669,8 @@ def chat(chat_id):
     _mark_read(chat_id)
     animate = bool(session.pop("anim_pending_" + chat_id, False))
     session.modified = True
-    director_online = is_director and account_deactivated
+    director_online = is_director  # директор всегда онлайн
+    deactivated_seen = bool(session.get("deactivated_seen"))
 
     return render_template(
         "chat.html",
@@ -616,6 +678,7 @@ def chat(chat_id):
         extra=state,
         director_online=director_online,
         deactivated=account_deactivated,
+        deactivated_seen=deactivated_seen,
         animate=animate,
         bot_cracked=bool(session.get("bot_cracked") and item.get("bot")),
         bot_lines=BOT["abyss_lines"] if item.get("bot") else [],
@@ -730,7 +793,6 @@ def chat_hijack(chat_id):
 # Платья
 # ------------------------------------------------------------------
 def _is_request_dress(item):
-    """Мягкая проверка — есть ли слово 'запрос' в цене."""
     return "запрос" in (item.get("price") or "").lower()
 
 
@@ -760,7 +822,6 @@ def dress(sku):
 
 @app.route("/catalog/<sku>/request", methods=["POST"])
 def dress_request(sku):
-    """Запрос доступа для платья 'по запросу'. Возвращает JSON."""
     if not is_secret():
         return jsonify({"ok": False, "msg": "ACCESS DENIED"}), 403
 
@@ -824,7 +885,6 @@ def order(sku):
 
         order_id = f"ORD-{random.randint(1700, 1799)}"
 
-        # ---- Расчёт с учётом скидки сотрудника −20% ----
         DISCOUNT = 0.20
         subtotal = 0.0
         discount = 0.0
@@ -847,7 +907,6 @@ def order(sku):
         discount_str = "−" + fmt(discount) + " USDT"
         total        = fmt(total_val) + " USDT"
 
-        # ---- Сообщение от ORDERS ----
         now = _now_time()
 
         pay_label = ("Оплата при получении"
@@ -1173,4 +1232,4 @@ def dead_drop():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5009))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=True)
