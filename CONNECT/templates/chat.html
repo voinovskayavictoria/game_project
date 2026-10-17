@@ -326,29 +326,43 @@
 
         if (conversation) conversation.classList.add("is-reading");
 
-        // ---- Мета-данные клиента ----
+        // ---- Метаданные клиента ----
         var TZ = "неизвестно";
         try { TZ = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
-        var LANG = navigator.language || "неизвестно";
+        var LANG   = navigator.language || "неизвестно";
         var SCREEN = (screen.width || 0) + "x" + (screen.height || 0);
+        var BROWSER = (function () {
+          var ua = navigator.userAgent;
+          if (ua.indexOf("Firefox") > -1) return "Firefox";
+          if (ua.indexOf("Edg") > -1)     return "Edge";
+          if (ua.indexOf("Chrome") > -1)  return "Chrome";
+          if (ua.indexOf("Safari") > -1)  return "Safari";
+          return "неизвестно";
+        })();
 
-        function fillClient(s) {
-          return (s || "")
-            .replace("{tz}", TZ)
-            .replace("{lang}", LANG)
-            .replace("{screen}", SCREEN);
-        }
+        // отправляем метаданные на сервер
+        fetch(window.location.pathname, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "action=meta"
+            + "&screen="  + encodeURIComponent(SCREEN)
+            + "&tz="      + encodeURIComponent(TZ)
+            + "&lang="    + encodeURIComponent(LANG)
+            + "&browser=" + encodeURIComponent(BROWSER)
+            + "&online="  + (navigator.onLine ? "true" : "false"),
+        });
 
         // ---- Первый раунд ----
         var firstRound = {
-          step: {{ quiz.step + 1 }},
-          total: {{ quiz.total }},
-          errors: {{ quiz.errors }},
-          max_errors: {{ quiz.max_errors }},
-          percent: {{ (quiz.step / quiz.total * 100)|round }},
-          question: {{ quiz.round.question|tojson }},
+          step:        {{ quiz.step + 1 }},
+          total:       {{ quiz.total }},
+          percent:     {{ quiz.percent }},
+          act:         {{ quiz.act }},
+          no_options:  {{ 'true' if quiz.no_options else 'false' }},
+          pause_after: {{ quiz.pause_after }},
+          question:    {{ quiz.question|tojson }},
           options: [
-            {% for opt in quiz.round.options %}
+            {% for opt in quiz.options %}
               { id: {{ opt.id|tojson }}, label: {{ opt.label|tojson }} }{% if not loop.last %},{% endif %}
             {% endfor %}
           ],
@@ -373,10 +387,10 @@
           document.body.style.filter = "";
 
           var lvl = 1;
-          if (step >= 4) lvl = 2;
-          if (step >= 6) lvl = 3;
-          if (step >= 8) lvl = 4;
-          if (step >= 10) lvl = 5;
+          if (step >= 8)  lvl = 2;
+          if (step >= 15) lvl = 3;
+          if (step >= 22) lvl = 4;
+          if (step >= 28) lvl = 5;
           overlay.classList.add("lvl-" + lvl);
 
           if (lvl === 2) document.body.style.filter = "brightness(0.95)";
@@ -384,7 +398,7 @@
           if (lvl === 4) document.body.style.filter = "brightness(0.65) contrast(1.25)";
           if (lvl === 5) document.body.style.filter = "brightness(0.45) contrast(1.5)";
 
-          ensureGlitch(step >= 7);
+          ensureGlitch(step >= 25);
           return lvl;
         }
 
@@ -409,7 +423,7 @@
         }
 
         function renderRound(data) {
-          var q = fillClient(data.question);
+          var q   = data.question || "";
           var lvl = applyLevel(data.step);
 
           var html = "";
@@ -418,18 +432,23 @@
           html += '    <div class="quiz-fullscreen__fill" style="width:' + data.percent + '%;"></div>';
           html += '  </div>';
           html += '  <div class="quiz-fullscreen__label">';
-          html += '    раунд <b>' + data.step + '</b> / ' + data.total;
-          html += '    · ошибок: <b>' + data.errors + '</b> / ' + data.max_errors;
+          html += '    акт ' + data.act + ' · вопрос <b>' + data.step + '</b> / ' + data.total;
           html += '  </div>';
           html += '</div>';
           html += '<div class="quiz-fullscreen__question" id="quiz-q"></div>';
-          html += '<div class="quiz-fullscreen__options">';
-          data.options.forEach(function (opt) {
-            html += '<button type="button" class="quiz-fullscreen__card" data-choice="' + opt.id + '">';
-            html +=   '<span class="quiz-fullscreen__card-label">' + opt.label + '</span>';
-            html += '</button>';
-          });
-          html += '</div>';
+
+          if (!data.no_options && data.options && data.options.length) {
+            html += '<div class="quiz-fullscreen__options">';
+            data.options.forEach(function (opt) {
+              html += '<button type="button" class="quiz-fullscreen__card" data-choice="' + opt.id + '">';
+              html +=   '<span class="quiz-fullscreen__card-label">' + opt.label + '</span>';
+              html += '</button>';
+            });
+            html += '</div>';
+          } else {
+            html += '<div class="quiz-fullscreen__typing"><span></span><span></span><span></span></div>';
+          }
+
           overlayInner.innerHTML = html;
 
           var qEl = document.getElementById("quiz-q");
@@ -442,6 +461,14 @@
           if (lvl === 5) intensity = 0.40;
           startGlitch(qEl, intensity);
 
+          // пауза-вопрос без вариантов
+          if (data.no_options) {
+            setTimeout(function () {
+              sendChoice("__pause__");
+            }, (data.pause_after || 3) * 1000);
+            return;
+          }
+
           overlayInner.querySelectorAll(".quiz-fullscreen__card").forEach(function (btn) {
             btn.addEventListener("click", function () {
               sendChoice(btn.dataset.choice);
@@ -449,47 +476,38 @@
           });
         }
 
-        // ---- Пасть ----
-        function showMouth() {
-          var wrap = document.createElement("div");
-          wrap.className = "jumpscare";
-          wrap.innerHTML =
-            '<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">' +
-            '  <rect width="400" height="400" fill="#000"/>' +
-            '  <ellipse cx="200" cy="230" rx="180" ry="120" fill="#1a0000"/>' +
-            '  <path d="M20,200 Q200,20 380,200" fill="#2a0000" stroke="#500"/>' +
-            '  <path d="M20,200 Q200,380 380,200" fill="#2a0000" stroke="#500"/>' +
-            '  <polygon points="60,200 80,240 100,200" fill="#c8ffcf"/>' +
-            '  <polygon points="120,200 140,250 160,200" fill="#c8ffcf"/>' +
-            '  <polygon points="180,200 200,260 220,200" fill="#c8ffcf"/>' +
-            '  <polygon points="240,200 260,250 280,200" fill="#c8ffcf"/>' +
-            '  <polygon points="300,200 320,240 340,200" fill="#c8ffcf"/>' +
-            '  <polygon points="80,240 100,200 120,240" fill="#c8ffcf"/>' +
-            '  <polygon points="160,250 180,200 200,250" fill="#c8ffcf"/>' +
-            '  <polygon points="220,250 240,200 260,250" fill="#c8ffcf"/>' +
-            '</svg>';
-          document.body.appendChild(wrap);
-          document.body.classList.add("shaking");
-          setTimeout(function(){ window.location.reload(); }, 1800);
-        }
+        // ---- Пасть (убрала нах) ----
+        // ---- Конец теста — перезагрузка ----
+// ---- Конец теста — ждём ESC или клик ----
+function endQuiz() {
+  var hint = document.createElement("div");
+  hint.style.cssText =
+    "position:fixed; bottom:30px; left:50%; transform:translateX(-50%);" +
+    "color:#4a5364; font-family:'JetBrains Mono', monospace;" +
+    "font-size:11px; letter-spacing:2px; text-transform:uppercase;" +
+    "opacity:.6; animation: blink 2s ease-in-out infinite; z-index:100000;";
+  hint.textContent = "нажмите ESC или клик чтобы выйти";
+  document.body.appendChild(hint);
 
-        // ---- Голос за кадром — печатается по буквам ----
+  function close() {
+    document.removeEventListener("keydown", onKey);
+    document.removeEventListener("click", close);
+    window.location.reload();
+  }
+  function onKey(e) {
+    if (e.key === "Escape") close();
+  }
+
+  document.addEventListener("keydown", onKey);
+  document.addEventListener("click", close);
+
+  // fallback — если игрок ничего не нажал за 50 сек
+  setTimeout(close, 50000);
+}
+
+        // ---- Голос за кадром ----
         function showVoice(text, cb) {
-          if (!text) { if (cb) cb(); return; }
-          overlayInner.innerHTML =
-            '<div class="quiz-fullscreen__voice">' +
-            '<span class="quiz-fullscreen__voice-text"></span>' +
-            '</div>';
-          var el = overlayInner.querySelector(".quiz-fullscreen__voice-text");
-          var i = 0;
-          var t = setInterval(function(){
-            el.textContent = text.slice(0, i);
-            i++;
-            if (i > text.length) {
-              clearInterval(t);
-              setTimeout(cb, 1100);
-            }
-          }, 45);
+          if (cb) cb();
         }
 
         // ---- Отправка ответа ----
@@ -502,31 +520,39 @@
           fetch(window.location.pathname, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "choice=" + encodeURIComponent(choice),
+            body: "action=answer&choice=" + encodeURIComponent(choice),
           })
             .then(function (r) { return r.json(); })
             .then(function (data) {
               if (data.status === "victory") {
-                showVoice(data.voice, function(){ showMouth(); });
+                showVoice(data.voice || "", function(){ renderFinal(data.final); });
                 return;
               }
-              if (data.status === "failed") {
-                ensureGlitch(false);
-                showVoice(data.voice || "тест провален.", function(){
-                  overlayInner.innerHTML =
-                    '<div class="quiz-fullscreen__fail">' +
-                    '  <div class="quiz-fullscreen__fail-title">ACCESS REVOKED</div>' +
-                    '  <div class="quiz-fullscreen__fail-text">не-человек</div>' +
-                    '  <a href="' + window.location.pathname + '" class="quiz-fullscreen__restart">// начать заново</a>' +
-                    '</div>';
-                });
+              if (data.status === "next") {
+                showVoice(data.voice || "", function(){ renderRound(data); });
                 return;
               }
-              showVoice(data.voice, function(){ renderRound(data); });
             })
             .catch(function () {
               overlayInner.innerHTML = '<div class="quiz-fullscreen__fail">ошибка сети</div>';
             });
+        }
+
+        function renderFinal(final) {
+          if (!final) {
+            overlayInner.innerHTML = '<div class="quiz-fullscreen__fail">конец</div>';
+            return;
+          }
+          var html = '<div class="quiz-fullscreen__fail" style="border-color:#c8ffcf; background:rgba(200,255,207,.05);">';
+          html += '<div class="quiz-fullscreen__fail-title" style="color:#c8ffcf;">' + final.title + '</div>';
+          final.lines.forEach(function (line) {
+            html += '<div style="color:#888; font-family:monospace; font-size:14px; margin:4px 0;">' + line + '</div>';
+          });
+          html += '<div style="margin-top:28px; color:#c8ffcf; font-family:monospace; letter-spacing:3px; font-size:18px;">' + final.fragment + '</div>';
+          html += '</div>';
+          overlayInner.innerHTML = html;
+
+          endQuiz();
         }
 
         function openQuiz() {
@@ -546,9 +572,11 @@
           if (quizOpened || triggered) return;
           triggered = true;
           trigger.style.display = "block";
+          box.scrollTop = box.scrollHeight;
 
           setTimeout(function () {
             typing.style.display = "flex";
+            box.scrollTop = box.scrollHeight;
             setTimeout(function () {
               typing.style.display = "none";
               quizOpened = true;
@@ -577,83 +605,6 @@
           </div>
         </div>
       </header>
-
-      <div class="abyss is-active" id="abyss">
-        <canvas id="abyss-canvas" width="800" height="500"></canvas>
-        <div class="abyss__lines" id="abyss-lines"></div>
-        <div class="abyss__hint">нажмите ESC или клик чтобы вернуться</div>
-      </div>
-
-      <script>
-      (function () {
-        var LINES = {{ bot_lines|tojson }};
-        var overlay = document.getElementById("abyss");
-        var canvas  = document.getElementById("abyss-canvas");
-        var ctx     = canvas.getContext("2d");
-        var linesEl = document.getElementById("abyss-lines");
-
-        var PIXEL = 10;
-        var COLS  = Math.floor(canvas.width / PIXEL);
-        var ROWS  = Math.floor(canvas.height / PIXEL);
-        var openness = 0;
-        var animId = null;
-
-        function drawMouth(open) {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          if (open <= 0) return;
-          var midX = COLS/2, midY = ROWS/2;
-          var maxH = ROWS*0.45, maxW = COLS*0.45;
-          for (var x = 0; x < COLS; x++) {
-            var dx = Math.abs(x - midX) / maxW;
-            if (dx > 1) continue;
-            var curve = 1 - dx*dx*0.85;
-            var halfH = maxH * open * curve;
-            var topY = Math.floor(midY - halfH);
-            var botY = Math.ceil(midY + halfH);
-            for (var y = topY; y <= botY; y++) {
-              if (y < 0 || y >= ROWS) continue;
-              var isTooth = (y - topY < 1 || botY - y < 1) && (x % 3 !== 0);
-              ctx.fillStyle = isTooth ? "#c8ffcf" : "#ff2a3d";
-              ctx.fillRect(x*PIXEL, y*PIXEL, PIXEL-1, PIXEL-1);
-            }
-          }
-        }
-
-        function animate() {
-          openness += 0.012;
-          if (openness > 1) openness = 1;
-          drawMouth(openness);
-          if (openness < 1) {
-            animId = requestAnimationFrame(animate);
-          } else {
-            var i = 0;
-            var nextLine = function () {
-              if (i >= LINES.length) return;
-              var div = document.createElement("div");
-              div.className = "abyss__line";
-              div.textContent = LINES[i];
-              linesEl.appendChild(div);
-              i++;
-              setTimeout(nextLine, 1400);
-            };
-            setTimeout(nextLine, 800);
-          }
-        }
-
-        function closeOverlay() {
-          overlay.classList.remove("is-active");
-          overlay.style.display = "none";
-          if (animId) cancelAnimationFrame(animId);
-        }
-
-        animId = requestAnimationFrame(animate);
-        document.addEventListener("keydown", function (e) {
-          if (e.key === "Escape") closeOverlay();
-        });
-        overlay.addEventListener("click", closeOverlay);
-      })();
-      </script>
 
     {# ========== РЕЖИМ 3 — ОБЫЧНЫЙ ЧАТ ========== #}
     {% else %}
@@ -700,8 +651,6 @@
     {% endif %}
 
   </main>
-
-</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){

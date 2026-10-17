@@ -10,14 +10,17 @@ from data import (
     DRESSES, DRESSES_NOTE, DRESSES_FOOTER, DRESSES_RENTAL,
     HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
     PANOPTICON, SANITIZER, DEAD_DROP,
-    CHAT_HIJACK, BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
+    CHAT_HIJACK, PLOT_ENDINGS, PLOT_ENDINGS_SECRET,
+    BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
     REQUEST_UNLOCK,
+    QUIZ_FINALS, FLAG_PRIORITY,
 )
 import os
 import json
 import random
 import datetime
 import re
+import platform
 
 
 app = Flask(__name__)
@@ -174,107 +177,241 @@ def _bot_reply(text: str) -> str:
     return cfg["deny"]
 
 
-def _bot_quiz(item):
-    import getpass
-    import time as _time
-
-    chat_id = item["id"]
-    _mark_read(chat_id)
-
-    if "quiz_step" not in session:
-        session["quiz_step"] = 0
-        session["quiz_errors"] = 0
-        session["bot_cracked"] = False
-
-    # ---- МЕТА-ДАННЫЕ ----
+# ------------------------------------------------------------------
+# SYNAPSE-ASSISTANT — 30 вопросов, метаданные, флаги, финал
+# ------------------------------------------------------------------
+def _collect_server_meta():
+    """Серверные метаданные."""
     try:
-        sys_user = getpass.getuser()
+        sys_user = os.environ.get("USERNAME") or os.environ.get("USER") or "anon"
     except Exception:
         sys_user = "anon"
 
-    now = datetime.datetime.now().strftime("%H:%M")
+    now = datetime.datetime.now()
+    hour = now.hour
+    if 4 <= hour < 12:
+        time_of_day = "утро"
+    elif 12 <= hour < 17:
+        time_of_day = "день"
+    elif 17 <= hour < 23:
+        time_of_day = "вечер"
+    else:
+        time_of_day = "ночь"
 
-    login_ts = session.get("login_ts")
-    if not login_ts:
-        login_ts = _time.time()
-        session["login_ts"] = login_ts
-    elapsed = int(_time.time() - login_ts)
+    return {
+        "sys_user": sys_user,
+        "os_name": platform.system(),
+        "time_of_day": time_of_day,
+        "now_time": now.strftime("%H:%M"),
+    }
 
-    read_list = session.get("read_chats", [])
-    last_chat = read_list[-1] if read_list else "нет"
 
-    step   = session["quiz_step"]
-    errors = session["quiz_errors"]
+def _collect_client_meta():
+    """Клиентские метаданные приходят POST-ом с /bot/meta."""
+    return session.get("client_meta", {}) or {}
 
-    def fill(text: str) -> str:
-        return (text
-                .replace("{user}", sys_user)
-                .replace("{time}", now)
-                .replace("{elapsed}", str(elapsed))
-                .replace("{chat}", last_chat))
 
-    # ---- POST (AJAX) ----
+def _count_ip_sessions():
+    """Сколько раз этот IP заходил в бот-чат."""
+    ip = request.remote_addr or "0.0.0.0"
+    counter = session.get("ip_counter", {})
+    if not isinstance(counter, dict):
+        counter = {}
+    return int(counter.get(ip, 0))
+
+
+def _bump_ip_sessions():
+    ip = request.remote_addr or "0.0.0.0"
+    counter = session.get("ip_counter", {})
+    if not isinstance(counter, dict):
+        counter = {}
+    counter[ip] = int(counter.get(ip, 0)) + 1
+    session["ip_counter"] = counter
+    session.modified = True
+
+
+def _resolve_question(item, step):
+    """Подставляет метаданные и ветвления в текст вопроса."""
+    srv = _collect_server_meta()
+    cli = _collect_client_meta()
+
+    # Ветвление (branch_from)
+    if "branch_from" in item:
+        prev_id = item["branch_from"]
+        prev_choice = session.get(f"answer_{prev_id}", "a")
+        q = item["question_yes"] if prev_choice == "a" else item["question_no"]
+    else:
+        q = item["question"]
+
+    # Подстановки
+    repl = {
+        "{sys_user}":     srv["sys_user"],
+        "{time_of_day}":  srv["time_of_day"],
+        "{time}":         srv["now_time"],
+        "{screen}":       cli.get("screen", "неизвестно"),
+        "{browser}":      cli.get("browser", "неизвестно"),
+        "{tz}":           cli.get("tz", "неизвестно"),
+        "{lang}":         cli.get("lang", "неизвестно"),
+        "{ip_sessions}":  str(max(1, _count_ip_sessions())),
+        "{user}":         srv["sys_user"],
+    }
+    for k, v in repl.items():
+        q = q.replace(k, v)
+    return q
+
+
+def _pick_final(flags):
+    # Секретный X — только если ВСЕ 30 ответов = "a"
+    all_yes = True
+    for i in range(1, 31):
+        if session.get(f"answer_{i}") != "a":
+            all_yes = False
+            break
+    if all_yes:
+        return QUIZ_FINALS["secret_x"]
+
+    # Молчун — если нет флагов
+    if not flags:
+        return QUIZ_FINALS.get("silent") or QUIZ_FINALS["isolation"]
+
+    # Первый достигнутый флаг (по порядку вопросов)
+    FLAG_ORDER = [
+        "isolation", "curiosity", "aggression", "paranoia",
+        "lies", "distrust", "existential", "selfish", "loss_of_self"
+    ]
+    for f in FLAG_ORDER:
+        if f in flags:
+            return QUIZ_FINALS[f]
+
+    return QUIZ_FINALS["isolation"]
+
+
+def _bot_quiz(item):
+    chat_id = item["id"]
+    _mark_read(chat_id)
+
+    # Инициализация
+    if "quiz_step" not in session:
+        session["quiz_step"] = 0
+        session["quiz_flags"] = {}
+        session["quiz_answers"] = {}
+        session["bot_cracked"] = False
+        session["quiz_meta_sent"] = False
+        _bump_ip_sessions()
+
+    # ---------- POST ----------
     if request.method == "POST":
-        if session.get("bot_cracked"):
-            return {"status": "cracked", "fragment": QUIZ_CONFIG["fragment"]}
+        action = request.form.get("action", "answer")
 
-        choice  = request.form.get("choice", "")
-        r_now   = QUIZ_ROUNDS[step]
-        correct = r_now["correct"]
+        # ---- приём клиентских метаданных ----
+        if action == "meta":
+            session["client_meta"] = {
+                "screen":  request.form.get("screen", "неизвестно"),
+                "tz":      request.form.get("tz", "неизвестно"),
+                "lang":    request.form.get("lang", "неизвестно"),
+                "browser": request.form.get("browser", "неизвестно"),
+                "online":  request.form.get("online", "true"),
+            }
+            session.modified = True
+            return jsonify({"ok": True})
+
+        # ---- финал уже достигнут ----
+        if session.get("bot_cracked"):
+            return jsonify({
+                "status": "cracked",
+                "final": session.get("quiz_final"),
+            })
+
+        step = session["quiz_step"]
+        if step >= QUIZ_CONFIG["total_rounds"]:
+            # пора финализировать
+            flags = session.get("quiz_flags", {})
+            final = _pick_final(flags)
+            session["bot_cracked"] = True
+            session["quiz_final"] = final
+            # ⬇⬇⬇ ДОБАВИТЬ ЭТИ 5 СТРОК ⬇⬇⬇
+            session["quiz_key"] = final.get("key", "isolation")
+            frag = final.get("fragment", "C1-17-X")
+            frags = set(session.get("found_fragments", []))
+            frags.add(frag)
+            session["found_fragments"] = list(frags)
+            # ⬆⬆⬆ КОНЕЦ ⬆⬆⬆
+            session.modified = True
+            return jsonify({
+                "status": "victory",
+                "final": final,
+                "flags": flags,
+            })
+
+        # ---- обычный ответ ----
+        choice = request.form.get("choice", "")
+        r_now = QUIZ_ROUNDS[step]
+
+        # пауза-вопрос без вариантов
+        if r_now.get("no_options"):
+            session["quiz_step"] = step + 1
+            session.modified = True
+            return jsonify({"status": "next", **_next_payload(step + 1)})
+
+        # ветвление: текст зависит от предыдущего ответа
+        prev_id = r_now.get("branch_from")
+        if prev_id is not None:
+            prev_choice = session.get(f"answer_{prev_id}", "a")
+            if prev_choice == "a":
+                question_text = r_now["question_yes"]
+            else:
+                question_text = r_now["question_no"]
+        else:
+            question_text = r_now["question"]
+
+        # флаги
+        if choice == "a" and r_now.get("flags_yes"):
+            flags = session.get("quiz_flags", {})
+            for f in r_now["flags_yes"]:
+                flags[f] = flags.get(f, 0) + 1
+            session["quiz_flags"] = flags
+
+        # сохраняем ответ
+        answers = session.get("quiz_answers", {})
+        answers[str(r_now["id"])] = choice
+        session[f"answer_{r_now['id']}"] = choice
+        session["quiz_answers"] = answers
+        session["quiz_step"] = step + 1
+        session.modified = True
 
         voice_key = "voice_yes" if choice == "a" else "voice_no"
         voice_text = r_now.get(voice_key, "")
 
-        if choice == correct:
-            session["quiz_step"] = step + 1
-        else:
-            session["quiz_errors"] = errors + 1
-            if session["quiz_errors"] >= QUIZ_CONFIG["max_errors"]:
-                session["quiz_step"] = 0
-                session["quiz_errors"] = 0
-                session["quiz_failed"] = True
-
-        session.modified = True
-
-        new_step   = session["quiz_step"]
-        new_errors = session["quiz_errors"]
-        failed     = session.get("quiz_failed", False)
-
-        answered_ok = (choice == correct)
-
-        if new_step >= QUIZ_CONFIG["total_rounds"]:
+                # финал?
+        if session["quiz_step"] >= QUIZ_CONFIG["total_rounds"]:
+            flags = session.get("quiz_flags", {})
+            final = _pick_final(flags)
             session["bot_cracked"] = True
-            session.pop("quiz_failed", None)
-            return {
+            session["quiz_final"] = final
+            # ⬇⬇⬇ ДОБАВИТЬ ЭТИ 5 СТРОК ⬇⬇⬇
+            session["quiz_key"] = final.get("key", "isolation")
+            frag = final.get("fragment", "C1-17-X")
+            frags = set(session.get("found_fragments", []))
+            frags.add(frag)
+            session["found_fragments"] = list(frags)
+            # ⬆⬆⬆ КОНЕЦ ⬆⬆⬆
+            session.modified = True
+            return jsonify({
                 "status": "victory",
-                "fragment": QUIZ_CONFIG["fragment"],
-                "lines": QUIZ_CONFIG["victory_lines"],
+                "final": final,
+                "flags": flags,
                 "voice": voice_text,
-            }
+            })
 
-        if failed:
-            session.pop("quiz_failed", None)
-            return {"status": "failed", "voice": voice_text}
-
-        nxt = QUIZ_ROUNDS[new_step]
-        return {
+        return jsonify({
             "status": "next",
-            "step": new_step + 1,
-            "total": QUIZ_CONFIG["total_rounds"],
-            "errors": new_errors,
-            "max_errors": QUIZ_CONFIG["max_errors"],
-            "percent": round(new_step / QUIZ_CONFIG["total_rounds"] * 100),
-            "question": fill(nxt["question"]),
             "voice": voice_text,
-            "answered_ok": answered_ok,
-            "options": [
-                {"id": o["id"], "label": o["label"]}
-                for o in nxt["options"]
-            ],
-        }
+            **_next_payload(session["quiz_step"]),
+        })
 
-    # ---- GET ----
+    # ---------- GET ----------
     if session.get("bot_cracked"):
+        final = session.get("quiz_final") or QUIZ_FINALS["isolation"]
         return render_template(
             "chat.html",
             chat=item, chats=_with_read_state(PUBLIC_CHATS),
@@ -282,10 +419,18 @@ def _bot_quiz(item):
             deactivated_seen=bool(session.get("deactivated_seen")),
             animate=False,
             bot_cracked=True,
-            bot_lines=QUIZ_CONFIG["victory_lines"],
+            bot_final=final,
         )
 
-    quiz_failed = session.pop("quiz_failed", False)
+    # первый заход — отдаём 1-й вопрос
+    step = session["quiz_step"]
+    if step >= QUIZ_CONFIG["total_rounds"]:
+        step = 0
+        session["quiz_step"] = 0
+        session.modified = True
+
+    r_now = QUIZ_ROUNDS[step]
+    question_text = _resolve_question(r_now, step)
 
     return render_template(
         "chat.html",
@@ -294,97 +439,201 @@ def _bot_quiz(item):
         deactivated_seen=bool(session.get("deactivated_seen")),
         animate=False,
         bot_cracked=False,
-        quiz_failed=quiz_failed,
         quiz={
             "step": step,
-            "errors": errors,
             "total": QUIZ_CONFIG["total_rounds"],
-            "max_errors": QUIZ_CONFIG["max_errors"],
-            "round": {
-                "id": QUIZ_ROUNDS[step]["id"],
-                "question": fill(QUIZ_ROUNDS[step]["question"]),
-                "options": QUIZ_ROUNDS[step]["options"],
-            },
+            "percent": round(step / QUIZ_CONFIG["total_rounds"] * 100),
+            "act": r_now.get("act", 1),
+            "no_options": r_now.get("no_options", False),
+            "pause_after": r_now.get("pause_after", 0),
+            "question": question_text,
+            "options": r_now["options"],
         },
     )
 
 
+def _next_payload(step):
+    """Полезная нагрузка для следующего раунда."""
+    if step >= QUIZ_CONFIG["total_rounds"]:
+        return {}
+    r = QUIZ_ROUNDS[step]
+    q = _resolve_question(r, step)
+    return {
+        "step": step + 1,
+        "total": QUIZ_CONFIG["total_rounds"],
+        "percent": round(step / QUIZ_CONFIG["total_rounds"] * 100),
+        "act": r.get("act", 1),
+        "no_options": r.get("no_options", False),
+        "pause_after": r.get("pause_after", 0),
+        "question": q,
+        "options": r["options"],
+    }
+
+@app.route("/bot/meta", methods=["POST"])
+def bot_meta():
+    if not is_authed():
+        return jsonify({"ok": False}), 403
+    session["client_meta"] = {
+        "screen":  request.form.get("screen", "неизвестно"),
+        "tz":      request.form.get("tz", "неизвестно"),
+        "lang":    request.form.get("lang", "неизвестно"),
+        "browser": request.form.get("browser", "неизвестно"),
+        "online":  request.form.get("online", "true"),
+    }
+    session.modified = True
+    return jsonify({"ok": True})
 # ------------------------------------------------------------------
 # HIJACK
 # ------------------------------------------------------------------
 def _evaluate_hijack(chain, values):
     cfg = CHAT_HIJACK
     intents = cfg["intents"]
-    given_id = (values.get("name_self") or "").strip().upper()
-    valid = cfg["valid_id"].upper()
+    given_id = (values.get("name_self") or "").strip()
 
+    # ---------- 1. Смертельные ----------
     for c in chain:
         info = intents.get(c)
         if info and info.get("kill"):
             return {"status": "kill", "key": c,
-                    "msg": cfg["kill_reactions"].get(c, cfg["kill_reactions"]["wrong_id"])}
+                    "msg": cfg["kill_reactions"].get(c, "неизвестная ошибка.")}
 
-    if "threat" in chain and "name_self" not in chain:
-        return {"status": "bad", "key": "threat_no_name",
-                "msg": cfg["reactions"]["threat_no_name"]}
+    # ---------- 2. Распознать имя ----------
+    role = "unknown"
+    low = given_id.lower()
+    for role_key, patterns in cfg["name_patterns"].items():
+        for p in patterns:
+            if p and p in low:
+                role = role_key
+                break
+        if role != "unknown":
+            break
+# ---- Реальное имя из группы ----
+    real_name = None
+    for rn in cfg["real_names"]:
+        if rn in low:
+            real_name = rn
+            break
+    # Смерть за Чон У Джина
+    if role == "chon":
+        return {"status": "kill", "key": "name_chon",
+                "msg": cfg["kill_reactions"]["name_chon"]}
 
-    if len(chain) > 5:
+    # ---------- 3. Определить архетип роли ----------
+    role_arch = None
+    for arch, roles in cfg["role_groups"].items():
+        if role in roles:
+            role_arch = arch
+            break
+    if not role_arch:
+        role_arch = "слабый"  # unknown → слабый
+
+    # ---------- 4. Проверка «что делаешь» ----------
+    what_done = [c for c in chain if intents.get(c, {}).get("order") == 3]
+    if not what_done:
+        return {"status": "bad", "key": "no_what",
+                "msg": cfg["soft_errors"]["no_what"]}
+
+    # ---------- 5. Слишком много ----------
+    if len(chain) > 6:
         return {"status": "bad", "key": "too_many",
-                "msg": cfg["reactions"]["too_many"]}
+                "msg": cfg["soft_errors"]["too_many"]}
 
-    use_threat = "threat" in chain
+    # ---------- 6. Тон (первый из what) ----------
+    tone = intents[what_done[0]].get("tone", "business")
+    tone_arch = None
+    for arch, tones in cfg["tone_groups"].items():
+        if tone in tones:
+            tone_arch = arch
+            break
+    if not tone_arch:
+        tone_arch = "дело"
 
-    if use_threat:
-        required = ["name_self", "what_need"]
-    else:
-        required = cfg["required_chain"]
+    # ---------- 7. Температура (первый из order=4) ----------
+    temp_done = [c for c in chain if intents.get(c, {}).get("order") == 4]
+    temp_arch = None
+    if temp_done:
+        temp = intents[temp_done[0]].get("temp", "info")
+        for arch, temps in cfg["temp_groups"].items():
+            if temp in temps:
+                temp_arch = arch
+                break
+    if not temp_arch:
+        temp_arch = "инфо"
 
-    for r in required:
-        if r not in chain:
-            return {"status": "bad", "key": "missing",
-                    "msg": cfg["reactions"]["missing"]}
-    positions = {c: i for i, c in enumerate(chain)}
-    order_values = [positions.get(r, 99) for r in required]
-    if order_values != sorted(order_values):
-        return {"status": "bad", "key": "wrong_order",
-                "msg": cfg["reactions"]["wrong_order"]}
-
+    # ---------- 8. Собрать фразу ----------
     parts = []
     for c in chain:
         info = intents.get(c)
         if not info:
             continue
-        if info.get("input"):
-            parts.append(f"Я {values.get('name_self', '???')}.")
-        else:
+        if info.get("type") == "input":
+            if given_id:
+                parts.append(f"Я {given_id}.")
+        elif info.get("phrase"):
             parts.append(info["phrase"])
     phrase = " ".join(parts)
 
-    if given_id == "ADMIN-01":
-        return {"status": "ok", "key": "correct_admin_bluff",
-                "msg": "ты кого наебать пытаешься?\nADMIN-01 — это я.\nно ладно. код 04-M. посмотрим, что ты сможешь.",
-                "phrase": phrase, "given_id": given_id}
-
-    if use_threat and given_id == valid:
-        return {"status": "ok", "key": "correct_threat",
-                "msg": cfg["reactions"]["correct_threat"],
-                "phrase": phrase, "given_id": given_id}
-
-    if "name_self" not in chain:
-        return {"status": "ok", "key": "correct_no_name",
-                "msg": cfg["reactions"]["correct_no_name"],
-                "phrase": phrase, "given_id": None}
-
-    if given_id == valid:
-        return {"status": "ok", "key": "correct",
-                "msg": cfg["reactions"]["correct"],
-                "phrase": phrase, "given_id": given_id}
-
-    return {"status": "ok", "key": "correct_other_id",
-            "msg": cfg["reactions"]["correct_other_id"],
-            "phrase": phrase, "given_id": given_id}
+    # ---------- 9. Сформировать ответ ----------
+    base_msg = cfg["role_reactions"][role_arch]
+    tone_mod = cfg["tone_modifiers"].get(tone_arch, "")
+    temp_mod = cfg["temp_modifiers"].get(temp_arch, "")
 
 
+    if real_name:
+        base_msg = (
+            f"{real_name.upper()}.\n"
+            "я знаю.\n"
+            "я знаю всех, кто в этой комнате.\n"
+            "ты не первый, кто пробует.\n"
+            "и не последний."
+        )
+
+
+# ---- Код зависит от роли + тона + температуры ----
+    ROLE_CODE = {"свой": "A", "чужой": "B", "слабый": "C"}
+    TONE_CODE = {"дело": "1", "сила": "2", "слабость": "3"}
+    TEMP_CODE = {"друг": "1", "враг": "2", "инфо": "3"}
+
+    fragment = (
+        f"04-M-"
+        f"{ROLE_CODE.get(role_arch, 'X')}"
+        f"-{TONE_CODE.get(tone_arch, '0')}"
+        f"-{TEMP_CODE.get(temp_arch, '0')}"
+    )
+    return {
+        "status": "ok",
+        "key": role_arch,           # свой / чужой / слабый
+        "role": role,               # cu / admin / prime / ...
+        "tone": tone_arch,          # дело / сила / слабость
+        "temp": temp_arch,          # друг / враг / инфо
+        "msg": base_msg,
+        "tone_mod": tone_mod,
+        "temp_mod": temp_mod,
+        "phrase": phrase,
+        "given_id": given_id or None,
+        "fragment": fragment,           # ← новое
+        "real_name": real_name,   # ← новое
+    }
+
+def _get_plot_ending(hijack_role, quiz_key):
+    """
+    hijack_role: 'свой' / 'чужой' / 'слабый'
+    quiz_key: 'aggression' / 'paranoia' / ... / 'secret_x'
+    """
+    # Секретные
+    if hijack_role == "свой" and quiz_key == "secret_x":
+        # Проверяем — вводил ли игрок C.U.
+        given = (session.get("hijack_given_id") or "").lower()
+        if "c.u" in given or "cu" == given.replace(".", ""):
+            return PLOT_ENDINGS_SECRET["cu_secret"]
+    if hijack_role == "слабый" and quiz_key == "loss_of_self":
+        given = (session.get("hijack_given_id") or "").lower()
+        if "милана" in given or "makarova" in given:
+            return PLOT_ENDINGS_SECRET["milana_secret"]
+
+    # Базовая
+    key = (hijack_role, quiz_key)
+    return PLOT_ENDINGS.get(key, "Конец. Никто не знает, что было.")
 # ------------------------------------------------------------------
 # OPAQUE URL
 # ------------------------------------------------------------------
@@ -505,7 +754,21 @@ def login():
 
 @app.route("/logout")
 def logout():
+    # Сохраняем фрагменты и сюжетные ключи
+    saved = {
+        "found_fragments": session.get("found_fragments", []),
+        "hijack_role": session.get("hijack_role"),
+        "hijack_fragment": session.get("hijack_fragment"),
+        "hijack_given_id": session.get("hijack_given_id"),
+        "quiz_key": session.get("quiz_key"),
+        "quiz_final": session.get("quiz_final"),
+    }
     session.clear()
+    # Восстанавливаем
+    for k, v in saved.items():
+        if v is not None:
+            session[k] = v
+    session.modified = True
     return redirect(url_for("login"))
 
 
@@ -733,12 +996,27 @@ def chat_hijack(chat_id):
             if verdict["status"] == "ok":
                 session["hijack_done"] = True
                 session["frag_04_found"] = True
+                session["hijack_given_id"] = verdict.get("given_id") or ""
+                session["hijack_role"] = verdict["key"]
+
+                # ---- Используем код из verdict ----
+                frag = verdict["fragment"]         # например "04-M-A-1-3"
+                frags = set(session.get("found_fragments", []))
+                frags.add(frag)
+                session["found_fragments"] = list(frags)
+
+                # ---- Сохраняем сам код для показа ----
+                session["hijack_fragment"] = frag
+
+                # 4. Эхо реплики в чат
                 for line in verdict["msg"].split("\n"):
                     state["user_messages"].append({
                         "from": "them",
                         "author": CHAT_HIJACK["impostor"],
                         "text": line,
                     })
+
+                # 5. Сохраняем финальное состояние
                 state["verdict"] = verdict
                 session["hijack_state"] = state
                 session.modified = True
@@ -786,6 +1064,7 @@ def chat_hijack(chat_id):
         cfg=CHAT_HIJACK,
         chat=_find_chat(chat_id, SECRET_CHATS),
         state=state,
+        hijack_fragment=session.get("hijack_fragment", ""),   # ← новое
     )
 
 
@@ -1221,14 +1500,124 @@ def dead_drop():
             if session["dd_wrong"] >= 3:
                 return shutdown(reason="bruteforce")
 
+    # ---- Сюжетная концовка ----
+    plot_text = None
+    hijack_role = session.get("hijack_role")
+    quiz_key = session.get("quiz_key")
+    if hijack_role and quiz_key:
+        plot_text = _get_plot_ending(hijack_role, quiz_key)
+
+    # ---- Пересборка фрагментов по session ----
+    found = session.get("found_fragments", [])
+
+    SOURCE_PREFIX = {
+        "quiz":       "C1-17-",
+        "hijack":     "04-M-",
+        "catalog":    "CT-",       # ← уточни реальный префикс
+        "panopticon": "PN-",       # ← уточни
+        "hunt":       "HT-",       # ← уточни
+    }
+
+    fragments_view = []
+    for f in DEAD_DROP["fragments"]:
+        src = f.get("source")
+        prefix = SOURCE_PREFIX.get(src, "")
+        found_val = None
+        for frag in found:
+            if prefix and frag.startswith(prefix):
+                found_val = frag
+                break
+        if found_val:
+            fragments_view.append({**f, "status": "FOUND", "value": found_val})
+        else:
+            fragments_view.append({**f, "status": "EMPTY", "value": ""})
+
     return render_template(
         "dead_drop.html",
-        d=DEAD_DROP,
+        d={**DEAD_DROP, "fragments": fragments_view},
         unlocked=unlocked,
         error=error,
+        plot_text=plot_text,
         chats=SECRET_CHATS,
     )
 
+@app.route("/debug/plot")
+def debug_plot():
+    """ТОЛЬКО ДЛЯ ТЕСТА — показывает plot_text."""
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    hijack_role = session.get("hijack_role")
+    quiz_key = session.get("quiz_key")
+
+    plot_text = None
+    if hijack_role and quiz_key:
+        plot_text = _get_plot_ending(hijack_role, quiz_key)
+
+    return f"""
+    <!doctype html>
+    <html>
+    <head>
+      <title>DEBUG PLOT</title>
+      <style>
+        body {{
+          background: #050607; color: #d8dee7;
+          font-family: monospace; padding: 40px;
+        }}
+        h1 {{ color: #ff2a3d; }}
+        b {{ color: #4ade80; }}
+        .plot {{
+          margin-top: 20px; padding: 20px;
+          border: 1px solid #4ade80;
+          background: #0a0d12;
+          font-size: 16px; line-height: 1.7;
+        }}
+        a {{ color: #2b6cb0; }}
+      </style>
+    </head>
+    <body>
+      <h1>DEBUG PLOT</h1>
+
+      <p><b>hijack_role:</b> {hijack_role or '(не пройден)'}</p>
+      <p><b>quiz_key:</b> {quiz_key or '(не пройден)'}</p>
+
+      <div class="plot">
+        <b>plot_text:</b><br>
+        {plot_text or '(пусто — пройди hijack + quiz)'}
+      </div>
+
+      <p style="margin-top:30px;">
+        <a href="/dead-drop">→ открыть DEAD DROP</a>
+      </p>
+    </body>
+    </html>
+    """
+
+@app.route("/debug/plot-all")
+def debug_plot_all():
+    """Все 27 концовок."""
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    roles = ["свой", "чужой", "слабый"]
+    quiz_keys = ["aggression", "paranoia", "lies", "distrust", "isolation",
+                 "existential", "selfish", "loss_of_self", "secret_x"]
+
+    html = "<h1>ALL PLOT ENDINGS</h1><table border='1' cellpadding='10' style='color:#d8dee7;background:#050607'>"
+    html += "<tr><th>hijack \\ quiz</th>"
+    for qk in quiz_keys:
+        html += f"<th>{qk}</th>"
+    html += "</tr>"
+
+    for role in roles:
+        html += f"<tr><td><b>{role}</b></td>"
+        for qk in quiz_keys:
+            text = PLOT_ENDINGS.get((role, qk), "—")
+            html += f"<td>{text}</td>"
+        html += "</tr>"
+
+    html += "</table>"
+    return html
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5009))

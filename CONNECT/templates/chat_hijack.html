@@ -128,31 +128,140 @@
       <div>&gt; identity ......... <b>{{ state.verdict.given_id or 'anonymous' }}</b></div>
       <div>&gt; access ........... <b>level 5</b></div>
       <div>&gt; route ............ <b>node → 05</b></div>
-      <div>&gt; code ............. <b>{{ cfg.fragment_value }}</b></div>
+      <div>&gt; code ............. <b>{{ hijack_fragment or cfg.fragment_value }}</b></div>
       <div>&gt; session .......... closed</div>
     </div>
 
-    <div class="hijack-epilogue__note">
-      {% if state.verdict.key == 'correct' %}
+        <div class="hijack-epilogue__note">
+      {% set role = state.verdict.role %}
+      {% set tone = state.verdict.tone %}
+      {% set temp = state.verdict.temp %}
+
+
+ {% if state.verdict.real_name %}
+  <div>[ NOTE ] {{ state.verdict.real_name|upper }}?</div>
+  <div>[ NOTE ] я знаю это имя.</div>
+  <div>[ NOTE ] я знаю всех.</div>
+  <div>[ NOTE ] ты не должен был заходить.</div>
+
+      {# --- испуг: C.U. + угроза --- #}
+      {% elif role == 'cu' and temp == 'враг' %}
+        <div>[ NOTE ] C.U.?</div>
+        <div>[ NOTE ] я думал...</div>
+        <div>[ NOTE ] вы вернулись.</div>
+        <div>[ NOTE ] я не знал. простите.</div>
+
+      {# --- C.U. без угрозы --- #}
+      {% elif role == 'cu' %}
         <div>[ NOTE ] вы не C.U.</div>
         <div>[ NOTE ] так ведь?</div>
         <div>[ NOTE ] %)</div>
-      {% elif state.verdict.key == 'correct_threat' %}
-        <div>[ NOTE ] напугали.</div>
-        <div>[ NOTE ] почти поверил.</div>
-        <div>[ NOTE ] %)</div>
-      {% elif state.verdict.key == 'correct_admin_bluff' %}
+
+      {# --- ADMIN-01 --- #}
+      {% elif role == 'admin' %}
         <div>[ NOTE ] ADMIN-01 — это я.</div>
         <div>[ NOTE ] но ты мне нравишься.</div>
         <div>[ NOTE ] посмотрим, что ты сможешь.</div>
-      {% elif state.verdict.key == 'correct_other_id' %}
-        <div>[ NOTE ] ого.</div>
-        <div>[ NOTE ] а это уже становится интересным.</div>
-        <div>[ NOTE ] кто вы такой?</div>
-      {% elif state.verdict.key == 'correct_no_name' %}
+
+      {# --- ADMIN-02 --- #}
+      {% elif role == 'admin2' %}
+        <div>[ NOTE ] ADMIN-02?</div>
+        <div>[ NOTE ] такого не существует.</div>
+        <div>[ NOTE ] но... прям как настоящий ;)</div>
+
+      {# --- PRIME --- #}
+      {% elif role == 'prime' %}
+        <div>[ NOTE ] PRIME SYSTEMS?</div>
+        <div>[ NOTE ] вы вычеркнуты. три года назад.</div>
+        <div>[ NOTE ] но что-то в вас всё таки есть.</div>
+
+      {# --- ORBIT --- #}
+      {% elif role == 'orbit' %}
+        <div>[ NOTE ] ORBIT DATA?</div>
+        <div>[ NOTE ] инженер. хорошо.</div>
+        <div>[ NOTE ] слишком хорошо.</div>
+
+      {# --- H&P --- #}
+      {% elif role == 'hp' %}
+        <div>[ NOTE ] юрист?</div>
+        <div>[ NOTE ] H&P. хм.</div>
+        <div>[ NOTE ] пригодишься.</div>
+
+      {# --- Милана --- #}
+      {% elif role == 'milana' %}
+        <div>[ NOTE ] макарова мертва.</div>
+        <div>[ NOTE ] ты кто?</div>
+        <div>[ NOTE ] не отвечай. я уже знаю.</div>
+
+      {# --- USER --- #}
+      {% elif role == 'user' %}
+        <div>[ NOTE ] рядовой. хорошо.</div>
+        <div>[ NOTE ] работай. не отвлекайся.</div>
+
+      {# --- CLIENT --- #}
+      {% elif role == 'client' %}
+        <div>[ NOTE ] клиент. хорошо.</div>
+        <div>[ NOTE ] плати. не задавай вопросов.</div>
+
+      {# --- ANON --- #}
+      {% elif role == 'anon' %}
         <div>[ NOTE ] без имени?</div>
         <div>[ NOTE ] скромно.</div>
         <div>[ NOTE ] ладно. проверим позже.</div>
+
+      {# --- UNKNOWN --- #}
+      {% else %}
+        <div>[ NOTE ] ого?</div>
+        <div>[ NOTE ] ладно. проверю позже.</div>
+        <div>[ NOTE ] не задерживайся.</div>
+      {% endif %}
+
+            {# --- модификаторы: тон × температура --- #}
+      {% if tone and temp %}
+        {# --- оба есть: матрица 9 --- #}
+        {% if tone == 'дело' and temp == 'друг' %}
+          <div>[ NOTE ] осторожный.</div>
+        {% elif tone == 'дело' and temp == 'враг' %}
+          <div>[ NOTE ] деловой.</div>
+        {% elif tone == 'дело' and temp == 'инфо' %}
+          <div>[ NOTE ] информатор.</div>
+        {% elif tone == 'сила' and temp == 'друг' %}
+          <div>[ NOTE ] противоречивый.</div>
+        {% elif tone == 'сила' and temp == 'враг' %}
+          <div>[ NOTE ] опасный.</div>
+        {% elif tone == 'сила' and temp == 'инфо' %}
+          <div>[ NOTE ] угрожающий.</div>
+        {% elif tone == 'слабость' and temp == 'друг' %}
+          <div>[ NOTE ] жалкий.</div>
+        {% elif tone == 'слабость' and temp == 'враг' %}
+          <div>[ NOTE ] загнанный.</div>
+        {% elif tone == 'слабость' and temp == 'инфо' %}
+          <div>[ NOTE ] сломленный.</div>
+        {% endif %}
+
+      {% elif tone %}
+        {# --- только тон --- #}
+        {% if tone == 'дело' %}
+          <div>[ NOTE ] деловой.</div>
+        {% elif tone == 'сила' %}
+          <div>[ NOTE ] злой.</div>
+        {% elif tone == 'слабость' %}
+          <div>[ NOTE ] слабак.</div>
+        {% endif %}
+
+      {% elif temp %}
+        {# --- только температура --- #}
+        {% if temp == 'друг' %}
+          <div>[ NOTE ] добрый.</div>
+        {% elif temp == 'враг' %}
+          <div>[ NOTE ] опасный.</div>
+        {% elif temp == 'инфо' %}
+          <div>[ NOTE ] полезный.</div>
+        {% endif %}
+
+      {% else %}
+        {# --- ничего --- #}
+        <div>[ NOTE ] нейтральный.</div>
       {% endif %}
     </div>
 
@@ -161,7 +270,7 @@
       // counterparty offline<br>
       // restarting ... ok<br>
       // вы всё ещё здесь?<br>
-      // хорошо. для особо одарённых, код: <b>{{ cfg.fragment_value }}</b>
+      // хорошо. для особо одарённых, код: <b>{{ hijack_fragment or cfg.fragment_value }}</b>
     </div>
 
     <div class="hijack-epilogue__cta">
@@ -268,13 +377,13 @@
     ).join("");
 
     const parts = chain.map(id => {
-      const info = INTENTS[id];
-      if (info.input) {
-        const v = values[id] || "___";
-        return `Я ${v}.`;
-      }
-      return info.phrase;
-    });
+  const info = INTENTS[id];
+  if (info.input || info.type === "input") {
+    const v = values[id] || "___";
+    return `Я ${v}.`;
+  }
+  return info.phrase;
+});
     previewEl.textContent = parts.length ? "«" + parts.join(" ") + "»" : "«…»";
 
     document.getElementById("hijack-chain-input").value = JSON.stringify(chain);
@@ -295,13 +404,13 @@
           ([k, v]) => `<input type="hidden" name="value_${k}" value="${String(v).replace(/"/g,'&quot;')}">`
         ).join("");
         const parts2 = chain.map(cid => {
-          const info = INTENTS[cid];
-          if (info.input) {
-            const v2 = values[cid] || "___";
-            return `Я ${v2}.`;
-          }
-          return info.phrase;
-        });
+  const info = INTENTS[cid];
+  if (info.input || info.type === "input") {
+    const v2 = values[cid] || "___";
+    return `Я ${v2}.`;
+  }
+  return info.phrase;
+});
         previewEl.textContent = "«" + parts2.join(" ") + "»";
       });
     });
