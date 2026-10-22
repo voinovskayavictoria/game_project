@@ -18,85 +18,100 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
 
   <style>
-    body.is-locked-view .secret-content{
-      display:none !important;
+    /* --- Скрытие контента до разблокировки --- */
+    body.is-locked-view .secret-content { display: none !important; }
+    
+    .lock-banner {
+      display: none; align-items: center; gap: 10px;
+      margin: 14px 0 18px; padding: 10px 14px;
+      border-left: 3px solid #ff3344; background: #140000;
+      color: #ff3344; font-size: 12px; letter-spacing: .12em;
+      text-transform: uppercase;
     }
+    body.is-locked-view .lock-banner { display: flex !important; }
 
-    .lock-banner{
-      display:none;
-      align-items:center;
-      gap:10px;
-      margin:14px 0 18px;
-      padding:10px 14px;
-      border-left:3px solid #ff3344;
-      background:#140000;
-      color:#ff3344;
-      font-size:12px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
+    /* --- Модалка --- */
+    .rq-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.92); display: none; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
     }
-    body.is-locked-view .lock-banner{ display:flex !important; }
-
-    .rq-overlay{
-      position:fixed; inset:0; z-index:9999;
-      background:rgba(0,0,0,.88);
-      display:none; align-items:center; justify-content:center;
-      font-family:'JetBrains Mono',monospace;
+    .rq-overlay.is-open { display: flex; }
+    
+    .rq-modal {
+      width: min(520px, 92vw); background: #0a0a0a;
+      border: 1px solid #ff3344; box-shadow: 0 0 40px rgba(255,51,68,.2);
+      color: #e8e8e8;
     }
-    .rq-overlay.is-open{ display:flex; }
-    .rq-modal{
-      width:min(520px, 92vw);
-      background:#0a0a0a;
-      border:1px solid #ff3344;
-      box-shadow:0 0 40px rgba(255,51,68,.35);
-      color:#e8e8e8;
+    .rq-modal__head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 1px solid #222; background: #120000;
     }
-    .rq-modal__head{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:12px 16px; border-bottom:1px solid #222;
-      background:#120000;
+    .rq-modal__title { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #ff3344; }
+    .rq-modal__close { background: none; border: 0; color: #888; font-size: 22px; cursor: pointer; }
+    .rq-modal__body { 
+      padding: 24px 20px; 
+      max-height: 70vh; /* Ограничиваем высоту */
+      overflow-y: auto; /* Добавляем скролл */
     }
-    .rq-modal__title{
-      font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-      color:#ff3344;
+    
+    .rq-hint { 
+      font-size: 14px; color: #fff; margin: 0 0 20px; 
+      line-height: 1.5; text-align: center; 
     }
-    .rq-modal__close{
-      background:none; border:0; color:#888; font-size:22px;
-      cursor:pointer; line-height:1; padding:0 4px;
+    
+    /* --- Стили для карточек выбора --- */
+    .rq-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
     }
-    .rq-modal__close:hover{ color:#ff3344; }
-    .rq-modal__body{ padding:18px 16px 22px; }
-    .rq-hint{
-      font-size:12px; color:#888; margin:0 0 16px; line-height:1.5;
+    .rq-option { display: block; cursor: pointer; }
+    .rq-option input { display: none; } /* прячем стандартный кружок */
+    
+    .rq-option span {
+      display: block;
+      padding: 14px;
+      background: #050505;
+      border: 1px solid #2a2a2a;
+      color: #888;
+      font-size: 13px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: all 0.2s ease;
     }
-    .rq-field{ display:block; margin-bottom:12px; }
-    .rq-field__label{
-      display:block; font-size:11px; letter-spacing:.1em;
-      text-transform:uppercase; color:#666; margin-bottom:5px;
+    
+    .rq-option span:hover {
+      border-color: #555;
+      color: #ccc;
     }
-    .rq-field input{
-      width:100%; box-sizing:border-box;
-      background:#050505; border:1px solid #2a2a2a;
-      color:#e8e8e8; padding:10px 12px;
-      font-family:inherit; font-size:13px; outline:none;
+    
+    /* Когда выбрано — светится красным */
+    .rq-option input:checked + span {
+      border-color: #ff3344;
+      color: #fff;
+      background: #1a0305;
+      box-shadow: 0 0 15px rgba(255,51,68,.2) inset;
     }
-    .rq-field input:focus{ border-color:#ff3344; }
-    .rq-submit{
-      width:100%; margin-top:8px; padding:12px;
-      background:#ff3344; color:#000; border:0;
-      font-family:inherit; font-weight:700; letter-spacing:.1em;
-      text-transform:uppercase; font-size:12px; cursor:pointer;
+    
+    .rq-submit {
+      width: 100%; padding: 14px;
+      background: #ff3344; color: #000; border: 0; font-family: inherit;
+      font-weight: 700; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+      transition: opacity 0.2s;
     }
-    .rq-submit:hover{ background:#ff5566; }
-    .rq-result{ margin-top:14px; font-size:12px; line-height:1.6; }
-    .rq-ok{ color:#00ff88; border-left:2px solid #00ff88; padding-left:10px; }
-    .rq-ok b{ display:block; margin-top:8px; font-size:18px; letter-spacing:.14em; }
-    .rq-fail{ color:#ff3344; border-left:2px solid #ff3344; padding-left:10px; }
+    .rq-submit:hover { background: #ff5566; }
+    
+    .rq-result { margin-top: 16px; font-size: 12px; line-height: 1.6; text-align: center; }
+    .rq-ok { color: #00ff88; }
+    .rq-ok b { display: block; margin-top: 10px; font-size: 20px; letter-spacing: .14em; }
+    .rq-fail { color: #ff3344; }
   </style>
 </head>
 
 {% set is_locked = is_request and not unlocked %}
-
 <body class="s-app s-app--catalog {% if is_locked %}is-locked-view{% endif %}">
 
 <header class="s-topbar">
@@ -104,9 +119,7 @@
     <span class="s-mark">C</span>
     <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
   </div>
-  <div class="s-search">
-    <input type="text" placeholder="search /catalog/{{ dress.sku }}" readonly>
-  </div>
+  <div class="s-search"><input type="text" placeholder="search /catalog/{{ dress.sku }}" readonly></div>
   <div class="s-user">
     <span class="s-session">item: <b>{{ dress.sku }}</b></span>
     <a href="{{ url_for('catalog') }}" class="s-nav-link">// catalog</a>
@@ -115,11 +128,9 @@
 </header>
 
 <main class="dress-page">
-
   <div class="dress-page__grid">
     <div class="dress-page__image">
-      <img src="{{ url_for('static', filename=dress.image) }}" alt=""
-           onerror="this.style.display='none'">
+      <img src="{{ url_for('static', filename=dress.image) }}" alt="" onerror="this.style.display='none'">
     </div>
 
     <div class="dress-page__info">
@@ -128,9 +139,7 @@
       <div class="dress-page__price">{{ dress.price }}</div>
       <div class="dress-page__rent-note">только прокат · оплата почасовая</div>
 
-      <div class="lock-banner">
-        ● ДАННЫЕ ЗАШИФРОВАНЫ. ТРЕБУЕТСЯ ЗАПРОС ДОСТУПА
-      </div>
+      <div class="lock-banner">● ДАННЫЕ ЗАШИФРОВАНЫ. ТРЕБУЕТСЯ УКАЗАТЬ ЦЕЛЬ</div>
 
       <div class="secret-content">
         <p class="dress-page__desc">{{ dress.description }}</p>
@@ -153,9 +162,8 @@
 
       <div class="dress-page__cta">
         {% if is_request %}
-          <button type="button" class="dress-btn" id="rq-open-btn"
-                  {% if unlocked %}style="display:none"{% endif %}>
-            ОФОРМИТЬ ЗАПРОС
+          <button type="button" class="dress-btn" id="rq-open-btn" {% if unlocked %}style="display:none"{% endif %}>
+            СДЕЛАТЬ ЗАПРОС
           </button>
         {% else %}
           <a class="dress-btn" href="{{ url_for('order', sku=dress.sku) }}">Заказать</a>
@@ -163,47 +171,51 @@
       </div>
     </div>
   </div>
-
   <a class="s-nav-link" href="{{ url_for('catalog') }}">← вернуться в каталог</a>
 </main>
 
+<!-- МОДАЛКА -->
 <div class="rq-overlay" id="rq-overlay">
   <div class="rq-modal">
     <div class="rq-modal__head">
-      <span class="rq-modal__title">Запрос доступа // {{ dress.sku }}</span>
+      <span class="rq-modal__title">ЗАПРОС ДОСТУПА // {{ dress.sku }}</span>
       <button type="button" class="rq-modal__close" id="rq-close-btn">×</button>
     </div>
     <div class="rq-modal__body">
+      
       <p class="rq-hint">
-        Заполните анкету. При совпадении всех данных система выдаст
-        фрагмент хэша.
+        Подумай хорошо.<br>
+        Зачем тебе это платье?
       </p>
-
+      
       <form id="rq-form" autocomplete="off">
-        {% for f in request_unlock.fields %}
-          <label class="rq-field">
-            <span class="rq-field__label">{{ f.label }}</span>
-            <input type="text" name="{{ f.name }}"
-                   placeholder="{{ f.placeholder or '' }}">
-          </label>
-        {% endfor %}
-        <button type="submit" class="rq-submit">Отправить запрос</button>
+        <div class="rq-options">
+          {% for f in request_unlock.fields %}
+            {% for opt in f.options %}
+              <label class="rq-option">
+                <input type="radio" name="{{ f.name }}" value="{{ opt }}" required>
+                <span>{{ opt }}</span>
+              </label>
+            {% endfor %}
+          {% endfor %}
+        </div>
+        
+        <button type="submit" class="rq-submit">Подтвердить выбор</button>
       </form>
-
+      
       <div class="rq-result" id="rq-result"></div>
     </div>
   </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/secret.js') }}"></script>
-
 <script>
 (function(){
-  var overlay  = document.getElementById('rq-overlay');
-  var openBtn  = document.getElementById('rq-open-btn');
+  var overlay = document.getElementById('rq-overlay');
+  var openBtn = document.getElementById('rq-open-btn');
   var closeBtn = document.getElementById('rq-close-btn');
-  var form     = document.getElementById('rq-form');
-  var result   = document.getElementById('rq-result');
+  var form = document.getElementById('rq-form');
+  var result = document.getElementById('rq-result');
 
   if (!overlay || !openBtn || !form) return;
 
@@ -212,37 +224,34 @@
 
   openBtn.addEventListener('click', open);
   closeBtn.addEventListener('click', close);
-  overlay.addEventListener('click', function(e){
-    if (e.target === overlay) close();
-  });
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') close();
-  });
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) close(); });
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
-    result.innerHTML = '';
+    result.innerHTML = '<div style="color:#888;">ОБРАБОТКА...</div>';
     var fd = new FormData(form);
 
-    fetch('{{ url_for("dress_request", sku=dress.sku) }}', {
-      method: 'POST',
-      body: fd
-    })
+    fetch('{{ url_for("dress_request", sku=dress.sku) }}', { method: 'POST', body: fd })
     .then(function(r){ return r.json(); })
     .then(function(data){
       if (data.ok) {
         document.body.classList.remove('is-locked-view');
-
-        result.innerHTML =
-          '<div class="rq-ok">' + data.msg + '<b>' + data.fragment + '</b></div>';
-        form.style.display = 'none';
-        openBtn.style.display = 'none';
+        
+        // Красивый вывод
+        var html = '<div class="rq-ok">';
+        html += data.msg;
+        html += '<b>' + data.fragment + '</b>';
+        html += '<div style="margin-top:12px; font-size:10px; color:#555;">Твой мотив: ' + data.motivation + '</div>';
+        html += '</div>';
+        
+        result.innerHTML = html;
+        form.style.display = 'none'; // Прячем кнопки
       } else {
         result.innerHTML = '<div class="rq-fail">' + data.msg + '</div>';
       }
     })
-    .catch(function(){
-      result.innerHTML = '<div class="rq-fail">ОШИБКА СОЕДИНЕНИЯ</div>';
+    .catch(function(){ 
+      result.innerHTML = '<div class="rq-fail">ОШИБКА СОЕДИНЕНИЯ</div>'; 
     });
   });
 })();

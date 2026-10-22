@@ -1088,13 +1088,17 @@ def dress(sku):
         return shutdown(reason="breach")
 
     _remember("catalog")
+    
+    # Проверяем, есть ли слово "запрос" в цене
+    is_req = "запрос" in (item.get("price") or "").lower()
+    
     return render_template(
         "dress.html",
         dress=item,
         rental=DRESSES_RENTAL,
         chats=SECRET_CHATS,
         request_unlock=REQUEST_UNLOCK,
-        is_request=_is_request_dress(item),
+        is_request=is_req,
         unlocked=bool(session.get("frag_04_found")),
     )
 
@@ -1107,32 +1111,40 @@ def dress_request(sku):
     if sku not in ALLOWED_SKUS:
         return jsonify({"ok": False, "msg": "NOT FOUND"}), 404
 
-    item = next((d for d in DRESSES if d["sku"] == sku), None)
-    if not item:
-        return jsonify({"ok": False, "msg": "NOT FOUND"}), 404
+    motivation = request.form.get("motivation", "")
 
-    if not _is_request_dress(item):
-        return jsonify({"ok": False, "msg": "NOT AVAILABLE"}), 403
+    if not motivation:
+        return jsonify({"ok": False, "msg": "ЦЕЛЬ НЕ УКАЗАНА."})
 
-    cfg = REQUEST_UNLOCK
+    # Генерируем уникальный фрагмент в зависимости от мотива
+    mapping = {
+        "Освободить её": "FRAG-FREE-17",
+        "Скрыть от системы": "FRAG-HIDE-17",
+        "Забрать себе": "FRAG-SELF-17",
+        "Использовать для шантажа": "FRAG-BLACK-17",
+        "Выкупить контракт": "FRAG-BUY-17",
+        "Перепродать конкурентам": "FRAG-SELL-17",
+        "Улучшить (апгрейд)": "FRAG-UPG-17",
+        "Перепрограммировать": "FRAG-CODE-17",
+        "Уничтожить данные": "FRAG-DEL-17",
+        "Стереть её личность": "FRAG-WIPE-17",
+        "Вскрыть систему изнутри": "FRAG-HACK-17",
+        "Узнать правду о C-17": "FRAG-TRUTH-17",
+    }
+    
+    fragment = mapping.get(motivation, "FRAG-UNK-17")
 
-    def norm(s):
-        return (s or "").strip().lower().replace(" ", "").replace("-", "")
-
-    for key, correct in cfg["answers"].items():
-        given = request.form.get(key, "")
-        if norm(given) != norm(correct):
-            return jsonify({"ok": False, "msg": cfg["fail_text"]})
-
-    session["frag_04_found"] = True
+    session["dress_motivation"] = motivation
+    session["dress_fragment"] = fragment
     session.modified = True
+    session["frag_04_found"] = True
 
     return jsonify({
         "ok": True,
-        "fragment": cfg["fragment"],
-        "msg": cfg["success_text"],
+        "fragment": fragment,
+        "msg": REQUEST_UNLOCK["success_text"],
+        "motivation": motivation
     })
-
 
 @app.route("/catalog/<sku>/order", methods=["GET", "POST"])
 def order(sku):
