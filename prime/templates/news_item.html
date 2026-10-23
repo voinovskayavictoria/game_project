@@ -1,11 +1,58 @@
 {% extends "base.html" %}
-{% block title %}{{ item.title }}{% endblock %}
+{% block title %}{{ item.title }} — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<article class="news-article">
-  <time class="muted">{{ item.date }}</time>
-  <h1>{{ item.title }}</h1>
-  <p class="lead">{{ item.body }}</p>
-  <a class="back-link" href="{{ url_for('news') }}">← Все новости</a>
-</article>
+
+<style>
+  .article-page { max-width: 800px; margin: 0 auto; }
+  .article-header { margin-bottom: 30px; border-bottom: 2px solid #c9a227; padding-bottom: 20px; }
+  .article-date { font-family: monospace; color: #c9a227; font-size: 1rem; margin-bottom: 10px; }
+  .article-title { font-size: 2.2rem; line-height: 1.3; margin: 0; color: #0d1b2a; }
+  .article-content { font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 40px; }
+  .article-content p { margin-bottom: 20px; }
+  
+  /* Стиль для внешней ссылки */
+  .external-btn {
+    display: inline-block;
+    background: #ff4d4d;
+    color: #fff;
+    padding: 15px 30px;
+    text-decoration: none;
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 1.1rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+    margin-top: 20px;
+  }
+  .external-btn:hover { background: #e60000; }
+</style>
+
+<div class="article-page">
+  <div class="article-header">
+    <div class="article-date">{{ item.date }}</div>
+    <h1 class="article-title">{{ item.title }}</h1>
+  </div>
+
+  <div class="article-content">
+    <!-- Разбиваем текст по переносам строк, чтобы были абзацы -->
+    {% for paragraph in item.content.split('\n\n') %}
+      <p>{{ paragraph }}</p>
+    {% endfor %}
+  </div>
+
+  <!-- Если есть внешняя ссылка, показываем кнопку -->
+  {% if item.external_link %}
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+      <a href="{{ item.external_link }}" class="external-btn" target="_blank">
+        {{ item.external_text }} →
+      </a>
+    </div>
+  {% endif %}
+
+  <div style="margin-top: 50px;">
+    <a href="{{ url_for('news') }}" style="color: #c9a227; text-decoration: none; font-weight: bold; font-family: monospace;">← Вернуться ко всем новостям</a>
+  </div>
+</div>
+
 {% endblock %}

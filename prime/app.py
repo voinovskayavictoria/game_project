@@ -48,9 +48,9 @@ def team_member(slug):
 @app.route("/projects")
 def projects():
     active = [p for p in PROJECTS if p["status"] == "active"]
-    archived = [p for p in PROJECTS if p["status"] == "archived"]
+    # Добавляем suspended, чтобы C-17 отображался в архиве
+    archived = [p for p in PROJECTS if p["status"] in ("archived", "suspended")] 
     return render_template("projects.html", active=active, archived=archived)
-
 
 @app.route("/projects/<slug>")
 def project(slug):

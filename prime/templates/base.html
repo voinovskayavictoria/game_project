@@ -54,23 +54,10 @@
   {% block content %}{% endblock %}
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer" style="padding: 30px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
   <div class="container">
-    <div class="footer-cols">
-      <div>
-        <strong>PRIME SYSTEMS</strong><br>
-        {{ SITE.tagline }}<br>
-        <small>Основана в {{ SITE.founded }} г.</small>
-      </div>
-      <div>
-        <strong>Партнёры</strong><br>
-        {% for p in PARTNERS %}
-          <a href="{{ p.url }}">{{ p.name }}</a><br>
-        {% endfor %}
-      </div>
-    </div>
-    <div class="footer-bottom">
-      © {{ SITE.founded }}–2026 {{ SITE.name }}. Все права защищены.
+    <div class="footer-bottom" style="font-size: 0.9em; color: #888;">
+      © 2014–2026 PRIME SYSTEMS. Все права защищены.
     </div>
   </div>
 </footer>
