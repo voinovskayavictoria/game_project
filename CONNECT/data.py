@@ -1004,68 +1004,90 @@ PANOPTICON = {
     "uptime": "13d 04h 17m",
     "load": "0.87 / 0.92 / 0.94",
     "cameras": [
-        {"id": "CAM-01", "label": "ENTRANCE", "status": "ENCRYPTED",
-         "codec": "h264 / aes-256", "fps": "24",
-         "gif": "",
-         "video": "video/podezd.mp4",
-         "note": "поток зашифрован. ключ дешифровки отсутствует."},
-
-        {"id": "CAM-02", "label": "WARDROBE", "status": "ENCRYPTED",
-         "codec": "h264 / aes-256", "fps": "24",
-         "gif": "",
-         "video": "video/dress_1.mp4",
-         "note": "внутренняя камера. звук отключён."},
-
-        {"id": "CAM-03", "label": "APT — UNKNOWN", "status": "ENCRYPTED",
-         "codec": "—", "fps": "—",
-         "gif": "",
-         "broken": True,
-         "note": "нет сигнала. камера не отвечает с 17.04."},
-
-        {"id": "CAM-04", "label": "CLUB — MAIN HALL", "status": "ENCRYPTED",
-         "codec": "h264 / aes-256", "fps": "24",
-         "gif": "",
-         "video": "video/nightclub.mp4",
-         "note": "внутренняя камера. звук отключён."},
-
-        {"id": "CAM-05", "label": "ROOM 1704", "status": "ENCRYPTED",
-         "codec": "h264 / aes-256", "fps": "24",
-         "gif": "",
-         "video": "video/room_1.mp4",
-         "note": "внутренняя камера. сигнал активен."},
-
-        {"id": "CAM-06", "label": "ROOM — BED", "status": "ENCRYPTED",
-         "codec": "h264 / aes-256", "fps": "24",
-         "gif": "",
-         "video": "video/vanaya.mp4",
-         "note": "внутренняя камера. звук отключён."},
-        
-    ],
-    "events": [
-        ("04:17:02", "INFO",  "cron: nightly rotation ok"),
-        ("04:17:03", "INFO",  "heartbeat CAM-01 ok"),
-        ("04:17:04", "INFO",  "heartbeat CAM-02 ok"),
-        ("04:17:05", "INFO",  "heartbeat CAM-03 ok"),
-        ("04:17:06", "WARN",  "CAM-04 signal lost"),
-        ("04:17:11", "INFO",  "ping od17-edge 12ms"),
-        ("04:17:15", "INFO",  "ping connect 7ms"),
-        ("04:17:19", "INFO",  "auth: anon attempt from 10.17.0.4"),
-        ("04:17:23", "INFO",  "ufw: rule 17 matched"),
-        ("04:17:31", "WARN",  "ufw: rule 17 bypassed"),
-        ("04:17:32", "WARN",  "ufw: rule 18 bypassed"),
-        ("04:17:33", "CRIT",  "ROOT ACCESS GRANTED TO NODE_01"),
-        ("04:17:34", "CRIT",  "operator: C.W.J  mac: 17:04:17:04:17:04"),
-        ("04:17:35", "CRIT",  "operator viewing CAM-03 manually"),
-        ("04:17:36", "CRIT",  "operator viewing CAM-01 manually"),
-        ("04:17:41", "INFO",  "session idle"),
-        ("04:17:55", "INFO",  "ping od17-edge 11ms"),
-        ("04:18:02", "INFO",  "cron: cleanup tmp ok"),
-        ("04:18:11", "INFO",  "ping connect 6ms"),
-        ("04:18:17", "INFO",  "camera grid refresh"),
-        ("04:18:22", "WARN",  "retention policy: 17 days"),
-        ("04:18:31", "INFO",  "ping od17-edge 13ms"),
-        ("04:18:41", "INFO",  "log rotation ok"),
-        ("04:18:55", "INFO",  "session idle"),
+        {
+            "id": "CAM-01", "label": "ENTRANCE", "status": "ENCRYPTED",
+            "codec": "h264 / aes-256", "fps": "24", "gif": "",
+            "video": "video/podezd.mp4",
+            "note": "поток зашифрован. ключ дешифровки отсутствует.",
+            "settings": {"bitrate": 100, "buffer": 100, "freq": 0}, # правильные настройки
+            "fragment": "04-M-CAM1", # фрагмент (но его надо еще найти в логах)
+            "events_normal": [
+                ("04:17:02", "INFO", "CAM-01 boot ok"),
+                ("04:17:05", "INFO", "stream established"),
+                ("04:17:11", "WARN", "minor packet loss"),
+                ("04:17:15", "INFO", "frame sync ok"),
+            ],
+            "events_unlocked": [
+                ("04:17:02", "INFO", "CAM-01 boot ok"),
+                ("04:17:05", "INFO", "stream established"),
+                ("04:17:11", "WARN", "minor packet loss"),
+                ("04:17:34", "CRIT", "operator: C.W.J  mac: 17:04:17:04:17:04"),
+                ("04:17:35", "CRIT", "operator viewing CAM-01 manually"),
+            ]
+        },
+        {
+            "id": "CAM-02", "label": "WARDROBE", "status": "ENCRYPTED",
+            "codec": "h264 / aes-256", "fps": "24", "gif": "",
+            "video": "video/dress_1.mp4",
+            "note": "внутренняя камера. звук отключён.",
+            "settings": {"bitrate": 0, "buffer": 50, "freq": 100},
+            "fragment": None, # нет фрагмента
+            "events_normal": [
+                ("04:17:02", "INFO", "CAM-02 boot ok"),
+                ("04:17:10", "INFO", "motion detected"),
+                ("04:17:12", "WARN", "audio codec error"),
+            ],
+            "events_unlocked": None
+        },
+        {
+            "id": "CAM-03", "label": "APT — UNKNOWN", "status": "ENCRYPTED",
+            "codec": "—", "fps": "—", "gif": "",
+            "broken": True,
+            "note": "нет сигнала. камера не отвечает с 17.04.",
+            "settings": {"bitrate": 100, "buffer": 100, "freq": 0}, # Комбинация
+            "fragment": "04-M", # ТУТ НАСТОЯЩИЙ ФРАГМЕНТ
+            "events_normal": [
+                ("04:17:02", "INFO", "CAM-03 boot ok"),
+                ("04:17:03", "ERROR", "signal lost (timeout)"),
+            ],
+            "events_unlocked": [
+                ("04:17:02", "INFO", "CAM-03 boot ok"),
+                ("04:17:03", "ERROR", "signal lost (timeout)"),
+                ("04:17:33", "CRIT", "ROOT ACCESS GRANTED TO NODE_01"),
+                ("04:17:34", "CRIT", "operator: C.W.J  mac: 17:04:17:04:17:04"),
+                ("04:17:35", "CRIT", "operator viewing CAM-03 manually"),
+            ]
+        },
+        {
+            "id": "CAM-04", "label": "CLUB — MAIN HALL", "status": "ENCRYPTED",
+            "codec": "h264 / aes-256", "fps": "24", "gif": "",
+            "video": "video/nightclub.mp4",
+            "note": "внутренняя камера. звук отключён.",
+            "settings": {"bitrate": 50, "buffer": 50, "freq": 50},
+            "fragment": None,
+            "events_normal": [("04:17:02", "INFO", "CAM-04 boot ok")],
+            "events_unlocked": None
+        },
+        {
+            "id": "CAM-05", "label": "ROOM 1704", "status": "ENCRYPTED",
+            "codec": "h264 / aes-256", "fps": "24", "gif": "",
+            "video": "video/room_1.mp4",
+            "note": "внутренняя камера. сигнал активен.",
+            "settings": {"bitrate": 25, "buffer": 75, "freq": 25},
+            "fragment": None,
+            "events_normal": [("04:17:02", "INFO", "CAM-05 boot ok")],
+            "events_unlocked": None
+        },
+        {
+            "id": "CAM-06", "label": "ROOM — BED", "status": "ENCRYPTED",
+            "codec": "h264 / aes-256", "fps": "24", "gif": "",
+            "video": "video/vanaya.mp4",
+            "note": "внутренняя камера. звук отключён.",
+            "settings": {"bitrate": 0, "buffer": 0, "freq": 0},
+            "fragment": None,
+            "events_normal": [("04:17:02", "INFO", "CAM-06 boot ok")],
+            "events_unlocked": None
+        },
     ],
 }
 

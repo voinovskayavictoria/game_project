@@ -1289,6 +1289,9 @@ def hunt_item(hid):
 # ------------------------------------------------------------------
 # PANOPTICON
 # ------------------------------------------------------------------
+# ------------------------------------------------------------------
+# PANOPTICON
+# ------------------------------------------------------------------
 @app.route("/panopticon")
 def panopticon():
     if not is_secret():
@@ -1301,14 +1304,71 @@ def panopticon():
     )
 
 
-@app.route("/panopticon/events")
-def panopticon_events():
+@app.route("/panopticon/cam/<cam_id>", methods=["GET", "POST"])
+def panopticon_cam(cam_id):
     if not is_secret():
         return redirect(url_for("inbox"))
-    _remember("panopticon_events")
+
+    cam = next((c for c in PANOPTICON["cameras"] if c["id"] == cam_id), None)
+    if not cam:
+        return redirect(url_for("panopticon"))
+
+    session_key = f"panopticon_{cam_id}_settings"
+    current = session.get(session_key) or {"bitrate": 50, "buffer": 50, "freq": 50}
+
+    unlocked = session.get(f"panopticon_{cam_id}_unlocked", False)
+    error = None
+
+    if request.method == "POST":
+        current = {
+            "bitrate": int(request.form.get("bitrate", 50)),
+            "buffer":  int(request.form.get("buffer", 50)),
+            "freq":    int(request.form.get("freq", 50)),
+        }
+        session[session_key] = current
+
+        # Проверка на правильные настройки
+        correct = cam.get("settings")
+        if correct:
+            if (current["bitrate"] == correct["bitrate"] and
+                current["buffer"] == correct["buffer"] and
+                current["freq"] == correct["freq"]):
+                unlocked = True
+                session[f"panopticon_{cam_id}_unlocked"] = True
+            else:
+                unlocked = False
+                session[f"panopticon_{cam_id}_unlocked"] = False
+                error = "ОШИБКА КОНФИГУРАЦИИ. ПОТОК НЕСТАБИЛЕН."
+
     return render_template(
-        "panopticon_events.html",
-        p=PANOPTICON,
+        "panopticon_cam.html",
+        cam=cam,
+        current=current,
+        unlocked=unlocked,
+        error=error,
+        chats=SECRET_CHATS,
+    )
+
+
+@app.route("/panopticon/cam/<cam_id>/events")
+def panopticon_cam_events(cam_id):
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    cam = next((c for c in PANOPTICON["cameras"] if c["id"] == cam_id), None)
+    if not cam:
+        return redirect(url_for("panopticon"))
+
+    unlocked = session.get(f"panopticon_{cam_id}_unlocked", False)
+
+    # Выбираем логи: обычные или разблокированные
+    events = cam.get("events_unlocked") if unlocked and cam.get("events_unlocked") else cam.get("events_normal")
+
+    return render_template(
+        "panopticon_cam_events.html",
+        cam=cam,
+        events=events,
+        unlocked=unlocked,
         chats=SECRET_CHATS,
     )
 

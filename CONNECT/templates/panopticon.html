@@ -28,7 +28,7 @@
     <span class="s-session">uid: <b>anon</b></span>
     <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
     <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
-    <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+    <a href="{{ url_for('panopticon') }}"  class="s-nav-link is-active">// panopticon</a>
     <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
     <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
     <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
@@ -50,9 +50,8 @@
 
   <div class="pan__grid">
     {% for c in p.cameras %}
-      <div class="cam cam--{{ c.status|lower }}">
+      <a href="{{ url_for('panopticon_cam', cam_id=c.id) }}" class="cam cam--{{ c.status|lower }}" style="text-decoration: none;">
         <div class="cam__feed">
-
           {% if c.broken %}
             <div class="cam__broken">
               <div class="cam__broken-text">NO SIGNAL</div>
@@ -62,9 +61,6 @@
             <video class="cam__video" autoplay muted loop playsinline>
               <source src="{{ url_for('static', filename=c.video) }}" type="video/mp4">
             </video>
-          {% elif c.gif %}
-            <img src="{{ url_for('static', filename=c.gif) }}" alt=""
-                 onerror="this.style.display='none'">
           {% endif %}
 
           <div class="cam__noise"></div>
@@ -77,12 +73,11 @@
           <div class="cam__row"><span>fps</span><b>{{ c.fps }}</b></div>
           <div class="cam__note">{{ c.note }}</div>
         </div>
-      </div>
+      </a>
     {% endfor %}
   </div>
 
   <div class="pan__foot">
-    <a href="{{ url_for('panopticon_events') }}" class="dress-btn">// открыть системные логи</a>
     <span class="pan__warn">
       поток зашифрован. ключ дешифровки отсутствует.
     </span>

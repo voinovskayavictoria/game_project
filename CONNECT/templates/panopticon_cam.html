@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ cam.id }} — PANOPTICON</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-user">
+    <a href="{{ url_for('panopticon') }}" class="s-nav-link">← panopticon</a>
+  </div>
+</header>
+
+<main class="pan-cam">
+  <header class="pan-cam__head">
+    <div class="pan__kicker">{{ cam.id }} · {{ cam.status }}</div>
+    <h1 class="pan__title">{{ cam.label }}</h1>
+    <p class="pan__sub">{{ cam.note }}</p>
+  </header>
+
+  {# --- ВИДЕО С ID ДЛЯ JS --- #}
+  <div class="pan-cam__video" id="video-container">
+    {% if cam.broken %}
+      <div class="pan-cam__broken" id="video-broken">NO SIGNAL</div>
+    {% elif cam.video %}
+      <video autoplay muted loop playsinline id="cam-video">
+        <source src="{{ url_for('static', filename=cam.video) }}" type="video/mp4">
+      </video>
+    {% endif %}
+  </div>
+
+  {# --- НАСТРОЙКИ --- #}
+  <form method="post" class="pan-cam__settings" id="settings-form">
+    <div class="pan__kicker" style="margin-bottom: 16px;">КОНФИГУРАЦИЯ ПОТОКА</div>
+
+    {% if error %}
+      <div class="hijack-final hijack-final--bad" style="margin-bottom: 16px;">
+        <div class="hijack-final__text">{{ error }}</div>
+      </div>
+    {% endif %}
+
+    <div class="pan-cam__row">
+      <label>БИТРЕЙТ</label>
+      <input type="range" name="bitrate" id="slider-bitrate" min="0" max="100" value="{{ current.bitrate }}">
+      <output id="out-bitrate">{{ current.bitrate }}</output>
+    </div>
+    <div class="pan-cam__row">
+      <label>БУФЕР</label>
+      <input type="range" name="buffer" id="slider-buffer" min="0" max="100" value="{{ current.buffer }}">
+      <output id="out-buffer">{{ current.buffer }}</output>
+    </div>
+    <div class="pan-cam__row">
+      <label>ЧАСТОТА</label>
+      <input type="range" name="freq" id="slider-freq" min="0" max="100" value="{{ current.freq }}">
+      <output id="out-freq">{{ current.freq }}</output>
+    </div>
+    <button type="submit" class="dress-btn" style="width: 100%; margin-top: 16px;">// ПРИМЕНИТЬ</button>
+  </form>
+
+  <div class="pan__foot" style="justify-content: space-between;">
+    <a href="{{ url_for('panopticon_cam_events', cam_id=cam.id) }}" class="dress-btn {% if not unlocked %}dress-btn--ghost{% endif %}">
+      {% if unlocked %}// ОТКРЫТЬ ЛОГИ (ДЕШИФРОВАНО){% else %}// ОТКРЫТЬ ЛОГИ{% endif %}
+    </a>
+  </div>
+
+  {% if unlocked and cam.fragment %}
+    <div class="pan-cam__unlocked" style="margin-top: 24px;">
+      <div class="pan-cam__unlocked-head">[ КАНАЛ ДЕШИФРОВАН ]</div>
+      <div class="pan-cam__unlocked-frag">ФРАГМЕНТ: <b>{{ cam.fragment }}</b></div>
+    </div>
+  {% endif %}
+
+</main>
+
+<script>
+(function() {
+  const video = document.getElementById("cam-video");
+  const broken = document.getElementById("video-broken");
+
+  const bitrate = document.getElementById("slider-bitrate");
+  const buffer  = document.getElementById("slider-buffer");
+  const freq    = document.getElementById("slider-freq");
+
+  const outBitrate = document.getElementById("out-bitrate");
+  const outBuffer  = document.getElementById("out-buffer");
+  const outFreq    = document.getElementById("out-freq");
+
+  function applyEffects() {
+    const b = parseInt(bitrate.value, 10);
+    const u = parseInt(buffer.value, 10);
+    const f = parseInt(freq.value, 10);
+
+    outBitrate.textContent = b;
+    outBuffer.textContent  = u;
+    outFreq.textContent    = f;
+
+    if (!video) return;
+
+    // --- БИТРЕЙТ → КАЧЕСТВО ---
+    // 0 = ужасное (пиксели), 100 = чистое
+    let pixelate = (100 - b) / 100 * 8; // 0..8 (сильное размытие при низком)
+
+    // --- БУФЕР → ЛАГИ ---
+    // 0 = рвётся, 100 = плавно
+    let lag = (100 - u) / 100 * 0.6; // 0..0.6 (сильная задержка)
+
+    // --- ЧАСТОТА → СКОРОСТЬ + ГЛИТЧ ---
+    // 0 = медленно, 100 = быстро
+    let speed = 0.5 + (f / 100) * 1.5; // 0.5..2.0
+    video.playbackRate = speed;
+
+    // --- CSS-ФИЛЬТРЫ ---
+    let blurPx   = (100 - b) / 100 * 6;   // 0..6px
+    let contrast = 0.5 + (b / 100) * 1.5; // 0.5..2.0
+    let saturate = 0.3 + (b / 100) * 1.2; // 0.3..1.5
+    let brightness = 0.4 + (u / 100) * 1.2; // 0.4..1.6
+    let hueShift = (f / 100) * 90 - 45;  // -45..45
+
+    video.style.filter = `
+      blur(${blurPx}px)
+      contrast(${contrast})
+      saturate(${saturate})
+      brightness(${brightness})
+      hue-rotate(${hueShift}deg)
+    `;
+
+    // --- ЭФФЕКТ "РВЁТСЯ" при низком буфере ---
+    if (u < 20) {
+      video.style.opacity = (Math.random() * 0.4 + 0.4).toFixed(2);
+    } else {
+      video.style.opacity = 1;
+    }
+
+    // --- "ГЛИТЧ" при низком битрейте (частое мерцание) ---
+    if (b < 15) {
+      video.style.transform = `translate(${(Math.random() * 4 - 2)}px, ${(Math.random() * 4 - 2)}px)`;
+    } else {
+      video.style.transform = "translate(0, 0)";
+    }
+  }
+
+  [bitrate, buffer, freq].forEach(el => {
+    el.addEventListener("input", applyEffects);
+  });
+
+  applyEffects();
+  setInterval(applyEffects, 500); // чтобы мерцание было живым
+})();
+</script>
+
+</body>
+</html>
