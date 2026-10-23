@@ -1037,14 +1037,9 @@ PANOPTICON = {
         {"id": "CAM-06", "label": "ROOM — BED", "status": "ENCRYPTED",
          "codec": "h264 / aes-256", "fps": "24",
          "gif": "",
-         "video": "video/matras_1.mp4",
+         "video": "video/vanaya.mp4",
          "note": "внутренняя камера. звук отключён."},
         
-        {"id": "CAM-07", "label": "BATHROOM", "status": "ENCRYPTED",
-         "codec": "h264 / aes-256", "fps": "24",
-         "gif": "",
-         "video": "video/vannaya.mp4",
-         "note": "внутренняя камера. звук отключён."},
     ],
     "events": [
         ("04:17:02", "INFO",  "cron: nightly rotation ok"),
