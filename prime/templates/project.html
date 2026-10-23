@@ -111,7 +111,7 @@
       {% endif %}
     </div>
 
-    <!-- Правая колонка: Быстрые факты -->
+        <!-- Правая колонка: Быстрые факты -->
     {% if project.status == 'active' %}
     <div class="project-sidebar">
       <div class="info-card">
@@ -121,6 +121,15 @@
       <div class="info-card">
         <h3>Поддержка</h3>
         <p>Техническая поддержка 24/7. SLA: 99.9% доступности.</p>
+      </div>
+    </div>
+    
+    {% elif project.transfer_details %}
+    <!-- Если проект передан/приостановлен, показываем справку о передаче -->
+    <div class="project-sidebar">
+      <div class="info-card" style="border-color: #8b1c1c; background: rgba(139, 28, 28, 0.1);">
+        <h3 style="color: #ff4d4d; border-bottom-color: #8b1c1c;">Передача прав</h3>
+        <p style="color: #e8e8e8;">{{ project.transfer_details }}</p>
       </div>
     </div>
     {% endif %}

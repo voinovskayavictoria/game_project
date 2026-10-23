@@ -33,7 +33,7 @@
     border-color: #c9a227;
   }
   
-  /* БЛАГОРОДНО-КРАСНАЯ КАРТОЧКА (для важных новостей) */
+  /* БЛАГОРОДНО-КРАСНАЯ КАРТОЧКА */
   .news-card--special {
     background: linear-gradient(145deg, #2a0808, #170202);
     border-color: #8b1c1c;
@@ -49,8 +49,6 @@
   .news-card--special .news-title a { color: #fff; }
   .news-card--special .news-title a:hover { color: #ffcccc; }
   .news-card--special .news-short { color: #d1bebe; }
-  .news-card--special .news-read-more { color: #ff4d4d; }
-  .news-card--special .news-read-more:hover { color: #fff; }
 
   /* Общие стили текста */
   .news-date { font-family: monospace; color: #c9a227; font-size: 0.9rem; margin-bottom: 12px; }
@@ -58,8 +56,38 @@
   .news-title a { color: #fff; text-decoration: none; transition: color 0.2s; }
   .news-title a:hover { color: #c9a227; }
   .news-short { color: #a0aec0; font-size: 0.95rem; line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
-  .news-read-more { color: #c9a227; text-decoration: none; font-size: 0.9rem; font-weight: bold; font-family: monospace; letter-spacing: 1px; }
-  .news-read-more:hover { color: #fff; }
+
+  /* Стили для кнопки "Читать далее" */
+  .news-read-more { 
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid #c9a227;
+    color: #c9a227; 
+    text-decoration: none; 
+    font-size: 0.85rem; 
+    font-weight: bold; 
+    font-family: monospace; 
+    letter-spacing: 1px; 
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .news-read-more:hover { 
+    background: #c9a227;
+    color: #000; 
+  }
+
+  /* Кнопка в красной карточке */
+  .news-card--special .news-read-more {
+    border-color: #8b1c1c;
+    color: #ffcccc;
+    background: rgba(139, 28, 28, 0.3);
+  }
+  .news-card--special .news-read-more:hover {
+    background: #8b1c1c;
+    color: #fff;
+    border-color: #ff4d4d;
+  }
 </style>
 
 <div class="news-page">
@@ -70,7 +98,6 @@
       <div class="year-title">{{ year }}</div>
       <div class="news-grid">
         {% for n in items %}
-          <!-- Добавляем класс news-card--special, если есть внешняя ссылка -->
           <div class="news-card {% if n.external_link %}news-card--special{% endif %}">
             <div class="news-date">{{ n.date }}</div>
             <h3 class="news-title">

@@ -11,21 +11,30 @@
   .article-content { font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 40px; }
   .article-content p { margin-bottom: 20px; }
   
-  /* Стиль для внешней ссылки */
+  /* Благородная кнопка (Бордо + Золото) */
   .external-btn {
     display: inline-block;
-    background: #ff4d4d;
-    color: #fff;
-    padding: 15px 30px;
+    background: #6e1e2a; /* Глубокий благородный бордовый */
+    color: #fff !important; /* Принудительно белый текст */
+    padding: 15px 35px;
     text-decoration: none;
     font-weight: bold;
-    font-family: monospace;
-    font-size: 1.1rem;
-    border-radius: 4px;
-    transition: background 0.2s;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    border-radius: 2px;
+    border: 1px solid #c9a227; /* Золотая окантовка в стиле PRIME */
+    transition: all 0.3s ease;
     margin-top: 20px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   }
-  .external-btn:hover { background: #e60000; }
+  
+  .external-btn:hover { 
+    background: #8b2532; /* Чуть светлее при наведении */
+    box-shadow: 0 6px 20px rgba(110, 30, 42, 0.5);
+    border-color: #fff;
+  }
 </style>
 
 <div class="article-page">
@@ -35,15 +44,14 @@
   </div>
 
   <div class="article-content">
-    <!-- Разбиваем текст по переносам строк, чтобы были абзацы -->
     {% for paragraph in item.content.split('\n\n') %}
       <p>{{ paragraph }}</p>
     {% endfor %}
   </div>
 
-  <!-- Если есть внешняя ссылка, показываем кнопку -->
   {% if item.external_link %}
     <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+      <!-- target="_blank" открывает ссылку в новой вкладке -->
       <a href="{{ item.external_link }}" class="external-btn" target="_blank">
         {{ item.external_text }} →
       </a>
