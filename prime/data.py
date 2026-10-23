@@ -104,7 +104,7 @@ TEAM = [
      "short": "Отвечает за коммуникации и публичные мероприятия."},
      
     {"slug": "milana-makarova", "name": "Милана Макарова", "role": "HR-директор",
-     "age": 30, "since": 2016, "photo": "img/team/makarova.jpg", "featured": False,
+     "age": 30, "since": 2021, "photo": "img/team/makarova.jpg", "featured": False,
      "short": "Подбор, адаптация и развитие сотрудников."},
      
     {"slug": "alexey-fedorov", "name": "Алексей Фёдоров", "role": "Senior Developer",
@@ -116,7 +116,7 @@ TEAM = [
     {"slug": "sergey-nikitin", "name": "Сергей Никитин", "role": "Project Manager",
      "age": 37, "since": 2019, "photo": "img/team/nikitin.jpg", "featured": False,
      "short": "Ведёт ключевые клиентские проекты."},
-    {"slug": "nikita-solovyev", "name": "Никита Соловьёв", "role": "DevOps Engineer",
+    {"slug": "german-zuravlev", "name": "Герман Журавлев", "role": "DevSecOps",
      "age": 31, "since": 2020, "photo": "img/team/solovyev.jpg", "featured": False,
      "short": "Инфраструктура, CI/CD, мониторинг."},
     {"slug": "tatyana-pavlova", "name": "Татьяна Павлова", "role": "Аналитик",

@@ -85,11 +85,6 @@ def partners():
 
 
 
-# --- Контакты ---
-@app.route("/contacts")
-def contacts():
-    return render_template("contacts.html")
-
 
 # --- 404 ---
 @app.errorhandler(404)

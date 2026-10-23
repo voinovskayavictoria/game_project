@@ -4,12 +4,40 @@
   <meta charset="utf-8">
   <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  
+  <!-- Стили для центрирования футера -->
+  <style>
+    .footer-cols {
+      display: flex;
+      justify-content: center; /* Центрирует колонки */
+      align-items: flex-start;
+      gap: 100px; /* Расстояние между колонками */
+      text-align: center; /* Текст внутри колонок по центру */
+      margin-bottom: 30px;
+    }
+    .footer-bottom {
+      text-align: center; /* Копирайт по центру */
+      border-top: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая линия над копирайтом */
+      padding-top: 20px;
+      font-size: 0.9em;
+      color: #888;
+    }
+    .footer-cols a {
+      color: #c9a227; /* Цвет ссылок в партнерах */
+      text-decoration: none;
+      transition: 0.2s;
+    }
+    .footer-cols a:hover {
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
 
 <header class="site-header">
   <div class="container header-inner">
     <a href="{{ url_for('index') }}" class="logo">
+      <!-- Если захочешь вернуть картинку, просто замени строку ниже на <img src="{{ url_for('static', filename='img/prime.png') }}" style="height: 40px;"> -->
       <span class="logo-mark">◆</span>
       PRIME <span class="logo-sub">SYSTEMS</span>
     </a>
@@ -18,7 +46,6 @@
       <a href="{{ url_for('team') }}">Команда</a>
       <a href="{{ url_for('projects') }}">Проекты</a>
       <a href="{{ url_for('news') }}">Новости</a>
-      <a href="{{ url_for('contacts') }}">Контакты</a>
     </nav>
   </div>
 </header>
@@ -40,12 +67,6 @@
         {% for p in PARTNERS %}
           <a href="{{ p.url }}">{{ p.name }}</a><br>
         {% endfor %}
-      </div>
-      <div>
-        <strong>Контакты</strong><br>
-        info@prime-systems.example<br>
-        +7 (000) 000-00-00<br>
-        г. Москва, Пресненская наб., 12
       </div>
     </div>
     <div class="footer-bottom">
