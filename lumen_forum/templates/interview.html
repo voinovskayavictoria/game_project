@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ item.name }} — LUMEN FORUM{% endblock %}
+
+{% block content %}
+<div style="background: #fff; padding: 50px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+  
+  <div style="font-family: monospace; color: #c9a227; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Интервью</div>
+  <h1 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #0d1b2a; margin-top: 0; margin-bottom: 10px;">{{ item.name }}</h1>
+  <div style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">{{ item.role }}</div>
+  
+  <h2 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #0d1b2a; border-left: 4px solid #c9a227; padding-left: 15px; margin-bottom: 30px;">
+    {{ item.title }}
+  </h2>
+
+  <p style="font-size: 1.1rem; line-height: 1.7; color: #333; margin-bottom: 40px; font-style: italic;">
+    {{ item.intro }}
+  </p>
+
+  <div style="display: flex; flex-direction: column; gap: 25px;">
+    {% for q, a in item.qa %}
+      <div>
+        <div style="font-weight: bold; color: #0d1b2a; margin-bottom: 8px; font-size: 1.05rem;">— {{ q }}</div>
+        <div style="color: #444; line-height: 1.7; font-size: 1.05rem; padding-left: 15px; border-left: 2px solid #e2e8f0;">{{ a }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee;">
+    <a href="{{ url_for('interviews') }}" style="color: #0d1b2a; font-weight: bold; text-decoration: none;">← Все интервью</a>
+  </div>
+</div>
+{% endblock %}
