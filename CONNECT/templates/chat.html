@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/public.css') }}">
 
   <style>
-    html, body{ height:100%; margin:0; overflow:hidden; }
+    html, body{ height:100%; margin:0; overflow:hidden; background: #000; }
     .app{ height:100vh; display:flex; flex-direction:column; }
     .app__topbar{ flex:0 0 auto; }
     .app__body{ flex:1 1 auto; min-height:0; display:flex; overflow:hidden; }
@@ -52,181 +52,153 @@
     }
 
     /* ============================================================
-       ПСИХОЛОГИЧЕСКИЙ ОПРОСНИК — базовая вёрстка
+       ПСИХОЛОГИЧЕСКИЙ ОПРОСНИК
        ============================================================ */
     .quiz-fullscreen{
       position:fixed; inset:0; z-index:9999;
       background:#000; color:#d8d8d8;
       font-family:'Inter',sans-serif;
       display:none; align-items:center; justify-content:center;
-      overflow:hidden;
-      transition: background .8s ease;
+      overflow:hidden; transition: background .8s ease;
     }
     .quiz-fullscreen.is-active{ display:flex; }
 
     .quiz-fullscreen__inner{
       width:min(640px, 92vw);
-      padding:32px 28px;
-      text-align:center;
+      padding:32px 28px; text-align:center;
       transition: box-shadow .6s ease;
+      max-height: 90vh; overflow-y: auto;
     }
 
     .quiz-fullscreen__progress{ margin-bottom:40px; }
-    .quiz-fullscreen__bar{
-      height:1px; background:#1a1a1a; margin-bottom:10px;
-    }
-    .quiz-fullscreen__fill{
-      height:1px; background:#ff2a3d; transition:width .5s ease;
-    }
-    .quiz-fullscreen__label{
-      font-size:11px; letter-spacing:.3em; color:#444;
-    }
+    .quiz-fullscreen__bar{ height:1px; background:#1a1a1a; margin-bottom:10px; }
+    .quiz-fullscreen__fill{ height:1px; background:#ff2a3d; transition:width .5s ease; }
+    .quiz-fullscreen__label{ font-size:11px; letter-spacing:.3em; color:#444; }
     .quiz-fullscreen__label b{ color:#888; }
 
     .quiz-fullscreen__question{
-      font-size:22px; line-height:1.5;
-      color:#e8e8e8;
-      margin-bottom:44px;
-      white-space:pre-line;
-      min-height:3em;
-      transition:color .4s;
+      font-size:22px; line-height:1.5; color:#e8e8e8;
+      margin-bottom:44px; white-space:pre-line; min-height:3em; transition:color .4s;
     }
 
-    .quiz-fullscreen__options{
-      display:grid; grid-template-columns:1fr 1fr; gap:16px;
-    }
+    .quiz-fullscreen__options{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     .quiz-fullscreen__card{
-      background:transparent;
-      border:1px solid #333;
-      color:#cfcfcf;
-      padding:22px 16px;
-      font-family:inherit; font-size:15px; letter-spacing:.14em;
-      text-transform:uppercase;
-      cursor:pointer;
+      background:transparent; border:1px solid #333; color:#cfcfcf;
+      padding:22px 16px; font-family:inherit; font-size:15px; letter-spacing:.14em;
+      text-transform:uppercase; cursor:pointer;
       transition:border-color .2s, color .2s, background .2s;
     }
-    .quiz-fullscreen__card:hover{
-      border-color:#ff2a3d; color:#fff;
-    }
+    .quiz-fullscreen__card:hover{ border-color:#ff2a3d; color:#fff; }
     .quiz-fullscreen__card.disabled{ opacity:.3; cursor:default; }
 
-    .quiz-fullscreen__typing,
+    .quiz-fullscreen__typing{ padding:40px 0; }
     .quiz-fullscreen__typing span{
-      display:inline-block;
-    }
-    .quiz-fullscreen__typing{
-      padding:40px 0;
-    }
-    .quiz-fullscreen__typing span{
-      width:8px; height:8px; margin:0 3px;
-      background:#ff2a3d; border-radius:50%;
-      animation: q-typing 1.2s infinite ease-in-out;
+      display:inline-block; width:8px; height:8px; margin:0 3px;
+      background:#ff2a3d; border-radius:50%; animation: q-typing 1.2s infinite ease-in-out;
     }
     .quiz-fullscreen__typing span:nth-child(2){ animation-delay:.15s; }
     .quiz-fullscreen__typing span:nth-child(3){ animation-delay:.3s; }
-    @keyframes q-typing{
-      0%,100%{ transform:translateY(0); opacity:.4; }
-      50%    { transform:translateY(-6px); opacity:1; }
-    }
+    @keyframes q-typing{ 0%,100%{ transform:translateY(0); opacity:.4; } 50%{ transform:translateY(-6px); opacity:1; } }
 
-    .quiz-fullscreen__fail{
-      padding:40px 0;
-    }
-    .quiz-fullscreen__fail-title{
-      color:#ff2a3d; font-size:14px; letter-spacing:.2em;
-      margin-bottom:14px;
-    }
-    .quiz-fullscreen__fail-text{
-      color:#888; font-size:13px; margin-bottom:22px;
-    }
-    .quiz-fullscreen__restart{
-      color:#ff2a3d; text-decoration:none;
-      border-bottom:1px solid #ff2a3d; font-size:12px;
-      letter-spacing:.1em;
-    }
-
-    /* --- Голос за кадром --- */
-    .quiz-fullscreen__voice{
-      padding:60px 0; min-height:4em;
-      font-size:16px; color:#888; letter-spacing:.06em;
-      font-family:'JetBrains Mono', monospace;
-    }
-    .quiz-fullscreen__voice-text{
-      display:inline-block;
-      text-align:left;
-    }
-    .quiz-fullscreen__voice-text::after{
-      content:"▌"; color:#ff2a3d;
-      animation: blink .8s step-end infinite;
-      margin-left:2px;
-    }
-    @keyframes blink{
-      50%{ opacity:0; }
-    }
-
-    /* ============================================================
-       ПРОГРЕССИЯ УЖАСА — уровни (lvl-1 … lvl-5)
-       ============================================================ */
-    .quiz-fullscreen.lvl-2 .quiz-fullscreen__inner{
-      box-shadow: inset 0 0 100px rgba(255,42,61,.05);
-    }
-    .quiz-fullscreen.lvl-3 .quiz-fullscreen__inner{
-      box-shadow: inset 0 0 140px rgba(255,42,61,.12);
-    }
+    /* --- Прогрессия ужаса --- */
+    .quiz-fullscreen.lvl-2 .quiz-fullscreen__inner{ box-shadow: inset 0 0 100px rgba(255,42,61,.05); }
+    .quiz-fullscreen.lvl-3 .quiz-fullscreen__inner{ box-shadow: inset 0 0 140px rgba(255,42,61,.12); }
     .quiz-fullscreen.lvl-3 .quiz-fullscreen__question{ color:#e0a0a8; }
-
-    .quiz-fullscreen.lvl-4 .quiz-fullscreen__inner{
-      box-shadow: inset 0 0 180px rgba(255,42,61,.25);
-    }
+    .quiz-fullscreen.lvl-4 .quiz-fullscreen__inner{ box-shadow: inset 0 0 180px rgba(255,42,61,.25); }
     .quiz-fullscreen.lvl-4 .quiz-fullscreen__question{ color:#ff8a94; }
-
-    .quiz-fullscreen.lvl-5{
-      animation: quiz-darken 1.4s ease-in-out infinite;
-    }
-    .quiz-fullscreen.lvl-5 .quiz-fullscreen__inner{
-      box-shadow: inset 0 0 220px rgba(255,42,61,.45);
-    }
+    .quiz-fullscreen.lvl-5{ animation: quiz-darken 1.4s ease-in-out infinite; }
+    .quiz-fullscreen.lvl-5 .quiz-fullscreen__inner{ box-shadow: inset 0 0 220px rgba(255,42,61,.45); }
     .quiz-fullscreen.lvl-5 .quiz-fullscreen__question{ color:#ff2a3d; }
-    @keyframes quiz-darken{
-      0%,100%{ background:#000; }
-      50%    { background:#120003; }
-    }
+    @keyframes quiz-darken{ 0%,100%{ background:#000; } 50%{ background:#120003; } }
 
-    /* Глитч-оверлей — включается с 7-го раунда */
     .glitch-layer{
-      position:fixed; inset:0; pointer-events:none; z-index:99999;
-      mix-blend-mode:screen; opacity:.28;
-      background:
-        repeating-linear-gradient(0deg,
-          rgba(255,42,61,.06) 0 1px,
-          transparent 1px 3px);
+      position:fixed; inset:0; pointer-events:none; z-index:99999; mix-blend-mode:screen; opacity:.28;
+      background: repeating-linear-gradient(0deg, rgba(255,42,61,.06) 0 1px, transparent 1px 3px);
       animation: glitch-shift .25s steps(2,end) infinite;
     }
-    @keyframes glitch-shift{
-      0%  { transform: translate(0); }
-      50% { transform: translate(-2px, 1px); }
-      100%{ transform: translate(0); }
+    @keyframes glitch-shift{ 0% { transform: translate(0); } 50% { transform: translate(-2px, 1px); } 100%{ transform: translate(0); } }
+
+    /* ============================================================
+       ФИНАЛЬНЫЙ ЭКРАН И ПЛАШКА ДОСТУПА
+       ============================================================ */
+    .final-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+      background: #000;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .final-title {
+      color: #ff2a3d;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 0.2em;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+    }
+    .final-lines {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      color: #c8ffcf;
+      text-align: center;
+      line-height: 1.8;
+      margin-bottom: 40px;
+      min-height: 200px;
+    }
+    .final-fragment {
+      color: #00ff88;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      letter-spacing: 0.3em;
+      margin-bottom: 40px;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
     }
 
-    /* Финальная пасть */
-    .jumpscare{
-      position:fixed; inset:0; z-index:999999;
-      background:#000;
-      animation: js-in .08s ease-out;
+    .od17-access {
+      padding: 20px;
+      border: 1px solid #00ff88;
+      background: rgba(0, 20, 10, 0.9);
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 1s ease, transform 1s ease;
+      width: 100%;
+      max-width: 420px;
     }
-    .jumpscare svg{ width:100vw; height:100vh; display:block; }
-    @keyframes js-in{
-      from{ transform:scale(.85); opacity:0; }
-      to  { transform:scale(1); opacity:1; }
+    .od17-access__title {
+      color: #00ff88;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      margin-bottom: 20px;
     }
-
-    body.shaking{ animation: body-shake .35s ease-in-out infinite; }
-    @keyframes body-shake{
-      0%,100%{ transform:translate(0); }
-      25%    { transform:translate(-3px,2px); }
-      50%    { transform:translate(3px,-2px); }
-      75%    { transform:translate(-2px,-2px); }
+    .od17-access__row {
+      font-size: 18px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10px;
     }
+    .od17-access__label { color: #4ade80; }
+    .od17-access__value { color: #fff; font-weight: 700; letter-spacing: 0.1em; }
+    
+    .hint-text {
+      position: absolute;
+      bottom: 30px;
+      color: #4a5364;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: .6;
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.2; } }
   </style>
 </head>
 <body class="app">
@@ -313,46 +285,26 @@
 
         if (!box || !overlay || !overlayInner) return;
 
-        // ---- Скролл в самый верх, жёстко ----
         function forceTop(){ box.scrollTop = 0; }
         forceTop();
         requestAnimationFrame(forceTop);
         setTimeout(forceTop, 50);
-        setTimeout(forceTop, 200);
-        setTimeout(forceTop, 500);
 
         var scrollReady = false;
         setTimeout(function(){ scrollReady = true; }, 900);
-
         if (conversation) conversation.classList.add("is-reading");
 
-        // ---- Метаданные клиента ----
         var TZ = "неизвестно";
         try { TZ = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
         var LANG   = navigator.language || "неизвестно";
         var SCREEN = (screen.width || 0) + "x" + (screen.height || 0);
-        var BROWSER = (function () {
-          var ua = navigator.userAgent;
-          if (ua.indexOf("Firefox") > -1) return "Firefox";
-          if (ua.indexOf("Edg") > -1)     return "Edge";
-          if (ua.indexOf("Chrome") > -1)  return "Chrome";
-          if (ua.indexOf("Safari") > -1)  return "Safari";
-          return "неизвестно";
-        })();
-
-        // отправляем метаданные на сервер
+        
         fetch(window.location.pathname, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: "action=meta"
-            + "&screen="  + encodeURIComponent(SCREEN)
-            + "&tz="      + encodeURIComponent(TZ)
-            + "&lang="    + encodeURIComponent(LANG)
-            + "&browser=" + encodeURIComponent(BROWSER)
-            + "&online="  + (navigator.onLine ? "true" : "false"),
+          body: "action=meta&screen=" + encodeURIComponent(SCREEN) + "&tz=" + encodeURIComponent(TZ) + "&lang=" + encodeURIComponent(LANG),
         });
 
-        // ---- Первый раунд ----
         var firstRound = {
           step:        {{ quiz.step + 1 }},
           total:       {{ quiz.total }},
@@ -368,63 +320,25 @@
           ],
         };
 
-        // ---- Глитч-оверлей ----
-        var glitchEl = null;
-        function ensureGlitch(on) {
-          if (on && !glitchEl) {
-            glitchEl = document.createElement("div");
-            glitchEl.className = "glitch-layer";
-            document.body.appendChild(glitchEl);
-          } else if (!on && glitchEl) {
-            glitchEl.remove();
-            glitchEl = null;
-          }
-        }
-
-        // ---- Уровень жути по номеру раунда ----
         function applyLevel(step) {
           overlay.classList.remove("lvl-1","lvl-2","lvl-3","lvl-4","lvl-5");
           document.body.style.filter = "";
-
           var lvl = 1;
           if (step >= 8)  lvl = 2;
           if (step >= 15) lvl = 3;
           if (step >= 22) lvl = 4;
           if (step >= 28) lvl = 5;
           overlay.classList.add("lvl-" + lvl);
-
           if (lvl === 2) document.body.style.filter = "brightness(0.95)";
           if (lvl === 3) document.body.style.filter = "brightness(0.82) contrast(1.1)";
           if (lvl === 4) document.body.style.filter = "brightness(0.65) contrast(1.25)";
           if (lvl === 5) document.body.style.filter = "brightness(0.45) contrast(1.5)";
-
-          ensureGlitch(step >= 25);
           return lvl;
-        }
-
-        // ---- Глитч текста ----
-        var glitchTimer = null;
-        function startGlitch(el, intensity) {
-          if (glitchTimer) clearInterval(glitchTimer);
-          var original = el.textContent;
-          var chars = "#█▓⌇█░@%&?!";
-          if (intensity <= 0) { el.textContent = original; return; }
-          glitchTimer = setInterval(function(){
-            var out = "";
-            for (var i = 0; i < original.length; i++) {
-              if (Math.random() < intensity) {
-                out += chars[Math.floor(Math.random()*chars.length)];
-              } else {
-                out += original[i];
-              }
-            }
-            el.textContent = out;
-          }, 70);
         }
 
         function renderRound(data) {
           var q   = data.question || "";
-          var lvl = applyLevel(data.step);
+          applyLevel(data.step);
 
           var html = "";
           html += '<div class="quiz-fullscreen__progress">';
@@ -450,73 +364,20 @@
           }
 
           overlayInner.innerHTML = html;
+          document.getElementById("quiz-q").textContent = q;
 
-          var qEl = document.getElementById("quiz-q");
-          qEl.textContent = q;
-
-          var intensity = 0;
-          if (lvl === 2) intensity = 0.04;
-          if (lvl === 3) intensity = 0.10;
-          if (lvl === 4) intensity = 0.20;
-          if (lvl === 5) intensity = 0.40;
-          startGlitch(qEl, intensity);
-
-          // пауза-вопрос без вариантов
           if (data.no_options) {
-            setTimeout(function () {
-              sendChoice("__pause__");
-            }, (data.pause_after || 3) * 1000);
+            setTimeout(function () { sendChoice("__pause__"); }, (data.pause_after || 3) * 1000);
             return;
           }
 
           overlayInner.querySelectorAll(".quiz-fullscreen__card").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-              sendChoice(btn.dataset.choice);
-            });
+            btn.addEventListener("click", function () { sendChoice(btn.dataset.choice); });
           });
         }
 
-        // ---- Пасть (убрала нах) ----
-        // ---- Конец теста — перезагрузка ----
-// ---- Конец теста — ждём ESC или клик ----
-function endQuiz() {
-  var hint = document.createElement("div");
-  hint.style.cssText =
-    "position:fixed; bottom:30px; left:50%; transform:translateX(-50%);" +
-    "color:#4a5364; font-family:'JetBrains Mono', monospace;" +
-    "font-size:11px; letter-spacing:2px; text-transform:uppercase;" +
-    "opacity:.6; animation: blink 2s ease-in-out infinite; z-index:100000;";
-  hint.textContent = "нажмите ESC или клик чтобы выйти";
-  document.body.appendChild(hint);
-
-  function close() {
-    document.removeEventListener("keydown", onKey);
-    document.removeEventListener("click", close);
-    window.location.reload();
-  }
-  function onKey(e) {
-    if (e.key === "Escape") close();
-  }
-
-  document.addEventListener("keydown", onKey);
-  document.addEventListener("click", close);
-
-  // fallback — если игрок ничего не нажал за 50 сек
-  setTimeout(close, 50000);
-}
-
-        // ---- Голос за кадром ----
-        function showVoice(text, cb) {
-          if (cb) cb();
-        }
-
-        // ---- Отправка ответа ----
         function sendChoice(choice) {
-          overlayInner.querySelectorAll(".quiz-fullscreen__card").forEach(function(b){
-            b.disabled = true;
-            b.classList.add("disabled");
-          });
-
+          overlayInner.querySelectorAll(".quiz-fullscreen__card").forEach(function(b){ b.disabled = true; b.classList.add("disabled"); });
           fetch(window.location.pathname, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -524,56 +385,26 @@ function endQuiz() {
           })
             .then(function (r) { return r.json(); })
             .then(function (data) {
-              if (data.status === "victory") {
-                showVoice(data.voice || "", function(){ renderFinal(data.final); });
-                return;
-              }
-              if (data.status === "next") {
-                showVoice(data.voice || "", function(){ renderRound(data); });
-                return;
-              }
+              if (data.status === "victory") { window.location.reload(); return; }
+              if (data.status === "next") { renderRound(data); return; }
             })
-            .catch(function () {
-              overlayInner.innerHTML = '<div class="quiz-fullscreen__fail">ошибка сети</div>';
-            });
-        }
-
-        function renderFinal(final) {
-          if (!final) {
-            overlayInner.innerHTML = '<div class="quiz-fullscreen__fail">конец</div>';
-            return;
-          }
-          var html = '<div class="quiz-fullscreen__fail" style="border-color:#c8ffcf; background:rgba(200,255,207,.05);">';
-          html += '<div class="quiz-fullscreen__fail-title" style="color:#c8ffcf;">' + final.title + '</div>';
-          final.lines.forEach(function (line) {
-            html += '<div style="color:#888; font-family:monospace; font-size:14px; margin:4px 0;">' + line + '</div>';
-          });
-          html += '<div style="margin-top:28px; color:#c8ffcf; font-family:monospace; letter-spacing:3px; font-size:18px;">' + final.fragment + '</div>';
-          html += '</div>';
-          overlayInner.innerHTML = html;
-
-          endQuiz();
+            .catch(function () { overlayInner.innerHTML = '<div class="quiz-fullscreen__fail">ошибка сети</div>'; });
         }
 
         function openQuiz() {
           if (conversation) conversation.classList.remove("is-reading");
           overlay.classList.add("is-active");
           renderRound(firstRound);
-          if (statusLine) {
-            statusLine.innerHTML =
-              '<span class="online-badge" style="color:#ff2a3d;">● ПРОВЕРКА ПОЛЬЗОВАТЕЛЯ</span>';
-          }
+          if (statusLine) statusLine.innerHTML = '<span class="online-badge" style="color:#ff2a3d;">● ПРОВЕРКА ПОЛЬЗОВАТЕЛЯ</span>';
         }
 
         var triggered = false;
         var quizOpened = false;
-
         function fireQuiz() {
           if (quizOpened || triggered) return;
           triggered = true;
           trigger.style.display = "block";
           box.scrollTop = box.scrollHeight;
-
           setTimeout(function () {
             typing.style.display = "flex";
             box.scrollTop = box.scrollHeight;
@@ -585,7 +416,6 @@ function endQuiz() {
           }, 1500);
         }
 
-        // Триггер — только когда игрок сам доскроллил до конца
         box.addEventListener("scroll", function () {
           if (!scrollReady || triggered) return;
           var atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 10;
@@ -594,17 +424,79 @@ function endQuiz() {
       })();
       </script>
 
-    {# ========== РЕЖИМ 2 — БОТ СЛОМАН ========== #}
+    {# ========== РЕЖИМ 2 — БОТ СЛОМАН, ПОБЕДА ========== #}
     {% elif chat.bot and bot_cracked %}
-      <header class="conversation__head">
-        <div class="chat-item__avatar" style="background:#ff2a3d">{{ chat.avatar }}</div>
-        <div>
-          <div class="conversation__name">{{ chat.name }}</div>
-          <div class="conversation__with">
-            <span class="offline-badge" style="color:#ff2a3d;">● CONNECTION LOST</span>
+      
+      <script>
+        // Убираем темный фильтр от теста! Экран должен быть ярким.
+        document.body.style.filter = "none";
+      </script>
+
+      <div class="final-screen">
+        <div class="final-title">{{ bot_final.title }}</div>
+        
+        <div class="final-lines" id="final-lines"></div>
+        
+        <div class="final-fragment" id="final-fragment" style="display:none;">
+          {{ bot_final.fragment }}
+        </div>
+
+        <!-- ПЛАШКА С ДОСТУПОМ К OD-17 -->
+        <div class="od17-access" id="od17-access">
+          <div class="od17-access__title">ДОСТУП К АРХИВУ OD-17 РАЗРЕШЕН</div>
+          <div class="od17-access__row">
+            <span class="od17-access__label">LOGIN:</span>
+            <span class="od17-access__value">{{ od17.login }}</span>
+          </div>
+          <div class="od17-access__row">
+            <span class="od17-access__label">PASSWORD:</span>
+            <span class="od17-access__value">{{ od17.password }}</span>
           </div>
         </div>
-      </header>
+
+        <div class="hint-text" id="exit-hint" style="display:none;">нажмите ESC или клик чтобы выйти</div>
+      </div>
+
+      <script>
+      (function () {
+        var LINES = {{ bot_final.lines | tojson }};
+        var linesEl = document.getElementById("final-lines");
+        var fragEl = document.getElementById("final-fragment");
+        var od17El = document.getElementById("od17-access");
+        var hintEl = document.getElementById("exit-hint");
+
+        var i = 0;
+        var nextLine = function () {
+          if (i >= LINES.length) {
+            // Печатаем фрагмент
+            fragEl.style.display = "block";
+            // Показываем плашку с логином и паролем
+            setTimeout(function() {
+              od17El.style.opacity = "1";
+              od17El.style.transform = "translateY(0)";
+              hintEl.style.display = "block";
+            }, 500);
+            return;
+          }
+          var div = document.createElement("div");
+          div.textContent = LINES[i];
+          linesEl.appendChild(div);
+          i++;
+          // Ускорил печать до 400мс, чтобы не ждать вечность
+          setTimeout(nextLine, 400);
+        };
+
+        // Начинаем печатать через полсекунды
+        setTimeout(nextLine, 500);
+
+        // Выход по клику или ESC
+        function closeOverlay() {
+          window.location.reload();
+        }
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeOverlay(); });
+        document.body.addEventListener("click", closeOverlay);
+      })();
+      </script>
 
     {# ========== РЕЖИМ 3 — ОБЫЧНЫЙ ЧАТ ========== #}
     {% else %}
@@ -652,6 +544,8 @@ function endQuiz() {
 
   </main>
 
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function(){
   var box = document.getElementById("messages");
@@ -665,7 +559,6 @@ document.addEventListener("DOMContentLoaded", function(){
       box.scrollTop = 0;
       requestAnimationFrame(function(){ box.scrollTop = 0; });
       setTimeout(function(){ box.scrollTop = 0; }, 100);
-      setTimeout(function(){ box.scrollTop = 0; }, 400);
     } else {
       box.scrollTop = box.scrollHeight;
     }
