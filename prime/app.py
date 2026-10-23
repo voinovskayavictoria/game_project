@@ -78,27 +78,11 @@ def news_item(slug):
         abort(404)
     return render_template("news_item.html", item=item)
 
-
-# --- Архив ---
-@app.route("/archive")
-def archive():
-    years = ["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"]
-    current = None  # можно принимать ?year= через request.args
-    from flask import request
-    current = request.args.get("year")
-    return render_template("archive.html", years=years, current=current)
-
-
 # --- Партнёры ---
 @app.route("/partners")
 def partners():
     return render_template("partners.html")
 
-
-# --- Медиа / галерея ---
-@app.route("/gallery")
-def gallery():
-    return render_template("gallery.html")
 
 
 # --- Контакты ---
