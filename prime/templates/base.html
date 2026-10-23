@@ -5,30 +5,24 @@
   <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   
-  <!-- Стили для центрирования футера -->
+  <!-- ГЛОБАЛЬНЫЕ СТИЛИ, ЧТОБЫ ФУТЕР БЫЛ ВНИЗУ -->
   <style>
-    .footer-cols {
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
       display: flex;
-      justify-content: center; /* Центрирует колонки */
-      align-items: flex-start;
-      gap: 100px; /* Расстояние между колонками */
-      text-align: center; /* Текст внутри колонок по центру */
-      margin-bottom: 30px;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    .footer-bottom {
-      text-align: center; /* Копирайт по центру */
-      border-top: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая линия над копирайтом */
-      padding-top: 20px;
-      font-size: 0.9em;
-      color: #888;
+    main {
+      flex: 1 0 auto; /* Это заставляет main растягиваться и выталкивать футер вниз */
+      padding-bottom: 80px; /* Отступ снизу, чтобы текст не лип к футеру */
+      padding-top: 40px;
     }
-    .footer-cols a {
-      color: #c9a227; /* Цвет ссылок в партнерах */
-      text-decoration: none;
-      transition: 0.2s;
-    }
-    .footer-cols a:hover {
-      color: #fff;
+    .site-footer {
+      flex-shrink: 0; /* Футер не сжимается */
     }
   </style>
 </head>
@@ -37,7 +31,6 @@
 <header class="site-header">
   <div class="container header-inner">
     <a href="{{ url_for('index') }}" class="logo">
-      <!-- Если захочешь вернуть картинку, просто замени строку ниже на <img src="{{ url_for('static', filename='img/prime.png') }}" style="height: 40px;"> -->
       <span class="logo-mark">◆</span>
       PRIME <span class="logo-sub">SYSTEMS</span>
     </a>
@@ -54,7 +47,7 @@
   {% block content %}{% endblock %}
 </main>
 
-<footer class="site-footer" style="padding: 30px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+<footer class="site-footer" style="padding: 30px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); background: #0d1b2a;">
   <div class="container">
     <div class="footer-bottom" style="font-size: 0.9em; color: #888;">
       © 2014–2026 PRIME SYSTEMS. Все права защищены.
