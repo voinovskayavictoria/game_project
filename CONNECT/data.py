@@ -439,6 +439,7 @@ QUIZ_FINALS = {
         ],
         "fragment": "C1-17-B",
     },
+    
     "lies": {
         "key": "lies", "title": "ВРЁШЬ",
         "lines": [
