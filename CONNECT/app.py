@@ -256,27 +256,33 @@ def _resolve_question(item, step):
 
 
 def _pick_final(flags):
-    all_yes = True
-    for i in range(1, 31):
-        if session.get(f"answer_{i}") != "a":
-            all_yes = False
-            break
+    # все "да" → секретная концовка
+    all_yes = all(session.get(f"answer_{i}") == "a" for i in range(1, 31))
     if all_yes:
         return QUIZ_FINALS["secret_x"]
 
     if not flags:
         return QUIZ_FINALS.get("silent") or QUIZ_FINALS["isolation"]
 
-    FLAG_ORDER = [
-        "isolation", "curiosity", "aggression", "paranoia",
-        "lies", "distrust", "existential", "selfish", "loss_of_self"
-    ]
-    for f in FLAG_ORDER:
-        if f in flags:
+    # доминирующий флаг = максимум по количеству;
+    # при равенстве — порядок FLAG_PRIORITY
+    best_flag = None
+    best_count = -1
+    for f in FLAG_PRIORITY:
+        cnt = flags.get(f, 0)
+        if cnt > best_count:
+            best_count = cnt
+            best_flag = f
+
+    if best_flag and best_flag in QUIZ_FINALS:
+        return QUIZ_FINALS[best_flag]
+
+    # fallback — первый попавшийся известный флаг
+    for f in FLAG_PRIORITY:
+        if f in flags and f in QUIZ_FINALS:
             return QUIZ_FINALS[f]
 
     return QUIZ_FINALS["isolation"]
-
 
 def _bot_quiz(item):
     chat_id = item["id"]
@@ -346,11 +352,18 @@ def _bot_quiz(item):
         else:
             question_text = r_now["question"]
 
+        flags = session.get("quiz_flags", {})
+
         if choice == "a" and r_now.get("flags_yes"):
-            flags = session.get("quiz_flags", {})
             for f in r_now["flags_yes"]:
                 flags[f] = flags.get(f, 0) + 1
-            session["quiz_flags"] = flags
+
+        if r_now.get("flags_by_choice"):
+            f = r_now["flags_by_choice"].get(choice)
+            if f:
+                flags[f] = flags.get(f, 0) + 1
+
+        session["quiz_flags"] = flags
 
         answers = session.get("quiz_answers", {})
         answers[str(r_now["id"])] = choice
@@ -578,6 +591,9 @@ def _evaluate_hijack(chain, values):
         "real_name": real_name,
     }
 
+def _norm_id(s: str) -> str:
+    return re.sub(r"[\s\.\-_]", "", (s or "").lower())
+
 import random  # если ещё не импортирован
 def _get_plot_ending(role_group, quiz_key, motive_arch="use"):
     # Секретные
@@ -587,8 +603,9 @@ def _get_plot_ending(role_group, quiz_key, motive_arch="use"):
             return PLOT_ENDINGS_SECRET["cu_secret"]
     if role_group == "милана" and quiz_key == "loss_of_self":
         return PLOT_ENDINGS_SECRET["milana_secret"]
+    
 
-    # Базовая
+    # базовая
     base = PLOT_ENDINGS.get((role_group, quiz_key), "Конец. Никто не знает, что было.")
 
     # Модификаторы
@@ -739,6 +756,11 @@ def logout():
         "hijack_given_id": session.get("hijack_given_id"),
         "quiz_key": session.get("quiz_key"),
         "quiz_final": session.get("quiz_final"),
+        "panopticon_rescued": session.get("panopticon_rescued"),   # ← добавить
+        "hunt_choice": session.get("hunt_choice"),                 # ← добавить
+        "hunt_finished": session.get("hunt_finished"),             # ← добавить
+        "dress_motive_arch": session.get("dress_motive_arch"),     # ← добавить
+        "dress_motivation": session.get("dress_motivation"),       # ← добавить
     }
     session.clear()
     for k, v in saved.items():
@@ -1288,6 +1310,30 @@ def hunt():
         hunts=HUNTS,
         chats=SECRET_CHATS,
     )
+import hunt_engine as eng   # hunt_engine.py лежит рядом с app.py
+
+HUNT_GAME_TEMPLATE = "hunt_game.html"
+HUNT_STATE_KEY = "hunt_state_v3"      # новый ключ: старые партии просто сбросятся
+
+
+def _int(v, default=0):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _state_ok(state, hid):
+    return (
+        isinstance(state, dict)
+        and state.get("hid") == hid
+        and "seed" in state
+        and "inv" in state
+        and "pickups" in state
+        and isinstance(state.get("target"), dict)
+        and "pos" in state["target"]
+        and isinstance(state.get("guards"), list)
+    )
 
 
 @app.route("/hunt/<hid>", methods=["GET", "POST"])
@@ -1344,7 +1390,7 @@ def hunt_item(hid):
         chats=SECRET_CHATS,
     )
 
-@app.route("/hunt/<hid>/game", methods=["GET", "POST"])
+
 @app.route("/hunt/<hid>/game", methods=["GET", "POST"])
 def hunt_game(hid):
     if not is_secret():
@@ -1353,125 +1399,80 @@ def hunt_game(hid):
     if hid not in HUNTS:
         return redirect(url_for("hunt"))
 
-    # Если игра уже завершена — на результат
-    if session.get("hunt_finished"):
-        return redirect(url_for("hunt_game_result"))
+    state = session.get(HUNT_STATE_KEY)
 
-    # --- POST ---
     if request.method == "POST":
-        action = request.form.get("action", "")
+        action = request.form.get("action")
 
-        # 1. Старт игры (первый POST с формы hunt_item)
-        if action == "" or action == "start":
-            callsign = request.form.get("callsign", "").strip()
-            slot_id  = request.form.get("slot", "").strip()
-
-            # Проверки на бан-слова
-            if is_suspicious_text(callsign):
-                return shutdown(reason="keyword")
-
-            banned = ["чон", "хан", "джин", "1704", "admin", "root",
-                      "полиция", "фбр", "интерпол", "журналист",
-                      "лебедева", "утечка", "слив"]
-            low = callsign.lower()
-            for w in banned:
-                if w in low:
-                    return shutdown(reason="breach")
-
-            # Сохраняем
-            session["hunt_callsign"] = callsign or "anon"
-            session["hunt_slot"] = slot_id or "S-03"
-
-            # Инициализируем лабиринт
-            session["hunt_game"] = {
-                "player": HUNT_LABYRINTH["start"],
-                "guards": [dict(g, pos=g["start"], idx=0) for g in HUNT_LABYRINTH["guards"]],
-                "turns": 0,
-                "choice": None,
-                "status": "playing",
-            }
+        if action in ("start", "", None):
+            state = eng.new_game()
+            state["hid"] = hid
+            state["callsign"] = request.form.get("callsign", "")[:32]
+            state["slot"] = request.form.get("slot", "")
+            session[HUNT_STATE_KEY] = state
+            session.pop("hunt_choice", None)
+            session.pop("hunt_finished", None)
             session.modified = True
             return redirect(url_for("hunt_game", hid=hid))
 
-        # 2. Движение в лабиринте
+        if not _state_ok(state, hid):
+            session.pop(HUNT_STATE_KEY, None)
+            return redirect(url_for("hunt_item", hid=hid))
+
         if action == "move":
-            game = session.get("hunt_game")
-            if not game:
-                return redirect(url_for("hunt_game", hid=hid))
-
-            dx = int(request.form.get("dx", 0))
-            dy = int(request.form.get("dy", 0))
-
-            px, py = game["player"]
-            nx, ny = px + dx, py + dy
-
-            # Проверка: стена / граница
-            if (not _is_wall(nx, ny)
-                and 0 <= nx < HUNT_LABYRINTH["size"]
-                and 0 <= ny < HUNT_LABYRINTH["size"]):
-                game["player"] = [nx, ny]
-                game["turns"] += 1
-
-                # Двигаем егерей
-                for g in game["guards"]:
-                    g["idx"] = (g["idx"] + 1) % len(g["route"])
-                    g["pos"] = g["route"][g["idx"]]
-
-                # Проверка: попался?
-                for g in game["guards"]:
-                    if g["pos"] == game["player"]:
-                        game["status"] = "caught"
-                        break
-
-                # Проверка: нашёл цель?
-                if game["player"] == HUNT_LABYRINTH["target"] and game["status"] == "playing":
-                    game["status"] = "found"
-
-            session["hunt_game"] = game
+            dx = max(-1, min(1, _int(request.form.get("dx"))))
+            dy = max(-1, min(1, _int(request.form.get("dy"))))
+            eng.step(state, dx, dy)
+            if state["status"] == "caught":
+                session["hunt_choice"] = "caught"
+            session[HUNT_STATE_KEY] = state
             session.modified = True
             return redirect(url_for("hunt_game", hid=hid))
 
-        # 3. Выбор на финале
-        if action == "choice":
-            choice = request.form.get("choice", "")
+        if action == "use":
+            item = request.form.get("item", "")
+            eng.step(state, 0, 0, use=item)
+            if state["status"] == "caught":
+                session["hunt_choice"] = "caught"
+            session[HUNT_STATE_KEY] = state
+            session.modified = True
+            return redirect(url_for("hunt_game", hid=hid))
+
+        if action == "chase_done":
+            if state["status"] == "chase" and request.form.get("result") == "win":
+                eng.finish_chase(state, True)
+                session[HUNT_STATE_KEY] = state
+                session.modified = True
+            return redirect(url_for("hunt_game", hid=hid))
+
+        if action == "choice" and state["status"] == "found":
+            choice = request.form.get("choice")
             if choice in ("reveal", "hide"):
-                game = session.get("hunt_game") or {}
-                game["choice"] = choice
-                game["status"] = "done"
                 session["hunt_choice"] = choice
                 session["hunt_finished"] = True
-                session["hunt_game"] = game
 
-                # --- РАЗНЫЙ ФРАГМЕНТ ОТ ВЫБОРА ---
                 frag = "HT-REVEAL" if choice == "reveal" else "HT-HIDE"
                 frags = set(session.get("found_fragments", []))
                 frags.add(frag)
                 session["found_fragments"] = list(frags)
-                session.modified = True
 
+                session.modified = True
                 return redirect(url_for("hunt_game_result"))
 
-        # fallback
         return redirect(url_for("hunt_game", hid=hid))
 
-    # --- GET ---
-    game = session.get("hunt_game") or {
-        "player": HUNT_LABYRINTH["start"],
-        "guards": [dict(g, pos=g["start"], idx=0) for g in HUNT_LABYRINTH["guards"]],
-        "turns": 0,
-        "choice": None,
-        "status": "playing",
-    }
+    # GET
+    if not _state_ok(state, hid):
+        session.pop(HUNT_STATE_KEY, None)
+        return redirect(url_for("hunt_item", hid=hid))
 
+    labyrinth, game = eng.public_view(state)
     return render_template(
-        "hunt_game.html",
-        hid=hid,
+        HUNT_GAME_TEMPLATE,
+        labyrinth=labyrinth,
         game=game,
-        labyrinth=HUNT_LABYRINTH,
+        hunt_id=hid,
     )
-
-def _is_wall(x, y):
-    return [x, y] in HUNT_LABYRINTH["walls"]
 
 
 @app.route("/hunt/result")
@@ -1482,12 +1483,12 @@ def hunt_game_result():
     if not session.get("hunt_finished"):
         return redirect(url_for("hunt"))
 
-    game = session.get("hunt_game", {})
     return render_template(
         "hunt_game_result.html",
-        game=game,
+        game={},
         choice=session.get("hunt_choice"),
     )
+
 # ------------------------------------------------------------------
 # THE panopticon
 # ------------------------------------------------------------------
@@ -1550,12 +1551,18 @@ def panopticon_cam(cam_id):
         if progress == 100:
             unlocked = True
             session[f"panopticon_{cam_id}_unlocked"] = True
-            
+
             # --- СОХРАНЯЕМ ФРАГМЕНТ В ОБЩИЙ СПИСОК ---
             if cam.get("fragment"):
                 frags = set(session.get("found_fragments", []))
-                frags.add(cam["fragment"])       # добавит "67-X"
+                frags.add(cam["fragment"])
                 session["found_fragments"] = list(frags)
+
+            # --- ФЛАГ «СПАСЕНА» — только для CAM-05 ---
+            if cam_id == "CAM-05":
+                session["panopticon_found"] = True
+
+            session.modified = True
         else:
             unlocked = False
             session[f"panopticon_{cam_id}_unlocked"] = False
@@ -1569,6 +1576,21 @@ def panopticon_cam(cam_id):
         error=error,
         chats=SECRET_CHATS,
     )
+@app.route("/panopticon/cam/<cam_id>/rescue", methods=["POST"])
+def panopticon_rescue(cam_id):
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    if cam_id != "CAM-05":
+        return redirect(url_for("panopticon"))
+
+    if not session.get(f"panopticon_{cam_id}_unlocked"):
+        return redirect(url_for("panopticon_cam", cam_id=cam_id))
+
+    session["panopticon_rescued"] = True
+    session.modified = True
+    return redirect(url_for("panopticon_cam_events", cam_id=cam_id))
+
 @app.route("/panopticon/cam/<cam_id>/events")
 def panopticon_cam_events(cam_id):
     if not is_secret():
@@ -1760,7 +1782,6 @@ def dead_drop():
     total=total,              # ← добавить
     found_count=found_count,  # ← добавить
 )
-
 @app.route("/debug/plot")
 def debug_plot():
     if not is_secret():
@@ -1780,19 +1801,12 @@ def debug_plot():
     <head>
       <title>DEBUG PLOT</title>
       <style>
-        body {{
-          background: #050607; color: #d8dee7;
-          font-family: monospace; padding: 40px;
-        }}
+        body {{ background: #050607; color: #d8dee7; font-family: monospace; padding: 40px; }}
         h1 {{ color: #ff2a3d; }}
         b {{ color: #4ade80; }}
-        .plot {{
-          margin-top: 20px; padding: 20px;
-          border: 1px solid #4ade80;
-          background: #0a0d12;
-          font-size: 16px; line-height: 1.7;
-        }}
+        .plot {{ margin-top: 20px; padding: 20px; border: 1px solid #4ade80; background: #0a0d12; font-size: 16px; line-height: 1.7; }}
         a {{ color: #2b6cb0; }}
+        .diag {{ margin-top: 20px; padding: 14px 18px; border: 1px dashed #444; background: #0a0d12; font-size: 13px; }}
       </style>
     </head>
     <body>
@@ -1800,6 +1814,13 @@ def debug_plot():
 
       <p><b>hijack_role:</b> {hijack_role or '(не пройден)'}</p>
       <p><b>quiz_key:</b> {quiz_key or '(не пройден)'}</p>
+      <p><b>dress_motive_arch:</b> {motive_arch}</p>
+
+      <div class="diag">
+        <b>panopticon_rescued:</b> {session.get("panopticon_rescued")}<br>
+        <b>hunt_choice:</b> {session.get("hunt_choice")}<br>
+        <b>found_fragments:</b> {session.get("found_fragments", [])}
+      </div>
 
       <div class="plot">
         <b>plot_text:</b><br>

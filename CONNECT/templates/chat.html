@@ -86,8 +86,10 @@
       background:transparent; border:1px solid #333; color:#cfcfcf;
       padding:22px 16px; font-family:inherit; font-size:15px; letter-spacing:.14em;
       text-transform:uppercase; cursor:pointer;
-      transition:border-color .2s, color .2s, background .2s;
+      transition:transform .18s ease, border-color .2s, color .2s, background .2s;
+      will-change: transform;
     }
+    .quiz-fullscreen__card.is-shy{ cursor: not-allowed; }
     .quiz-fullscreen__card:hover{ border-color:#ff2a3d; color:#fff; }
     .quiz-fullscreen__card.disabled{ opacity:.3; cursor:default; }
 
@@ -186,7 +188,7 @@
     }
     .od17-access__label { color: #4ade80; }
     .od17-access__value { color: #fff; font-weight: 700; letter-spacing: 0.1em; }
-    
+
     .hint-text {
       position: absolute;
       bottom: 30px;
@@ -310,7 +312,7 @@
         var LANG   = navigator.language || "неизвестно";
         var SCREEN = (screen.width || 0) + "x" + (screen.height || 0);
         var BROWSER = detectBrowser();
-        
+
         fetch(window.location.pathname, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -352,6 +354,42 @@
           return lvl;
         }
 
+        // ---------- ГЛИТЧ ТЕКСТА ВОПРОСА ----------
+        var glitchTimer = null;
+        var GLITCH_CHARS = "#█▓⌇░@%&?!";
+
+        // плавная шкала: 0 на 1-м вопросе → 0.30 на последнем
+        function glitchIntensity(step, total) {
+          if (total <= 1) return 0;
+          var t = (step - 1) / (total - 1);
+          return Math.min(0.30, 0.30 * t * t);
+        }
+
+        function startGlitch(el, text, intensity) {
+          if (glitchTimer) { clearInterval(glitchTimer); glitchTimer = null; }
+
+          if (!intensity || intensity <= 0) {
+            el.textContent = text;
+            return;
+          }
+
+          var original = text;
+          function tick() {
+            var out = "";
+            for (var i = 0; i < original.length; i++) {
+              if (Math.random() < intensity) {
+                out += GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+              } else {
+                out += original[i];
+              }
+            }
+            el.textContent = out;
+          }
+
+          tick();
+          glitchTimer = setInterval(tick, 90);
+        }
+
         function renderRound(data) {
           var q   = data.question || "";
           applyLevel(data.step);
@@ -380,7 +418,10 @@
           }
 
           overlayInner.innerHTML = html;
-          document.getElementById("quiz-q").textContent = q;
+
+          var qEl = document.getElementById("quiz-q");
+          var intensity = glitchIntensity(data.step, data.total);
+          startGlitch(qEl, q, intensity);
 
           if (data.no_options) {
             setTimeout(function () { sendChoice("__pause__"); }, (data.pause_after || 3) * 1000);
@@ -389,6 +430,34 @@
 
           overlayInner.querySelectorAll(".quiz-fullscreen__card").forEach(function (btn) {
             btn.addEventListener("click", function () { sendChoice(btn.dataset.choice); });
+
+            // «убегающая» карточка
+            var dodges = 0;
+            var MAX_DODGES = 4;
+            var DODGE_PX  = 18;
+
+            btn.addEventListener("mouseenter", function () {
+              if (dodges >= MAX_DODGES) {
+                btn.classList.remove("is-shy");
+                return;
+              }
+              var dx = (Math.random() * 2 - 1) * DODGE_PX;
+              var dy = (Math.random() * 2 - 1) * DODGE_PX;
+              var cur = btn.dataset.off ? btn.dataset.off.split(",").map(Number) : [0, 0];
+              var nx = cur[0] + dx;
+              var ny = cur[1] + dy;
+              nx = Math.max(-60, Math.min(60, nx));
+              ny = Math.max(-40, Math.min(40, ny));
+              btn.style.transform = "translate(" + nx.toFixed(0) + "px," + ny.toFixed(0) + "px)";
+              btn.dataset.off = nx + "," + ny;
+              dodges++;
+              if (dodges >= MAX_DODGES) btn.classList.add("is-shy");
+            });
+
+            btn.addEventListener("mousedown", function () {
+              btn.style.transform = "translate(0,0)";
+              btn.dataset.off = "0,0";
+            });
           });
         }
 
@@ -442,21 +511,20 @@
 
     {# ========== РЕЖИМ 2 — БОТ СЛОМАН, ПОБЕДА ========== #}
     {% elif chat.bot and bot_cracked %}
-      
+
       <script>
         document.body.style.filter = "none";
       </script>
 
       <div class="final-screen">
         <div class="final-title">{{ bot_final.title }}</div>
-        
+
         <div class="final-lines" id="final-lines"></div>
-        
+
         <div class="final-fragment" id="final-fragment" style="display:none;">
           {{ bot_final.fragment }}
         </div>
 
-        <!-- ПЛАШКА С ДОСТУПОМ К OD-17 -->
         <div class="od17-access" id="od17-access">
           <div class="od17-access__title">ДОСТУП К АРХИВУ OD-17 РАЗРЕШЕН</div>
           <div class="od17-access__row">

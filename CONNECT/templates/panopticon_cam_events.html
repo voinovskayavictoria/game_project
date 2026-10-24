@@ -41,8 +41,15 @@
       <div class="pan-cam__unlocked-frag">ФРАГМЕНТ: <b>{{ cam.fragment }}</b></div>
     </div>
   {% endif %}
+{% if unlocked and cam.id == "CAM-05" and not session.get('panopticon_rescued') %}
+  <form method="post" action="{{ url_for('panopticon_rescue', cam_id=cam.id) }}" style="margin-top: 24px;">
+    <button type="submit" class="dress-btn" style="width: 100%;">
+      // СООБЩИТЬ О КОМНАТЕ 1704
+    </button>
+  </form>
+{% endif %}
+  
 
-  <div class="pan__foot">
     <a href="{{ url_for('panopticon_cam', cam_id=cam.id) }}" class="dress-btn dress-btn--ghost">← к камере</a>
     <a href="{{ url_for('panopticon') }}" class="dress-btn dress-btn--ghost">← к сетке</a>
   </div>
