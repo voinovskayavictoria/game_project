@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>ЛАБИРИНТ — THE HUNT</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--hijack">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-user">
+    <a href="{{ url_for('hunt') }}" class="s-nav-link">← hunt</a>
+  </div>
+</header>
+
+<main class="hunt-game">
+  <h1 class="pan__title">ЛАБИРИНТ</h1>
+  <p class="pan__sub">найди цель. не попадись егерям.</p>
+
+  <div class="hunt-game__info">
+    <span>ХОДОВ: <b id="turns">{{ game.turns }}</b></span>
+    <span>СТАТУС: <b id="status">{{ game.status }}</b></span>
+  </div>
+
+  <p class="hunt-game__hint">
+    УПРАВЛЕНИЕ: ↑ ↓ ← → (или W A S D)
+  </p>
+
+  <div class="hunt-game__canvas-wrap">
+    <canvas id="game-canvas" width="720" height="720"></canvas>
+  </div>
+
+  {% if game.status == "found" %}
+    <div class="hunt-game__choice">
+      <h2>ТЫ НАШЁЛ ЦЕЛЬ</h2>
+      <p>Это он. Инженер. Разработчик. Он смотрит на тебя.</p>
+      <p>Что делать?</p>
+      <form method="post" style="display:inline;">
+        <input type="hidden" name="action" value="choice">
+        <input type="hidden" name="choice" value="reveal">
+        <button type="submit" class="dress-btn">// РАСКРЫТЬ ЕГО</button>
+      </form>
+      <form method="post" style="display:inline;">
+        <input type="hidden" name="action" value="choice">
+        <input type="hidden" name="choice" value="hide">
+        <button type="submit" class="dress-btn dress-btn--ghost">// СКРЫТЬ</button>
+      </form>
+    </div>
+  {% elif game.status == "caught" %}
+    <div class="hunt-game__caught">
+      <h2>ТЕБЯ НАШЛИ</h2>
+      <p>Егерь наступил на тебя. Выезд провален.</p>
+      <a href="{{ url_for('hunt') }}" class="dress-btn dress-btn--ghost">// выйти</a>
+    </div>
+  {% endif %}
+</main>
+
+<script>
+(function() {
+  const canvas = document.getElementById("game-canvas");
+  const ctx = canvas.getContext("2d");
+  
+  const size = {{ labyrinth.size }};
+  const cellSize = canvas.width / size;
+  
+  const walls = {{ labyrinth.walls|tojson }};
+  const target = {{ labyrinth.target|tojson }};
+  const player = {{ game.player|tojson }};
+  const guards = {{ game.guards|tojson }};
+  
+  // ========== ФУНКЦИИ РИСОВАНИЯ ==========
+  
+  function drawFloor() {
+    // Пол — тёмный с еле заметной сеткой
+    ctx.fillStyle = "#08090b";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.strokeStyle = "#0e1014";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= size; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * cellSize, 0);
+      ctx.lineTo(i * cellSize, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i * cellSize);
+      ctx.lineTo(canvas.width, i * cellSize);
+      ctx.stroke();
+    }
+  }
+  
+  function drawWall(x, y) {
+    const px = x * cellSize;
+    const py = y * cellSize;
+    const p = cellSize / 16;  // размер "пикселя" для текстуры
+    
+    // База
+    ctx.fillStyle = "#1a2332";
+    ctx.fillRect(px, py, cellSize, cellSize);
+    
+    // Верхняя грань (светлее)
+    ctx.fillStyle = "#2b3a52";
+    ctx.fillRect(px, py, cellSize, p * 2);
+    
+    // Левая грань
+    ctx.fillStyle = "#232d40";
+    ctx.fillRect(px, py, p * 2, cellSize);
+    
+    // Кирпичики
+    ctx.fillStyle = "#16202e";
+    for (let i = 1; i < 4; i++) {
+      ctx.fillRect(px, py + i * (cellSize / 4), cellSize, 1);
+    }
+    ctx.fillRect(px + cellSize / 2, py, 1, cellSize / 4);
+    ctx.fillRect(px + cellSize / 4, py + cellSize / 2, 1, cellSize / 4);
+    ctx.fillRect(px + cellSize * 3/4, py + cellSize / 2, 1, cellSize / 4);
+  }
+  
+  function drawHuman(px, py, color, isEnemy) {
+    // Пиксельный человечек: голова, тело, руки, ноги
+    const p = cellSize / 8;  // 1 пиксель = 1/8 клетки
+    
+    // Голова
+    ctx.fillStyle = color;
+    ctx.fillRect(px + p * 2, py + p, p * 4, p * 3);
+    
+    // Волосы / шлем
+    ctx.fillStyle = isEnemy ? "#1a1a1a" : color;
+    ctx.fillRect(px + p * 2, py + p, p * 4, p);
+    
+    // Тело
+    ctx.fillRect(px + p * 2, py + p * 4, p * 4, p * 3);
+    
+    // Руки
+    ctx.fillRect(px + p, py + p * 4, p, p * 3);
+    ctx.fillRect(px + p * 6, py + p * 4, p, p * 3);
+    
+    // Ноги
+    ctx.fillRect(px + p * 2, py + p * 7, p * 1.5, p);
+    ctx.fillRect(px + p * 4.5, py + p * 7, p * 1.5, p);
+    
+    // Глаза (для игрока — яркие)
+    if (!isEnemy) {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(px + p * 2.5, py + p * 2, p * 0.8, p * 0.8);
+      ctx.fillRect(px + p * 4.7, py + p * 2, p * 0.8, p * 0.8);
+    }
+  }
+  
+  function drawPlayer(px, py) {
+    drawHuman(px, py, "#4ade80", false);
+    
+    // Свечение
+    ctx.shadowColor = "#4ade80";
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = "rgba(74, 222, 128, 0.15)";
+    ctx.fillRect(px + cellSize * 0.15, py + cellSize * 0.15, cellSize * 0.7, cellSize * 0.7);
+    ctx.shadowBlur = 0;
+  }
+  
+  function drawTarget(px, py) {
+    drawHuman(px, py, "#ff2a3d", false);
+    
+    // Пульсирующее свечение (красное)
+    ctx.shadowColor = "#ff2a3d";
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = "rgba(255, 42, 61, 0.2)";
+    ctx.fillRect(px + cellSize * 0.1, py + cellSize * 0.1, cellSize * 0.8, cellSize * 0.8);
+    ctx.shadowBlur = 0;
+  }
+  
+  function drawGuard(px, py) {
+    drawHuman(px, py, "#ffcc33", true);
+    
+    // Тёмный плащ поверх
+    const p = cellSize / 8;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(px + p * 1.5, py + p * 4, p * 5, p * 4);
+    
+    // Свечение (жёлтое, тусклое)
+    ctx.shadowColor = "#ffcc33";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "rgba(255, 204, 51, 0.1)";
+    ctx.fillRect(px + cellSize * 0.15, py + cellSize * 0.15, cellSize * 0.7, cellSize * 0.7);
+    ctx.shadowBlur = 0;
+  }
+  
+  // ========== РИСУЕМ СЦЕНУ ==========
+  
+  drawFloor();
+  
+  // Стены
+  walls.forEach(([x, y]) => drawWall(x, y));
+  
+  // Цель (инженер)
+  drawTarget(target[0] * cellSize, target[1] * cellSize);
+  
+  // Егеря
+  guards.forEach(g => {
+    drawGuard(g.pos[0] * cellSize, g.pos[1] * cellSize);
+  });
+  
+  // Игрок
+  drawPlayer(player[0] * cellSize, player[1] * cellSize);
+  
+  // ========== УПРАВЛЕНИЕ С КЛАВИАТУРЫ ==========
+  
+  const isPlaying = {{ 'true' if game.status == 'playing' else 'false' }};
+  
+  if (isPlaying) {
+    let isMoving = false;
+    
+    document.addEventListener("keydown", (e) => {
+      if (isMoving) return;
+      
+      let dx = 0, dy = 0;
+      if (e.key === "ArrowUp" || e.key === "w" || e.key === "ц" || e.key === "W" || e.key === "Ц")    { dy = -1; }
+      if (e.key === "ArrowDown" || e.key === "s" || e.key === "ы" || e.key === "S" || e.key === "Ы")  { dy = 1; }
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "ф" || e.key === "A" || e.key === "Ф")  { dx = -1; }
+      if (e.key === "ArrowRight" || e.key === "d" || e.key === "в" || e.key === "D" || e.key === "В") { dx = 1; }
+      
+      if (dx === 0 && dy === 0) return;
+      
+      e.preventDefault();
+      isMoving = true;
+      
+      const form = document.createElement("form");
+      form.method = "post";
+      form.innerHTML = `
+        <input type="hidden" name="action" value="move">
+        <input type="hidden" name="dx" value="${dx}">
+        <input type="hidden" name="dy" value="${dy}">
+      `;
+      document.body.appendChild(form);
+      form.submit();
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

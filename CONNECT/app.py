@@ -14,7 +14,8 @@ from data import (
     BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
     REQUEST_UNLOCK,
     QUIZ_FINALS, FLAG_PRIORITY,
-    OD17_ACCESS,
+    OD17_ACCESS, PLOT_MOTIVE_MODS, HUNT_LABYRINTH,  
+    PLOT_EXTRA_MODS,
 )
 import os
 import json
@@ -217,7 +218,6 @@ def _count_ip_sessions():
         counter = {}
     return int(counter.get(ip, 0))
 
-
 def _bump_ip_sessions():
     ip = request.remote_addr or "0.0.0.0"
     counter = session.get("ip_counter", {})
@@ -247,7 +247,7 @@ def _resolve_question(item, step):
         "{browser}":      cli.get("browser", "неизвестно"),
         "{tz}":           cli.get("tz", "неизвестно"),
         "{lang}":         cli.get("lang", "неизвестно"),
-        "{ip_sessions}":  str(max(1, _count_ip_sessions())),
+        "{ip_sessions}":  str(max(0, _count_ip_sessions() - 1)), 
         "{user}":         srv["sys_user"],
     }
     for k, v in repl.items():
@@ -491,14 +491,15 @@ def _evaluate_hijack(chain, values):
     if role == "chon":
         return {"status": "kill", "key": "name_chon",
                 "msg": cfg["kill_reactions"]["name_chon"]}
-
+# конкретные группы раньше зонтика
     role_arch = None
-    for arch, roles in cfg["role_groups"].items():
-        if role in roles:
+    for arch in ("свой", "милана", "силовик", "руководство",
+                 "работник", "журналист", "слабый", "чужой"):
+        if role in cfg["role_groups"].get(arch, []):
             role_arch = arch
             break
     if not role_arch:
-        role_arch = "слабый"
+        role_arch = "мусор"
 
     what_done = [c for c in chain if intents.get(c, {}).get("order") == 3]
     if not what_done:
@@ -554,15 +555,13 @@ def _evaluate_hijack(chain, values):
             "и не последний."
         )
 
-    ROLE_CODE = {"свой": "A", "чужой": "B", "слабый": "C"}
+    ROLE_CODE = { "свой": "A", "чужой": "B", "работник": "C", "руководство": "D", "силовик": "E", "журналист": "F","слабый": "G", "милана": "H", "мусор": "X"}
     TONE_CODE = {"дело": "1", "сила": "2", "слабость": "3"}
     TEMP_CODE = {"друг": "1", "враг": "2", "инфо": "3"}
 
     fragment = (
         f"04-M-"
         f"{ROLE_CODE.get(role_arch, 'X')}"
-        f"-{TONE_CODE.get(tone_arch, '0')}"
-        f"-{TEMP_CODE.get(temp_arch, '0')}"
     )
     return {
         "status": "ok",
@@ -579,19 +578,40 @@ def _evaluate_hijack(chain, values):
         "real_name": real_name,
     }
 
-def _get_plot_ending(hijack_role, quiz_key):
-    if hijack_role == "свой" and quiz_key == "secret_x":
+import random  # если ещё не импортирован
+def _get_plot_ending(role_group, quiz_key, motive_arch="use"):
+    # Секретные
+    if role_group == "свой" and quiz_key == "secret_x":
         given = (session.get("hijack_given_id") or "").lower()
         if "c.u" in given or "cu" == given.replace(".", ""):
             return PLOT_ENDINGS_SECRET["cu_secret"]
-    if hijack_role == "слабый" and quiz_key == "loss_of_self":
-        given = (session.get("hijack_given_id") or "").lower()
-        if "милана" in given or "makarova" in given:
-            return PLOT_ENDINGS_SECRET["milana_secret"]
+    if role_group == "милана" and quiz_key == "loss_of_self":
+        return PLOT_ENDINGS_SECRET["milana_secret"]
 
-    key = (hijack_role, quiz_key)
-    return PLOT_ENDINGS.get(key, "Конец. Никто не знает, что было.")
+    # Базовая
+    base = PLOT_ENDINGS.get((role_group, quiz_key), "Конец. Никто не знает, что было.")
 
+    # Модификаторы
+    mods = []
+    if motive_arch in PLOT_MOTIVE_MODS:
+        mods.append(PLOT_MOTIVE_MODS[motive_arch])
+
+    hunt = session.get("hunt_choice")
+    if hunt == "reveal":
+        mods.append(PLOT_EXTRA_MODS["hunt_reveal"])
+    elif hunt == "hide":
+        mods.append(PLOT_EXTRA_MODS["hunt_hide"])
+    elif hunt == "caught":
+        mods.append(PLOT_EXTRA_MODS["hunt_caught"])
+
+    if session.get("panopticon_rescued"):
+        mods.append(PLOT_EXTRA_MODS["panopticon_rescued"])
+    else:
+        mods.append(PLOT_EXTRA_MODS["panopticon_failed"])
+
+    if mods:
+        return base + "\n\n" + "\n\n".join(mods)
+    return base
 # ------------------------------------------------------------------
 # OPAQUE URL
 # ------------------------------------------------------------------
@@ -1077,8 +1097,47 @@ def dress_request(sku):
     
     fragment = mapping.get(motivation, "FRAG-UNK-17")
 
+    # --- АРХЕТИП МОТИВАЦИИ ---
+    SAVE_MOTIVES   = ["Освободить её", "Скрыть от системы", "Узнать правду о C-17"]
+    USE_MOTIVES    = ["Забрать себе", "Использовать для шантажа", "Перепродать конкурентам",
+                      "Выкупить контракт", "Улучшить (апгрейд)", "Перепрограммировать"]
+    DESTROY_MOTIVES = ["Уничтожить данные", "Стереть её личность", "Вскрыть систему изнутри"]
+
+    if motivation in SAVE_MOTIVES:
+        motive_arch = "save"
+    elif motivation in USE_MOTIVES:
+        motive_arch = "use"
+    elif motivation in DESTROY_MOTIVES:
+        motive_arch = "destroy"
+    else:
+        motive_arch = "use"  # fallback
+
+    # --- АРХЕТИП МОТИВАЦИИ ---
+    SAVE_MOTIVES    = ["Освободить её", "Скрыть от системы", "Узнать правду о C-17"]
+    USE_MOTIVES     = ["Забрать себе", "Использовать для шантажа", "Перепродать конкурентам",
+                       "Выкупить контракт", "Улучшить (апгрейд)", "Перепрограммировать"]
+    DESTROY_MOTIVES = ["Уничтожить данные", "Стереть её личность", "Вскрыть систему изнутри"]
+
+    if motivation in SAVE_MOTIVES:
+        motive_arch = "save"
+    elif motivation in USE_MOTIVES:
+        motive_arch = "use"
+    elif motivation in DESTROY_MOTIVES:
+        motive_arch = "destroy"
+    else:
+        motive_arch = "use"
+
     session["dress_motivation"] = motivation
+    session["dress_motive_arch"] = motive_arch  # ← сохраняем архетип
     session["dress_fragment"] = fragment
+    session.modified = True
+    session["frag_04_found"] = True
+
+    # --- СОХРАНЯЕМ В ОБЩИЙ СПИСОК ---
+    frags = set(session.get("found_fragments", []))
+    frags.add(fragment)
+    session["found_fragments"] = list(frags)
+
     session.modified = True
     session["frag_04_found"] = True
 
@@ -1285,12 +1344,152 @@ def hunt_item(hid):
         chats=SECRET_CHATS,
     )
 
+@app.route("/hunt/<hid>/game", methods=["GET", "POST"])
+@app.route("/hunt/<hid>/game", methods=["GET", "POST"])
+def hunt_game(hid):
+    if not is_secret():
+        return redirect(url_for("inbox"))
 
+    if hid not in HUNTS:
+        return redirect(url_for("hunt"))
+
+    # Если игра уже завершена — на результат
+    if session.get("hunt_finished"):
+        return redirect(url_for("hunt_game_result"))
+
+    # --- POST ---
+    if request.method == "POST":
+        action = request.form.get("action", "")
+
+        # 1. Старт игры (первый POST с формы hunt_item)
+        if action == "" or action == "start":
+            callsign = request.form.get("callsign", "").strip()
+            slot_id  = request.form.get("slot", "").strip()
+
+            # Проверки на бан-слова
+            if is_suspicious_text(callsign):
+                return shutdown(reason="keyword")
+
+            banned = ["чон", "хан", "джин", "1704", "admin", "root",
+                      "полиция", "фбр", "интерпол", "журналист",
+                      "лебедева", "утечка", "слив"]
+            low = callsign.lower()
+            for w in banned:
+                if w in low:
+                    return shutdown(reason="breach")
+
+            # Сохраняем
+            session["hunt_callsign"] = callsign or "anon"
+            session["hunt_slot"] = slot_id or "S-03"
+
+            # Инициализируем лабиринт
+            session["hunt_game"] = {
+                "player": HUNT_LABYRINTH["start"],
+                "guards": [dict(g, pos=g["start"], idx=0) for g in HUNT_LABYRINTH["guards"]],
+                "turns": 0,
+                "choice": None,
+                "status": "playing",
+            }
+            session.modified = True
+            return redirect(url_for("hunt_game", hid=hid))
+
+        # 2. Движение в лабиринте
+        if action == "move":
+            game = session.get("hunt_game")
+            if not game:
+                return redirect(url_for("hunt_game", hid=hid))
+
+            dx = int(request.form.get("dx", 0))
+            dy = int(request.form.get("dy", 0))
+
+            px, py = game["player"]
+            nx, ny = px + dx, py + dy
+
+            # Проверка: стена / граница
+            if (not _is_wall(nx, ny)
+                and 0 <= nx < HUNT_LABYRINTH["size"]
+                and 0 <= ny < HUNT_LABYRINTH["size"]):
+                game["player"] = [nx, ny]
+                game["turns"] += 1
+
+                # Двигаем егерей
+                for g in game["guards"]:
+                    g["idx"] = (g["idx"] + 1) % len(g["route"])
+                    g["pos"] = g["route"][g["idx"]]
+
+                # Проверка: попался?
+                for g in game["guards"]:
+                    if g["pos"] == game["player"]:
+                        game["status"] = "caught"
+                        break
+
+                # Проверка: нашёл цель?
+                if game["player"] == HUNT_LABYRINTH["target"] and game["status"] == "playing":
+                    game["status"] = "found"
+
+            session["hunt_game"] = game
+            session.modified = True
+            return redirect(url_for("hunt_game", hid=hid))
+
+        # 3. Выбор на финале
+        if action == "choice":
+            choice = request.form.get("choice", "")
+            if choice in ("reveal", "hide"):
+                game = session.get("hunt_game") or {}
+                game["choice"] = choice
+                game["status"] = "done"
+                session["hunt_choice"] = choice
+                session["hunt_finished"] = True
+                session["hunt_game"] = game
+
+                # --- РАЗНЫЙ ФРАГМЕНТ ОТ ВЫБОРА ---
+                frag = "HT-REVEAL" if choice == "reveal" else "HT-HIDE"
+                frags = set(session.get("found_fragments", []))
+                frags.add(frag)
+                session["found_fragments"] = list(frags)
+                session.modified = True
+
+                return redirect(url_for("hunt_game_result"))
+
+        # fallback
+        return redirect(url_for("hunt_game", hid=hid))
+
+    # --- GET ---
+    game = session.get("hunt_game") or {
+        "player": HUNT_LABYRINTH["start"],
+        "guards": [dict(g, pos=g["start"], idx=0) for g in HUNT_LABYRINTH["guards"]],
+        "turns": 0,
+        "choice": None,
+        "status": "playing",
+    }
+
+    return render_template(
+        "hunt_game.html",
+        hid=hid,
+        game=game,
+        labyrinth=HUNT_LABYRINTH,
+    )
+
+def _is_wall(x, y):
+    return [x, y] in HUNT_LABYRINTH["walls"]
+
+
+@app.route("/hunt/result")
+def hunt_game_result():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    if not session.get("hunt_finished"):
+        return redirect(url_for("hunt"))
+
+    game = session.get("hunt_game", {})
+    return render_template(
+        "hunt_game_result.html",
+        game=game,
+        choice=session.get("hunt_choice"),
+    )
 # ------------------------------------------------------------------
-# PANOPTICON
-# ------------------------------------------------------------------
-# ------------------------------------------------------------------
-# PANOPTICON
+# THE panopticon
 # ------------------------------------------------------------------
 @app.route("/panopticon")
 def panopticon():
@@ -1303,7 +1502,6 @@ def panopticon():
         chats=SECRET_CHATS,
     )
 
-
 @app.route("/panopticon/cam/<cam_id>", methods=["GET", "POST"])
 def panopticon_cam(cam_id):
     if not is_secret():
@@ -1313,43 +1511,64 @@ def panopticon_cam(cam_id):
     if not cam:
         return redirect(url_for("panopticon"))
 
+    # Дефолтные настройки
+    default_settings = {"bitrate": 50, "buffer": 50, "focus": 50}
     session_key = f"panopticon_{cam_id}_settings"
-    current = session.get(session_key) or {"bitrate": 50, "buffer": 50, "freq": 50}
+    current = session.get(session_key) or default_settings.copy()
 
-    unlocked = session.get(f"panopticon_{cam_id}_unlocked", False)
+    unlocked = False
+    progress = 0
     error = None
 
     if request.method == "POST":
         current = {
             "bitrate": int(request.form.get("bitrate", 50)),
             "buffer":  int(request.form.get("buffer", 50)),
-            "freq":    int(request.form.get("freq", 50)),
+            "focus":   int(request.form.get("focus", 50)),
         }
         session[session_key] = current
 
-        # Проверка на правильные настройки
-        correct = cam.get("settings")
-        if correct:
-            if (current["bitrate"] == correct["bitrate"] and
-                current["buffer"] == correct["buffer"] and
-                current["freq"] == correct["freq"]):
-                unlocked = True
-                session[f"panopticon_{cam_id}_unlocked"] = True
-            else:
-                unlocked = False
-                session[f"panopticon_{cam_id}_unlocked"] = False
-                error = "ОШИБКА КОНФИГУРАЦИИ. ПОТОК НЕСТАБИЛЕН."
-
+    # Проверка: насколько настройки близки к правильным
+        # Проверка: насколько настройки близки к правильным
+    correct = cam.get("settings")
+    if correct:
+        diffs = []
+        for key in ("bitrate", "buffer", "focus"):
+            val = current.get(key, 50)
+            correct_val = correct.get(key, 50)
+            diffs.append(abs(val - correct_val))
+        
+        max_diff = max(diffs) if diffs else 100
+        
+        # Прогресс = 0, пока разница > 20 (то есть игрок далеко)
+        # Когда разница <= 20 — прогресс растёт от 0 до 100
+        if max_diff > 20:
+            progress = 0
+        else:
+            progress = int((20 - max_diff) / 20 * 100)  # 20→0, 0→100
+        
+        if progress == 100:
+            unlocked = True
+            session[f"panopticon_{cam_id}_unlocked"] = True
+            
+            # --- СОХРАНЯЕМ ФРАГМЕНТ В ОБЩИЙ СПИСОК ---
+            if cam.get("fragment"):
+                frags = set(session.get("found_fragments", []))
+                frags.add(cam["fragment"])       # добавит "67-X"
+                session["found_fragments"] = list(frags)
+        else:
+            unlocked = False
+            session[f"panopticon_{cam_id}_unlocked"] = False
+    
     return render_template(
         "panopticon_cam.html",
         cam=cam,
         current=current,
         unlocked=unlocked,
+        progress=progress,
         error=error,
         chats=SECRET_CHATS,
     )
-
-
 @app.route("/panopticon/cam/<cam_id>/events")
 def panopticon_cam_events(cam_id):
     if not is_secret():
@@ -1371,8 +1590,6 @@ def panopticon_cam_events(cam_id):
         unlocked=unlocked,
         chats=SECRET_CHATS,
     )
-
-
 # ------------------------------------------------------------------
 # SANITIZER
 # ------------------------------------------------------------------
@@ -1496,37 +1713,20 @@ def dead_drop():
 
     _remember("dead_drop")
 
-    unlocked = session.get("dd_unlocked", False)
-    error = None
-
-    if request.method == "POST":
-        sbox = (request.form.get("sbox") or "").strip().lower()
-        hsh  = (request.form.get("hash") or "").strip()
-
-        if is_suspicious_text(sbox) or is_suspicious_text(hsh):
-            return shutdown(reason="keyword")
-
-        if sbox == DEAD_DROP["sbox_answer"] and hsh == DEAD_DROP["hash_answer"]:
-            session["dd_unlocked"] = True
-            unlocked = True
-        else:
-            error = "KEY REJECTED. INVALID S-BOX OR HASH."
-            session["dd_wrong"] = session.get("dd_wrong", 0) + 1
-            if session["dd_wrong"] >= 3:
-                return shutdown(reason="bruteforce")
-
+    # Сюжетная концовка
     plot_text = None
     hijack_role = session.get("hijack_role")
     quiz_key = session.get("quiz_key")
+    motive_arch = session.get("dress_motive_arch", "use")  # дефолт
     if hijack_role and quiz_key:
-        plot_text = _get_plot_ending(hijack_role, quiz_key)
+        plot_text = _get_plot_ending(hijack_role, quiz_key, motive_arch)
 
+    # Собираем фрагменты по session
     found = session.get("found_fragments", [])
-
     SOURCE_PREFIX = {
         "quiz":       "C1-17-",
         "hijack":     "04-M-",
-        "catalog":    "CT-",
+        "catalog":    "FRAG-",
         "panopticon": "PN-",
         "hunt":       "HT-",
     }
@@ -1545,14 +1745,21 @@ def dead_drop():
         else:
             fragments_view.append({**f, "status": "EMPTY", "value": ""})
 
+    # Проверяем, все ли фрагменты собраны
+    total = len(fragments_view)
+    found_count = sum(1 for f in fragments_view if f["status"] == "FOUND")
+    all_found = (total > 0 and found_count == total)
+
     return render_template(
-        "dead_drop.html",
-        d={**DEAD_DROP, "fragments": fragments_view},
-        unlocked=unlocked,
-        error=error,
-        plot_text=plot_text,
-        chats=SECRET_CHATS,
-    )
+    "dead_drop.html",
+    d={**DEAD_DROP, "fragments": fragments_view},
+    unlocked=all_found,
+    error=None,
+    plot_text=plot_text,
+    chats=SECRET_CHATS,
+    total=total,              # ← добавить
+    found_count=found_count,  # ← добавить
+)
 
 @app.route("/debug/plot")
 def debug_plot():
@@ -1563,8 +1770,9 @@ def debug_plot():
     quiz_key = session.get("quiz_key")
 
     plot_text = None
+    motive_arch = session.get("dress_motive_arch", "use")
     if hijack_role and quiz_key:
-        plot_text = _get_plot_ending(hijack_role, quiz_key)
+        plot_text = _get_plot_ending(hijack_role, quiz_key, motive_arch)
 
     return f"""
     <!doctype html>
@@ -1610,7 +1818,8 @@ def debug_plot_all():
     if not is_secret():
         return redirect(url_for("inbox"))
 
-    roles = ["свой", "чужой", "слабый"]
+    roles = ["свой", "чужой", "работник", "руководство", "силовик",
+         "журналист", "слабый", "милана", "мусор"]
     quiz_keys = ["aggression", "paranoia", "lies", "distrust", "isolation",
                  "existential", "selfish", "loss_of_self", "secret_x"]
 
@@ -1629,6 +1838,125 @@ def debug_plot_all():
 
     html += "</table>"
     return html
+
+
+from data import REPORT   # добавить в блок импортов сверху
+
+def _normalize(text: str) -> str:
+    return (text or "").strip().lower().replace("ё", "е").replace(".", "")
+
+def _check_report(form: dict) -> tuple[dict, int]:
+    """Возвращает (results, score). results[i] = True/False/None для каждого пункта."""
+    results = {}
+    score = 0
+
+    for f in REPORT["fields"]:
+        fid = f["id"]
+        val = (form.get(fid) or "").strip()
+        correct = f.get("correct")
+
+        # п.11 — считаем по сессии
+        if fid == "rescued_count":
+            real = 0
+            if session.get("panopticon_rescued"):
+                real += 1
+            if session.get("hunt_choice") == "reveal":
+                real += 1
+            try:
+                given = int(val)
+            except (TypeError, ValueError):
+                given = -1
+            ok = (given == real)
+            results[fid] = ok
+            if ok:
+                score += real
+            continue
+
+        # п.1 — «жива» дороже
+        if fid == "milana_status":
+            ok = _normalize(val) == _normalize(f["correct"])
+            results[fid] = ok
+            if ok:
+                score += f.get("weight", 1)
+            continue
+
+        # multi (п.3) — хотя бы одно совпадение
+        if f.get("multi"):
+            ok = False
+            for c in correct:
+                if _normalize(c) in _normalize(val):
+                    ok = True
+                    break
+            results[fid] = ok
+            if ok:
+                score += 1
+            continue
+
+        # обычные
+        ok = False
+        for c in (correct or []):
+            if _normalize(c) in _normalize(val) or _normalize(val) == _normalize(c):
+                ok = True
+                break
+        results[fid] = ok
+        if ok:
+            score += 1
+
+    return results, score
+
+
+@app.route("/report", methods=["GET", "POST"])
+def report():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    _remember("report")
+
+    # доступ только после сборки всех фрагментов
+    found = session.get("found_fragments", [])
+    all_found = len(found) >= 5  # 5 источников
+    if not all_found:
+        return redirect(url_for("dead_drop"))
+
+    submitted = False
+    results = {}
+    score = 0
+
+    if request.method == "POST":
+        form = {f["id"]: request.form.get(f["id"], "") for f in REPORT["fields"]}
+        session["report_form"] = form
+        results, score = _check_report(form)
+        session["report_results"] = results
+        session["report_score"] = score
+        session["report_submitted"] = True
+        submitted = True
+        session.modified = True
+
+    elif session.get("report_submitted"):
+        submitted = True
+        results = session.get("report_results", {})
+        score = session.get("report_score", 0)
+
+    return render_template(
+        "report.html",
+        r=REPORT,
+        submitted=submitted,
+        results=results,
+        score=score,
+        form=session.get("report_form", {}),
+        chats=SECRET_CHATS,
+    )
+
+
+@app.route("/report/reset")
+def report_reset():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+    for k in ("report_form", "report_results", "report_score", "report_submitted"):
+        session.pop(k, None)
+    session.modified = True
+    return redirect(url_for("report"))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5009))

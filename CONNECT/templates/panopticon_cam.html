@@ -25,14 +25,22 @@
     <p class="pan__sub">{{ cam.note }}</p>
   </header>
 
-  {# --- ВИДЕО С ID ДЛЯ JS --- #}
+  {# --- ВИДЕО (два слоя) --- #}
   <div class="pan-cam__video" id="video-container">
     {% if cam.broken %}
-      <div class="pan-cam__broken" id="video-broken">NO SIGNAL</div>
+      <div class="pan-cam__broken">NO SIGNAL</div>
     {% elif cam.video %}
-      <video autoplay muted loop playsinline id="cam-video">
+      {# Нижний слой: шумное видео #}
+      <video autoplay muted loop playsinline class="cam-video-normal" id="cam-video-normal">
         <source src="{{ url_for('static', filename=cam.video) }}" type="video/mp4">
       </video>
+      
+      {# Верхний слой: секретное видео (появляется при правильных настройках) #}
+      {% if cam.video_unlocked %}
+        <video autoplay muted loop playsinline class="cam-video-unlocked" id="cam-video-unlocked" style="opacity: {{ (progress / 100) if progress else 0 }};">
+          <source src="{{ url_for('static', filename=cam.video_unlocked) }}" type="video/mp4">
+        </video>
+      {% endif %}
     {% endif %}
   </div>
 
@@ -57,21 +65,22 @@
       <output id="out-buffer">{{ current.buffer }}</output>
     </div>
     <div class="pan-cam__row">
-      <label>ЧАСТОТА</label>
-      <input type="range" name="freq" id="slider-freq" min="0" max="100" value="{{ current.freq }}">
-      <output id="out-freq">{{ current.freq }}</output>
+      <label>ФОКУС</label>
+      <input type="range" name="focus" id="slider-focus" min="0" max="100" value="{{ current.focus }}">
+      <output id="out-focus">{{ current.focus }}</output>
     </div>
     <button type="submit" class="dress-btn" style="width: 100%; margin-top: 16px;">// ПРИМЕНИТЬ</button>
   </form>
 
-  <div class="pan__foot" style="justify-content: space-between;">
+  <div class="pan__foot" style="justify-content: space-between; margin-top: 20px;">
     <a href="{{ url_for('panopticon_cam_events', cam_id=cam.id) }}" class="dress-btn {% if not unlocked %}dress-btn--ghost{% endif %}">
       {% if unlocked %}// ОТКРЫТЬ ЛОГИ (ДЕШИФРОВАНО){% else %}// ОТКРЫТЬ ЛОГИ{% endif %}
     </a>
   </div>
 
+  {# --- УВЕДОМЛЕНИЕ О ФРАГМЕНТЕ --- #}
   {% if unlocked and cam.fragment %}
-    <div class="pan-cam__unlocked" style="margin-top: 24px;">
+    <div class="pan-cam__unlocked" style="margin-top: 24px;" id="fragment-box">
       <div class="pan-cam__unlocked-head">[ КАНАЛ ДЕШИФРОВАН ]</div>
       <div class="pan-cam__unlocked-frag">ФРАГМЕНТ: <b>{{ cam.fragment }}</b></div>
     </div>
@@ -81,77 +90,93 @@
 
 <script>
 (function() {
-  const video = document.getElementById("cam-video");
-  const broken = document.getElementById("video-broken");
+  const videoNormal   = document.getElementById("cam-video-normal");
+  const videoUnlocked = document.getElementById("cam-video-unlocked");
 
-  const bitrate = document.getElementById("slider-bitrate");
-  const buffer  = document.getElementById("slider-buffer");
-  const freq    = document.getElementById("slider-freq");
+  const sliderBitrate = document.getElementById("slider-bitrate");
+  const sliderBuffer  = document.getElementById("slider-buffer");
+  const sliderFocus   = document.getElementById("slider-focus");
 
   const outBitrate = document.getElementById("out-bitrate");
   const outBuffer  = document.getElementById("out-buffer");
-  const outFreq    = document.getElementById("out-freq");
+  const outFocus   = document.getElementById("out-focus");
 
-  function applyEffects() {
-    const b = parseInt(bitrate.value, 10);
-    const u = parseInt(buffer.value, 10);
-    const f = parseInt(freq.value, 10);
+  // Получаем правильные настройки из бэкенда (через Jinja)
+  const correctSettings = {{ cam.settings|tojson if cam.settings else 'null' }};
 
+  // Функция расчёта прогресса (0-100)
+function calculateProgress() {
+  if (!correctSettings) return 0;
+
+  const b = parseInt(sliderBitrate.value, 10);
+  const u = parseInt(sliderBuffer.value, 10);
+  const f = parseInt(sliderFocus.value, 10);
+
+  const diffB = Math.abs(b - correctSettings.bitrate);
+  const diffU = Math.abs(u - correctSettings.buffer);
+  const diffF = Math.abs(f - correctSettings.focus);
+
+  const maxDiff = Math.max(diffB, diffU, diffF);
+  
+  // Пока разница > 20 — прогресс 0
+  // Когда разница <= 20 — растёт от 0 до 100
+  if (maxDiff > 20) return 0;
+  return Math.round((20 - maxDiff) / 20 * 100);
+}
+
+
+  function updateVideoEffects() {
+    const b = parseInt(sliderBitrate.value, 10);
+    const u = parseInt(sliderBuffer.value, 10);
+    const f = parseInt(sliderFocus.value, 10);
+
+    // Обновляем цифры рядом с ползунками
     outBitrate.textContent = b;
     outBuffer.textContent  = u;
-    outFreq.textContent    = f;
+    outFocus.textContent   = f;
 
-    if (!video) return;
+    const progress = calculateProgress();
 
-    // --- БИТРЕЙТ → КАЧЕСТВО ---
-    // 0 = ужасное (пиксели), 100 = чистое
-    let pixelate = (100 - b) / 100 * 8; // 0..8 (сильное размытие при низком)
-
-    // --- БУФЕР → ЛАГИ ---
-    // 0 = рвётся, 100 = плавно
-    let lag = (100 - u) / 100 * 0.6; // 0..0.6 (сильная задержка)
-
-    // --- ЧАСТОТА → СКОРОСТЬ + ГЛИТЧ ---
-    // 0 = медленно, 100 = быстро
-    let speed = 0.5 + (f / 100) * 1.5; // 0.5..2.0
-    video.playbackRate = speed;
-
-    // --- CSS-ФИЛЬТРЫ ---
-    let blurPx   = (100 - b) / 100 * 6;   // 0..6px
-    let contrast = 0.5 + (b / 100) * 1.5; // 0.5..2.0
-    let saturate = 0.3 + (b / 100) * 1.2; // 0.3..1.5
-    let brightness = 0.4 + (u / 100) * 1.2; // 0.4..1.6
-    let hueShift = (f / 100) * 90 - 45;  // -45..45
-
-    video.style.filter = `
-      blur(${blurPx}px)
-      contrast(${contrast})
-      saturate(${saturate})
-      brightness(${brightness})
-      hue-rotate(${hueShift}deg)
-    `;
-
-    // --- ЭФФЕКТ "РВЁТСЯ" при низком буфере ---
-    if (u < 20) {
-      video.style.opacity = (Math.random() * 0.4 + 0.4).toFixed(2);
-    } else {
-      video.style.opacity = 1;
+    // --- Плавно проявляем секретное видео ---
+    if (videoUnlocked) {
+      videoUnlocked.style.opacity = (progress / 100).toFixed(2);
     }
 
-    // --- "ГЛИТЧ" при низком битрейте (частое мерцание) ---
-    if (b < 15) {
-      video.style.transform = `translate(${(Math.random() * 4 - 2)}px, ${(Math.random() * 4 - 2)}px)`;
-    } else {
-      video.style.transform = "translate(0, 0)";
+    // --- Применяем "глюки" к обычному видео (когда настройки плохие) ---
+    if (videoNormal) {
+      // Чем хуже битрейт, тем размытее
+      const blurPx = (100 - b) / 100 * 8;
+      // Чем хуже буфер, тем темнее
+      const brightness = 0.3 + (u / 100) * 1.2;
+      // Чем хуже фокус, тем меньше контраст
+      const contrast = 0.4 + (f / 100) * 1.4;
+
+      videoNormal.style.filter = `
+        blur(${blurPx}px)
+        brightness(${brightness})
+        contrast(${contrast})
+        grayscale(${(100 - b) / 100 * 0.5})
+      `;
+
+      // Эффект "дёргается" при плохих настройках
+      if (b < 20 || u < 20) {
+        videoNormal.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+      } else {
+        videoNormal.style.transform = "translate(0, 0)";
+      }
     }
   }
 
-  [bitrate, buffer, freq].forEach(el => {
-    el.addEventListener("input", applyEffects);
+  // Слушаем все ползунки
+  [sliderBitrate, sliderBuffer, sliderFocus].forEach(slider => {
+    slider.addEventListener("input", updateVideoEffects);
   });
 
-  applyEffects();
-  setInterval(applyEffects, 500); // чтобы мерцание было живым
+  // Первый рендер
+  updateVideoEffects();
+  
+  // Небольшая анимация "дёрганья" видео каждые 500мс
+  setInterval(updateVideoEffects, 500);
 })();
 </script>
 
