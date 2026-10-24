@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>РЕЗУЛЬТАТ — THE HUNT</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--hijack">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+</header>
+
+<main class="hunt-game">
+  <h1 class="pan__title">ВЫЕЗД ЗАВЕРШЁН</h1>
+
+  {% if choice == "reveal" %}
+    <div class="plot-ending">
+      <div class="plot-ending__head">[ РАСКРЫТО ]</div>
+      <div class="plot-ending__text">
+        Ты нашёл его. И ты не молчал.<br>
+        Теперь все знают: инженер жив.<br>
+        Это меняет всё.
+      </div>
+      <div class="pan-cam__unlocked" style="margin-top: 24px;">
+      <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+      <div class="pan-cam__unlocked-frag">HT-REVEAL</div>
+    </div>
+    </div>
+  {% elif choice == "hide" %}
+    <div class="plot-ending">
+      <div class="plot-ending__head">[ СКРЫТО ]</div>
+      <div class="plot-ending__text">
+        Ты нашёл его. И ты молчал.<br>
+        Он всё ещё там.<br>
+        Но ты знаешь.
+      </div>
+      <div class="pan-cam__unlocked" style="margin-top: 24px;">
+      <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+      <div class="pan-cam__unlocked-frag">HT-HIDE</div>
+    </div>
+    </div>
+  {% else %}
+    <div class="plot-ending">
+      <div class="plot-ending__head">[ ПРОВАЛ ]</div>
+      <div class="plot-ending__text">
+        Ты не дошёл до него.<br>
+        Тебя нашли первым.
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="hunt-game__actions">
+    <a href="{{ url_for('hunt') }}" class="dress-btn dress-btn--ghost">// к списку выездов</a>
+    <a href="{{ url_for('dead_drop') }}" class="dress-btn">// к DEAD DROP</a>
+  </div>
+</main>
+
+</body>
+</html>

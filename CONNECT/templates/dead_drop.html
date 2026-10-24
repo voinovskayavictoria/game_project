@@ -293,87 +293,78 @@
     <p class="dd__sub">{{ d.subtitle }}</p>
   </header>
 
-  {% if unlocked %}
+{% if unlocked %}
 
-    <div class="dd__ok">{{ d.unlocked_message }}</div>
-    <a class="dd__cta" href="{{ d.unlocked_link }}">→ открыть канал {{ d.unlocked_link }}</a>
+  <div class="dd__ok">{{ d.unlocked_message }}</div>
+  <a class="dd__cta" href="{{ d.unlocked_link }}">→ открыть канал {{ d.unlocked_link }}</a>
 
-    {% if plot_text %}
-      <div class="plot-ending">
-        <div class="plot-ending__head">[СЮЖЕТНАЯ КОНЦОВКА]</div>
-        <div class="plot-ending__text">{{ plot_text }}</div>
-      </div>
-    {% endif %}
-
-  {% else %}
-
-    {# ---------- ПРОГРЕСС ---------- #}
-    <div class="dd__progress">
-      <div class="dd__progress-bar">
-        {% set total = d.fragments|length %}
-        {% set found = d.fragments|selectattr('status','equalto','FOUND')|list|length %}
-        {% set pct = (found / total * 100) if total else 0 %}
-        <div class="dd__progress-fill" style="width: {{ pct }}%;"></div>
-      </div>
-      <div class="dd__progress-label">
-        {{ found }} / {{ total }} фрагментов собрано
-      </div>
+  {% if plot_text %}
+    <div class="plot-ending">
+      <div class="plot-ending__head">[СЮЖЕТНАЯ КОНЦОВКА]</div>
+      <div class="plot-ending__text">{{ plot_text }}</div>
     </div>
+    <div style="margin-top:24px;text-align:center;">
+      <a href="{{ url_for('report') }}" class="dd__btn" style="display:inline-block;width:auto;">
+        ОФОРМИТЬ ОТЧЁТ →
+      </a>
+    </div>
+  {% endif %}
 
-    {# ---------- СЛОТЫ ФРАГМЕНТОВ ---------- #}
-    <div class="dd__slots">
-      {% for f in d.fragments %}
-        {% if f.status == 'FOUND' %}
-          {% set cls = 'dd-slot dd-slot--filled' %}
-        {% elif f.status == 'LOCKED' %}
-          {% set cls = 'dd-slot dd-slot--locked' %}
-        {% else %}
-          {% set cls = 'dd-slot dd-slot--empty' %}
-        {% endif %}
+{% else %}
 
-        <div class="{{ cls }}">
-          <div class="dd-slot__head">
-            <span class="dd-slot__id">{{ f.id }}</span>
-            <span class="dd-slot__status">{{ f.status }}</span>
-          </div>
-          <div class="dd-slot__value">
-            {% if f.status == 'FOUND' %}
-              {{ f.value }}
-            {% else %}
-              ······ ······ ······
-            {% endif %}
-          </div>
-          <div class="dd-slot__hint">{{ f.hint }}</div>
+  {# ---------- ПРОГРЕСС ---------- #}
+  <div class="dd__progress">
+    <div class="dd__progress-bar">
+      {% set total = d.fragments|length %}
+      {% set found = d.fragments|selectattr('status','equalto','FOUND')|list|length %}
+      {% set pct = (found / total * 100) if total else 0 %}
+      <div class="dd__progress-fill" style="width: {{ pct }}%;"></div>
+    </div>
+    <div class="dd__progress-label">
+      {{ found }} / {{ total }} фрагментов собрано
+    </div>
+  </div>
+
+  {# ---------- СЛОТЫ ФРАГМЕНТОВ ---------- #}
+  <div class="dd__slots">
+    {% for f in d.fragments %}
+      {% if f.status == 'FOUND' %}
+        {% set cls = 'dd-slot dd-slot--filled' %}
+      {% elif f.status == 'LOCKED' %}
+        {% set cls = 'dd-slot dd-slot--locked' %}
+      {% else %}
+        {% set cls = 'dd-slot dd-slot--empty' %}
+      {% endif %}
+
+      <div class="{{ cls }}">
+        <div class="dd-slot__head">
+          <span class="dd-slot__id">{{ f.id }}</span>
+          <span class="dd-slot__status">{{ f.status }}</span>
         </div>
-      {% endfor %}
-    </div>
-
-    {# ---------- ФИНАЛЬНАЯ СБОРКА ---------- #}
-    {% if error %}<div class="dd__err">{{ error }}</div>{% endif %}
-
-    <form class="dd__form" method="post" autocomplete="off">
-      <div class="dd__form-title">ФИНАЛЬНАЯ СБОРКА · ASSEMBLY</div>
-
-      <div class="dd__field">
-        <span>S-BOX SEQUENCE</span>
-        <input type="text" name="sbox" autofocus autocomplete="off"
-               spellcheck="false" placeholder="······">
+        <div class="dd-slot__value">
+          {% if f.status == 'FOUND' %}
+            {{ f.value }}
+          {% else %}
+            ······ ······ ······
+          {% endif %}
+        </div>
+        <div class="dd-slot__hint">{{ f.hint }}</div>
       </div>
-      <div class="dd__field">
-        <span>INPUT HASH</span>
-        <input type="text" name="hash" autocomplete="off"
-               spellcheck="false" placeholder="······">
-      </div>
+    {% endfor %}
+  </div>
 
-      <button class="dd__btn" type="submit">DECRYPT BLOCK</button>
-    </form>
-
-    <div class="dd__footnote">
+  <div class="dd__footnote">
+    {% set total = d.fragments|length %}
+    {% set found_count = d.fragments|selectattr('status','equalto','FOUND')|list|length %}
+    {% if found_count == total %}
+      <b style="color: #166534;">ВСЕ ФРАГМЕНТЫ СОБРАНЫ. КАНАЛ ОТКРЫТ.</b>
+    {% else %}
       фрагменты находятся в других узлах сети.<br>
       пока не собраны все — сборка не сработает.
-    </div>
+    {% endif %}
+  </div>
 
-  {% endif %}
+{% endif %}
 
 </div>
 

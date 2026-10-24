@@ -1,73 +1,115 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="hero">
+<section class="hero" style="margin-bottom: 50px;">
   <img src="{{ url_for('static', filename='img/hero.jpg') }}" alt="" class="hero-img">
   <div class="hero-overlay">
-    <h1>LUMEN FORUM</h1>
+    <h1>LUMEN FORUM 2026</h1>
     <p class="lead">{{ SITE.tagline }}</p>
-    <a class="btn" href="{{ url_for('about') }}">О форуме →</a>
+    <a class="btn" href="{{ url_for('archive') }}">Перейти в архив →</a>
   </div>
 </section>
 
-{% if upcoming %}
-<section class="section banner">
-  <div>
-    <span class="banner-tag">Скоро</span>
-    <h2>LUMEN FORUM {{ upcoming.theme }}</h2>
-    <p class="muted">Ближайший форум — осень 2026. Регистрация открыта.</p>
-  </div>
-  <a class="btn btn--outline" href="{{ url_for('program_year', year=2026) }}">Программа →</a>
-</section>
-{% endif %}
-
-<section class="section">
-  <h2>Ключевые участники</h2>
-  <div class="people-grid">
-    {% for p in participants %}
-      <article class="person">
-        <img src="{{ url_for('static', filename=p.photo) }}"
-             alt="{{ p.name }}" class="person-photo">
-        <h3>{{ p.name }}</h3>
-        <div class="person-role">{{ p.role }} · {{ p.company }}</div>
-        <a href="{{ url_for('participant', slug=p.slug) }}">Подробнее →</a>
-      </article>
-    {% endfor %}
+<!-- БЛОК С ТАЙМЕРОМ -->
+<section class="section" style="text-align: center; background: #0d1b2a; color: #fff; padding: 40px 20px; border-radius: 8px; margin-bottom: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+  <h2 style="font-family: 'Playfair Display', serif; font-size: 2rem; margin-top: 0; color: #c9a227;">До начала форума осталось:</h2>
+  
+  <div style="display: flex; justify-content: center; gap: 30px; margin-top: 30px;">
+    <div>
+      <div id="days" style="font-size: 3rem; font-weight: bold; font-family: monospace;">00</div>
+      <div style="font-size: 0.9rem; text-transform: uppercase; color: #888;">Дней</div>
+    </div>
+    <div>
+      <div id="hours" style="font-size: 3rem; font-weight: bold; font-family: monospace;">00</div>
+      <div style="font-size: 0.9rem; text-transform: uppercase; color: #888;">Часов</div>
+    </div>
+    <div>
+      <div id="minutes" style="font-size: 3rem; font-weight: bold; font-family: monospace;">00</div>
+      <div style="font-size: 0.9rem; text-transform: uppercase; color: #888;">Минут</div>
+    </div>
+    <div>
+      <div id="seconds" style="font-size: 3rem; font-weight: bold; font-family: monospace; color: #ff4d4d;">00</div>
+      <div style="font-size: 0.9rem; text-transform: uppercase; color: #888;">Секунд</div>
+    </div>
   </div>
 </section>
 
-<section class="section two-col">
-  <div>
-    <h2>Последние новости</h2>
-    <ul class="news-list">
-      {% for n in news %}
-        <li>
-          <time>{{ n.date }}</time>
-          <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
-        </li>
-      {% endfor %}
-    </ul>
-  </div>
-  <div>
-    <h2>Партнёры</h2>
-    <ul class="plain-list">
-      {% for p in PARTNERS %}
-        <li><a href="{{ external_url(p.key) }}">{{ p.name }}</a> — {{ p.desc }}</li>
-      {% endfor %}
-    </ul>
-  </div>
+<!-- БЛОК О ФОРУМЕ -->
+<section class="section" style="max-width: 800px; margin: 0 auto 60px auto; text-align: center;">
+  <h2 style="font-family: 'Playfair Display', serif; font-size: 2rem;">Что такое LUMEN FORUM?</h2>
+  <p class="lead" style="color: #555; line-height: 1.8;">
+    LUMEN FORUM — это закрытая площадка для обсуждения будущего IT-индустрии. 
+    Здесь собираются ведущие разработчики, аналитики и эксперты по безопасности. 
+    Мы обсуждаем архитектуру закрытых сетей, вопросы приватности, искусственный интеллект и облачные технологии. 
+    Это место, где принимаются решения, меняющие рынок.
+  </p>
 </section>
 
-<section class="section">
-  <h2>Фотографии с форума</h2>
-  <div class="gallery gallery--preview">
-    {% for ph in photos %}
-      <figure>
-        <img src="{{ url_for('static', filename='img/' + ph.file) }}" alt="">
-        <figcaption>{{ ph.caption }}</figcaption>
-      </figure>
-    {% endfor %}
+<!-- БЛОК С ФОРМОЙ СПИКЕРА -->
+<section class="section" style="max-width: 700px; margin: 0 auto 80px auto; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+  <h2 style="font-family: 'Playfair Display', serif; font-size: 2rem; margin-top: 0;">Стать спикером</h2>
+  <p style="color: #666; margin-bottom: 25px;">
+    Если вы хотите выступить на LUMEN FORUM с докладом или воркшопом, заполните заявку. Наши модераторы свяжутся с вами.
+  </p>
+
+  <!-- Красная плашка -->
+  <div style="background: rgba(184, 49, 47, 0.1); border-left: 4px solid #b8312f; padding: 15px; margin-bottom: 25px;">
+    <strong style="color: #b8312f;">⚠ ВНИМАНИЕ:</strong> Регистрация спикеров временно приостановлена. Приём заявок откроется позже.
   </div>
-  <a class="back-link" href="{{ url_for('gallery') }}">Все фотографии →</a>
+
+  <form style="display: flex; flex-direction: column; gap: 15px;">
+    <div>
+      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #444;">Ваше ФИО</label>
+      <input type="text" placeholder="Иванов Иван Иванович" disabled style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; color: #999; cursor: not-allowed; box-sizing: border-box;">
+    </div>
+    
+    <div>
+      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #444;">Компания / Организация</label>
+      <input type="text" placeholder="ООО Тмыв" disabled style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; color: #999; cursor: not-allowed; box-sizing: border-box;">
+    </div>
+
+    <div>
+      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #444;">Тема доклада</label>
+      <input type="text" placeholder="Название вашей темы" disabled style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; color: #999; cursor: not-allowed; box-sizing: border-box;">
+    </div>
+
+    <div>
+      <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #444;">Краткое описание (Abstract)</label>
+      <textarea rows="4" placeholder="О чём будет доклад?" disabled style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: #f5f5f5; color: #999; cursor: not-allowed; resize: none; box-sizing: border-box;"></textarea>
+    </div>
+
+    <button type="button" disabled style="margin-top: 10px; padding: 15px; background: #ccc; color: #666; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: not-allowed;">
+      Отправить заявку
+    </button>
+  </form>
 </section>
+
+<!-- Скрипт таймера -->
+<script>
+  // Задаем дату следующего форума (например, через 7 дней от сегодня)
+  // Или можно поставить конкретную дату: new Date("November 1, 2026 10:00:00")
+  const countdownDate = new Date();
+  countdownDate.setDate(countdownDate.getDate() + 7); // ровно неделя отсюда
+
+  const timer = setInterval(function() {
+    const now = new Date().getTime();
+    const distance = countdownDate - now;
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    document.getElementById("days").innerText = days < 10 ? "0" + days : days;
+    document.getElementById("hours").innerText = hours < 10 ? "0" + hours : hours;
+    document.getElementById("minutes").innerText = minutes < 10 ? "0" + minutes : minutes;
+    document.getElementById("seconds").innerText = seconds < 10 ? "0" + seconds : seconds;
+
+    if (distance < 0) {
+      clearInterval(timer);
+      document.querySelector(".section h2").innerText = "ФОРУМ НАЧАЛСЯ!";
+    }
+  }, 1000);
+</script>
+
 {% endblock %}

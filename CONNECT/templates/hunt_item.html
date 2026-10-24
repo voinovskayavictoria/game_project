@@ -25,14 +25,14 @@
     <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
   </div>
   <div class="s-user">
-  <span class="s-session">uid: <b>anon</b></span>
-  <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
-  <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
-  <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
-  <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
-  <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
-  <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
-</div>
+    <span class="s-session">uid: <b>anon</b></span>
+    <a href="{{ url_for('catalog') }}"     class="s-nav-link">// catalog</a>
+    <a href="{{ url_for('hunt') }}"        class="s-nav-link">// hunt</a>
+    <a href="{{ url_for('panopticon') }}"  class="s-nav-link">// panopticon</a>
+    <a href="{{ url_for('sanitizer') }}"   class="s-nav-link">// sanitizer</a>
+    <a href="{{ url_for('dead_drop') }}"   class="s-nav-link">// dead-drop</a>
+    <a href="{{ url_for('logout') }}"      class="s-nav-link s-nav-link--warn">terminate</a>
+  </div>
 </header>
 
 <main class="hunt-page">
@@ -94,7 +94,8 @@
   </div>
 
   {% if hunt.status == 'OPEN' %}
-    <form class="hunt-join" method="post" action="{{ url_for('hunt_item', hid=hunt_id) }}">
+    <form class="hunt-join" method="post" action="{{ url_for('hunt_game', hid=hunt_id) }}">
+  <input type="hidden" name="action" value="start">
       <div class="hunt-page__block-label">JOIN THE HUNT</div>
 
       <label class="hunt-join__field">

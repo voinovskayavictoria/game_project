@@ -4,6 +4,27 @@
   <meta charset="utf-8">
   <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  
+  <!-- ГЛОБАЛЬНЫЕ СТИЛИ, ЧТОБЫ ФУТЕР БЫЛ ВНИЗУ -->
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main {
+      flex: 1 0 auto; /* Это заставляет main растягиваться и выталкивать футер вниз */
+      padding-bottom: 80px; /* Отступ снизу, чтобы текст не лип к футеру */
+      padding-top: 40px;
+    }
+    .site-footer {
+      flex-shrink: 0; /* Футер не сжимается */
+    }
+  </style>
 </head>
 <body>
 
@@ -18,7 +39,6 @@
       <a href="{{ url_for('team') }}">Команда</a>
       <a href="{{ url_for('projects') }}">Проекты</a>
       <a href="{{ url_for('news') }}">Новости</a>
-      <a href="{{ url_for('contacts') }}">Контакты</a>
     </nav>
   </div>
 </header>
@@ -27,29 +47,10 @@
   {% block content %}{% endblock %}
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer" style="padding: 30px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); background: #0d1b2a;">
   <div class="container">
-    <div class="footer-cols">
-      <div>
-        <strong>PRIME SYSTEMS</strong><br>
-        {{ SITE.tagline }}<br>
-        <small>Основана в {{ SITE.founded }} г.</small>
-      </div>
-      <div>
-        <strong>Партнёры</strong><br>
-        {% for p in PARTNERS %}
-          <a href="{{ p.url }}">{{ p.name }}</a><br>
-        {% endfor %}
-      </div>
-      <div>
-        <strong>Контакты</strong><br>
-        info@prime-systems.example<br>
-        +7 (000) 000-00-00<br>
-        г. Москва, Пресненская наб., 12
-      </div>
-    </div>
-    <div class="footer-bottom">
-      © {{ SITE.founded }}–2026 {{ SITE.name }}. Все права защищены.
+    <div class="footer-bottom" style="font-size: 0.9em; color: #888;">
+      © 2014–2026 PRIME SYSTEMS. Все права защищены.
     </div>
   </div>
 </footer>

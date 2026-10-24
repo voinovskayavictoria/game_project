@@ -2,63 +2,47 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ SITE.name }}{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  {% block head_extra %}{% endblock %}
 </head>
-<body>
+<body style="margin: 0; background: #f4f4f4; font-family: 'Inter', sans-serif;">
+  
+  <header style="background: #fff; border-bottom: 2px solid #0d1b2a; padding: 20px 0;">
+    <div class="container" style="max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+      
+      <!-- === ЛОГОТИП === -->
+      <a href="{{ url_for('index') }}" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+        
+        <!-- Диафрагма (6 лучей) -->
+        <svg viewBox="0 0 40 40" width="36" height="36" style="flex-shrink: 0;">
+          <g transform="translate(20,20)">
+            <path d="M0,-18 L15.6,-9 L15.6,9 L0,18 L-15.6,9 L-15.6,-9 Z" 
+                  fill="none" stroke="#0d1b2a" stroke-width="2"/>
+            <circle cx="0" cy="0" r="5" fill="#0d1b2a"/>
+          </g>
+        </svg>
 
-<header class="masthead">
-  <div class="masthead__top">
-    <span class="masthead__date">Выпуск №{{ SITE.founded and (2026 - SITE.founded) }} · Москва</span>
-    <span class="masthead__tagline">{{ SITE.tagline }}</span>
-  </div>
-  <div class="masthead__brand">
-    <a href="{{ url_for('index') }}">LUMEN<span class="masthead__brand-mark">/</span>FORUM</a>
-  </div>
-  <nav class="masthead__nav">
-    <a href="{{ url_for('about') }}">О форуме</a>
-    <a href="{{ url_for('participants') }}">Участники</a>
-    <a href="{{ url_for('speakers') }}">Спикеры</a>
-    <a href="{{ url_for('program') }}">Программа</a>
-    <a href="{{ url_for('gallery') }}">Фото</a>
-    <a href="{{ url_for('partners') }}">Партнёры</a>
-    <a href="{{ url_for('news') }}">Новости</a>
-    <a href="{{ url_for('archive') }}">Архив</a>
-  </nav>
-</header>
+        <!-- Текст -->
+        <span style="font-family: 'Playfair Display', serif; font-size: 2rem; color: #0d1b2a; font-weight: bold;">
+          LUMEN FORUM
+        </span>
+      </a>
 
-<main class="page">
-  {% block content %}{% endblock %}
-</main>
-
-<footer class="colophon">
-  <div class="colophon__inner">
-    <div>
-      <div class="colophon__name">LUMEN FORUM</div>
-      <p>{{ SITE.description }}</p>
+      <!-- === НАВИГАЦИЯ === -->
+      <nav>
+        <a href="{{ url_for('archive') }}" style="margin-left: 20px; color: #0d1b2a; text-decoration: none; font-weight: 600;">Архив</a>
+        <a href="{{ url_for('interviews') }}" style="margin-left: 20px; color: #0d1b2a; text-decoration: none; font-weight: 600;">Интервью</a>
+      </nav>
     </div>
-    <div>
-      <div class="colophon__label">Партнёры</div>
-      {% for p in PARTNERS %}
-        <a href="{{ external_url(p.key) }}">{{ p.name }}</a>
-      {% endfor %}
-    </div>
-    <div>
-      <div class="colophon__label">Контакты</div>
-      <a href="mailto:hello@lumen-forum.example">hello@lumen-forum.example</a>
-      <span>+7 (000) 000-00-01</span>
-    </div>
-  </div>
-  <div class="colophon__bottom">
-    © {{ SITE.founded }}–2026 LUMEN FORUM. Все материалы защищены.
-  </div>
-</footer>
+  </header>
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <main style="max-width: 1000px; margin: 40px auto; padding: 0 20px; min-height: 60vh;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer style="background: #0d1b2a; color: #a0aec0; text-align: center; padding: 30px 0; margin-top: 60px;">
+    © 2018–2026 LUMEN FORUM. Все материалы защищены.
+  </footer>
 </body>
 </html>

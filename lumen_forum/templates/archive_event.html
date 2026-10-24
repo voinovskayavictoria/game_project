@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} — LUMEN {{ year }}{% endblock %}
+
+{% block content %}
+
+<style>
+  .report-hero {
+    background: #fff; border: 1px solid #e2e8f0; border-top: 5px solid #0d1b2a;
+    padding: 50px; margin-bottom: 30px;
+  }
+  .report-hero-meta {
+    display: flex; gap: 20px; color: #718096; font-family: 'Courier New', monospace;
+    font-size: 0.9rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .report-hero h1 {
+    font-family: 'Playfair Display', serif; font-size: 2.5rem; margin: 0; color: #0d1b2a; line-height: 1.2;
+  }
+  
+  .content-block {
+    background: #fff; border: 1px solid #e2e8f0; padding: 40px; margin-bottom: 30px;
+  }
+  .content-block h2 {
+    font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #0d1b2a;
+    margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #edf2f7; padding-bottom: 15px;
+  }
+  
+  .speaker-info { margin-bottom: 25px; }
+  .speaker-name { font-size: 1.2rem; font-weight: bold; color: #0d1b2a; }
+  .speaker-role { color: #718096; font-size: 0.95rem; margin-top: 5px; }
+
+  .abstract-text { font-size: 1.05rem; line-height: 1.7; color: #2d3748; margin-bottom: 0; text-align: justify; }
+
+  .key-points-list { margin: 0; padding-left: 20px; font-size: 1.05rem; line-height: 1.7; color: #2d3748; }
+  .key-points-list li { margin-bottom: 12px; }
+
+  /* Оформление Q&A как официальный транскрипт */
+  .qa-block {
+    background: #f8fafc; border-left: 3px solid #4a5568; padding: 20px; margin-bottom: 20px;
+    font-size: 0.95rem; line-height: 1.7; color: #2d3748;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+  }
+
+  .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+  .company-tag {
+    background: #edf2f7; color: #4a5568; padding: 6px 12px; border-radius: 2px;
+    font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+  }
+</style>
+
+<div class="report-hero">
+  <div class="report-hero-meta">
+    <span>LUMEN {{ year }}</span>
+    <span>|</span>
+    <span>{{ event.date }} ({{ event.time }})</span>
+    <span>|</span>
+    <span>{{ event.room }}</span>
+  </div>
+  <h1>{{ event.title }}</h1>
+</div>
+
+<div class="content-block">
+  <div class="speaker-info">
+    <div class="speaker-name">{{ event.report.speaker }}</div>
+    <div class="speaker-role">{{ event.report.role }}</div>
+  </div>
+  
+  <h2>Тема выступления</h2>
+  <p class="abstract-text" style="font-weight: 600; color: #0d1b2a;">{{ event.report.topic }}</p>
+</div>
+
+<div class="content-block">
+  <h2>Abstract</h2>
+  <p class="abstract-text">{{ event.report.abstract }}</p>
+</div>
+
+<div class="content-block">
+  <h2>Ключевые тезисы</h2>
+  <ul class="key-points-list">
+    {% for point in event.report.key_points %}
+      <li>{{ point }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="content-block">
+  <h2>Стенограмма Q&A</h2>
+  {% for qa in event.report.qa %}
+    <div class="qa-block">{{ qa }}</div>
+  {% endfor %}
+</div>
+
+<div class="content-block">
+  <h2>Список присутствующих организаций</h2>
+  <div class="tags-container">
+    {% for company in event.report.attendees %}
+      <span class="company-tag">{{ company }}</span>
+    {% endfor %}
+  </div>
+</div>
+
+<div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+  <a href="{{ url_for('archive', year=year) }}" style="color: #4a5568; text-decoration: none; font-weight: 600; font-size: 0.9rem;">← Вернуться к программе {{ year }} года</a>
+</div>
+
+{% endblock %}

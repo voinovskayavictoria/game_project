@@ -10,32 +10,135 @@
 {% endblock %}
 
 {% block content %}
+
+<style>
+  /* Делаем всю страницу проекта темной, чтобы текст было видно */
+  .project-detail {
+    background-color: #0d1b2a; /* Темно-синий фон PRIME */
+    color: #e8e8e8; /* Светлый текст */
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-top: 20px;
+    margin-bottom: 40px;
+  }
+
+  .project-header { border-bottom: 2px solid #c9a227; padding-bottom: 20px; margin-bottom: 30px; }
+  .project-title { font-size: 2.5rem; margin: 0 0 10px 0; color: #fff; }
+  
+  .project-meta { display: flex; gap: 15px; align-items: center; font-family: monospace; font-size: 0.9rem; }
+  
+  /* Бейджи статусов */
+  .badge { padding: 4px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+  .badge-active { background: rgba(56, 161, 105, 0.2); color: #38a169; border: 1px solid #38a169; }
+  .badge-suspended { background: rgba(221, 107, 32, 0.2); color: #dd6b20; border: 1px solid #dd6b20; }
+  .badge-archived { background: rgba(113, 128, 150, 0.2); color: #a0aec0; border: 1px solid #a0aec0; }
+  
+  .project-customer { color: #a0aec0; font-size: 0.9rem; }
+
+  /* Сетка контента */
+  .project-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-top: 30px; }
+  
+  .project-main h2 { color: #c9a227; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 30px; margin-bottom: 15px; }
+  .project-main p { font-size: 1.05rem; line-height: 1.7; color: #cbd5e0; margin-bottom: 15px; }
+
+  /* Карточки сбоку */
+  .project-sidebar { display: flex; flex-direction: column; gap: 20px; }
+  .info-card { background: #172a3f; border: 1px solid #2a4365; padding: 20px; border-radius: 6px; }
+  .info-card h3 { margin-top: 0; color: #fff; font-size: 1.1rem; border-bottom: 1px solid #2a4365; padding-bottom: 10px; margin-bottom: 15px; }
+  .info-card p { font-size: 0.9rem; color: #a0aec0; line-height: 1.6; margin: 0; }
+
+  /* Блок для архивных проектов */
+  .archive-warning { background: rgba(184, 49, 47, 0.15); border-left: 4px solid #e53e3e; padding: 20px; margin-top: 30px; border-radius: 0 6px 6px 0; }
+  .archive-warning h3 { color: #fc8181; margin-top: 0; }
+  .archive-warning p { color: #cbd5e0; margin-bottom: 0; }
+
+  /* Лог (терминальный стиль) */
+  .tech-log { background: #050505; border: 1px solid #2a4365; padding: 15px; font-family: monospace; color: #4ade80; font-size: 0.9rem; border-radius: 4px; margin-top: 30px; }
+  .tech-log span { color: #718096; }
+</style>
+
 <article class="project-detail">
-  <h1>{{ project.title }}</h1>
+  
+  <!-- Шапка проекта -->
+  <div class="project-header">
+    <h1 class="project-title">{{ project.title }}</h1>
+    <div class="project-meta">
+      {% if project.status == 'active' %}
+        <span class="badge badge-active">Активен</span>
+      {% elif project.status == 'suspended' %}
+        <span class="badge badge-suspended">Приостановлен</span>
+      {% else %}
+        <span class="badge badge-archived">Архив</span>
+      {% endif %}
+      
+      <span class="project-customer">
+        <strong>Период:</strong> {{ project.period }} 
+        {% if project.customer %} | <strong>Заказчик:</strong> {{ project.customer }}{% endif %}
+      </span>
+    </div>
+  </div>
 
-  <ul class="facts">
-    <li><strong>Период:</strong> {{ project.period }}</li>
-    <li><strong>Статус:</strong> {{ project.status }}</li>
-  </ul>
+  <div class="project-grid">
+    
+    <!-- Левая колонка: Описание -->
+    <div class="project-main">
+      <h2>О платформе</h2>
+      <p class="lead">{{ project.description }}</p>
+      
+      {% if project.platform_desc %}
+        <h2>Технические характеристики</h2>
+        <p>{{ project.platform_desc }}</p>
+      {% endif %}
 
-  {% if project.description %}
-    <p class="lead">{{ project.description }}</p>
-  {% else %}
-    <p class="lead">{{ project.short }}</p>
-  {% endif %}
+      {% if project.status == 'active' %}
+        <h2>Как приобрести</h2>
+        <p>{{ project.how_to_buy }}</p>
+        
+        <h2>Как установить</h2>
+        <p>{{ project.how_to_install }}</p>
+      {% else %}
+        <div class="archive-warning">
+          <h3>Почему проект недоступен?</h3>
+          <p>{{ project.archive_reason }}</p>
+        </div>
+      {% endif %}
 
-  {% if project.team %}
-    <h2>Команда проекта</h2>
-    <ul class="plain-list">
-      {% for line in project.team %}<li>{{ line }}</li>{% endfor %}
-    </ul>
-  {% endif %}
+      {% if project.last_note %}
+        <div class="tech-log">
+          <span>[LOG]</span> {{ project.last_note }}
+        </div>
+      {% endif %}
+    </div>
 
-  {% if project.last_note %}
-    <h2>Последняя запись</h2>
-    <p class="note">{{ project.last_note }}</p>
-  {% endif %}
+        <!-- Правая колонка: Быстрые факты -->
+    {% if project.status == 'active' %}
+    <div class="project-sidebar">
+      <div class="info-card">
+        <h3>Лицензирование</h3>
+        <p>Доступно для юридических лиц. Ознакомьтесь с тарифами в личном кабинете партнёра.</p>
+      </div>
+      <div class="info-card">
+        <h3>Поддержка</h3>
+        <p>Техническая поддержка 24/7. SLA: 99.9% доступности.</p>
+      </div>
+    </div>
+    
+    {% elif project.transfer_details %}
+    <!-- Если проект передан/приостановлен, показываем справку о передаче -->
+    <div class="project-sidebar">
+      <div class="info-card" style="border-color: #8b1c1c; background: rgba(139, 28, 28, 0.1);">
+        <h3 style="color: #ff4d4d; border-bottom-color: #8b1c1c;">Передача прав</h3>
+        <p style="color: #e8e8e8;">{{ project.transfer_details }}</p>
+      </div>
+    </div>
+    {% endif %}
 
-  <a class="back-link" href="{{ url_for('projects') }}">← Все проекты</a>
+  </div>
+
+  <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #2a4365;">
+    <a class="back-link" href="{{ url_for('projects') }}" style="color: #c9a227; text-decoration: none;">← Вернуться ко всем проектам</a>
+  </div>
+
 </article>
 {% endblock %}

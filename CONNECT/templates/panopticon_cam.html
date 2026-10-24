@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ cam.id }} — PANOPTICON</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+</head>
+<body class="s-app s-app--catalog">
+
+<header class="s-topbar">
+  <div class="s-brand">
+    <span class="s-mark">C</span>
+    <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
+  </div>
+  <div class="s-user">
+    <a href="{{ url_for('panopticon') }}" class="s-nav-link">← panopticon</a>
+  </div>
+</header>
+
+<main class="pan-cam">
+  <header class="pan-cam__head">
+    <div class="pan__kicker">{{ cam.id }} · {{ cam.status }}</div>
+    <h1 class="pan__title">{{ cam.label }}</h1>
+    <p class="pan__sub">{{ cam.note }}</p>
+  </header>
+
+  {# --- ВИДЕО (два слоя) --- #}
+  <div class="pan-cam__video" id="video-container">
+    {% if cam.broken %}
+      <div class="pan-cam__broken">NO SIGNAL</div>
+    {% elif cam.video %}
+      {# Нижний слой: шумное видео #}
+      <video autoplay muted loop playsinline class="cam-video-normal" id="cam-video-normal">
+        <source src="{{ url_for('static', filename=cam.video) }}" type="video/mp4">
+      </video>
+      
+      {# Верхний слой: секретное видео (появляется при правильных настройках) #}
+      {% if cam.video_unlocked %}
+        <video autoplay muted loop playsinline class="cam-video-unlocked" id="cam-video-unlocked" style="opacity: {{ (progress / 100) if progress else 0 }};">
+          <source src="{{ url_for('static', filename=cam.video_unlocked) }}" type="video/mp4">
+        </video>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  {# --- НАСТРОЙКИ --- #}
+  <form method="post" class="pan-cam__settings" id="settings-form">
+    <div class="pan__kicker" style="margin-bottom: 16px;">КОНФИГУРАЦИЯ ПОТОКА</div>
+
+    {% if error %}
+      <div class="hijack-final hijack-final--bad" style="margin-bottom: 16px;">
+        <div class="hijack-final__text">{{ error }}</div>
+      </div>
+    {% endif %}
+
+    <div class="pan-cam__row">
+      <label>БИТРЕЙТ</label>
+      <input type="range" name="bitrate" id="slider-bitrate" min="0" max="100" value="{{ current.bitrate }}">
+      <output id="out-bitrate">{{ current.bitrate }}</output>
+    </div>
+    <div class="pan-cam__row">
+      <label>БУФЕР</label>
+      <input type="range" name="buffer" id="slider-buffer" min="0" max="100" value="{{ current.buffer }}">
+      <output id="out-buffer">{{ current.buffer }}</output>
+    </div>
+    <div class="pan-cam__row">
+      <label>ФОКУС</label>
+      <input type="range" name="focus" id="slider-focus" min="0" max="100" value="{{ current.focus }}">
+      <output id="out-focus">{{ current.focus }}</output>
+    </div>
+    <button type="submit" class="dress-btn" style="width: 100%; margin-top: 16px;">// ПРИМЕНИТЬ</button>
+  </form>
+
+  <div class="pan__foot" style="justify-content: space-between; margin-top: 20px;">
+    <a href="{{ url_for('panopticon_cam_events', cam_id=cam.id) }}" class="dress-btn {% if not unlocked %}dress-btn--ghost{% endif %}">
+      {% if unlocked %}// ОТКРЫТЬ ЛОГИ (ДЕШИФРОВАНО){% else %}// ОТКРЫТЬ ЛОГИ{% endif %}
+    </a>
+  </div>
+
+  {# --- УВЕДОМЛЕНИЕ О ФРАГМЕНТЕ --- #}
+  {% if unlocked and cam.fragment %}
+    <div class="pan-cam__unlocked" style="margin-top: 24px;" id="fragment-box">
+      <div class="pan-cam__unlocked-head">[ КАНАЛ ДЕШИФРОВАН ]</div>
+      <div class="pan-cam__unlocked-frag">ФРАГМЕНТ: <b>{{ cam.fragment }}</b></div>
+    </div>
+  {% endif %}
+
+</main>
+
+<script>
+(function() {
+  const videoNormal   = document.getElementById("cam-video-normal");
+  const videoUnlocked = document.getElementById("cam-video-unlocked");
+
+  const sliderBitrate = document.getElementById("slider-bitrate");
+  const sliderBuffer  = document.getElementById("slider-buffer");
+  const sliderFocus   = document.getElementById("slider-focus");
+
+  const outBitrate = document.getElementById("out-bitrate");
+  const outBuffer  = document.getElementById("out-buffer");
+  const outFocus   = document.getElementById("out-focus");
+
+  // Получаем правильные настройки из бэкенда (через Jinja)
+  const correctSettings = {{ cam.settings|tojson if cam.settings else 'null' }};
+
+  // Функция расчёта прогресса (0-100)
+function calculateProgress() {
+  if (!correctSettings) return 0;
+
+  const b = parseInt(sliderBitrate.value, 10);
+  const u = parseInt(sliderBuffer.value, 10);
+  const f = parseInt(sliderFocus.value, 10);
+
+  const diffB = Math.abs(b - correctSettings.bitrate);
+  const diffU = Math.abs(u - correctSettings.buffer);
+  const diffF = Math.abs(f - correctSettings.focus);
+
+  const maxDiff = Math.max(diffB, diffU, diffF);
+  
+  // Пока разница > 20 — прогресс 0
+  // Когда разница <= 20 — растёт от 0 до 100
+  if (maxDiff > 20) return 0;
+  return Math.round((20 - maxDiff) / 20 * 100);
+}
+
+
+  function updateVideoEffects() {
+    const b = parseInt(sliderBitrate.value, 10);
+    const u = parseInt(sliderBuffer.value, 10);
+    const f = parseInt(sliderFocus.value, 10);
+
+    // Обновляем цифры рядом с ползунками
+    outBitrate.textContent = b;
+    outBuffer.textContent  = u;
+    outFocus.textContent   = f;
+
+    const progress = calculateProgress();
+
+    // --- Плавно проявляем секретное видео ---
+    if (videoUnlocked) {
+      videoUnlocked.style.opacity = (progress / 100).toFixed(2);
+    }
+
+    // --- Применяем "глюки" к обычному видео (когда настройки плохие) ---
+    if (videoNormal) {
+      // Чем хуже битрейт, тем размытее
+      const blurPx = (100 - b) / 100 * 8;
+      // Чем хуже буфер, тем темнее
+      const brightness = 0.3 + (u / 100) * 1.2;
+      // Чем хуже фокус, тем меньше контраст
+      const contrast = 0.4 + (f / 100) * 1.4;
+
+      videoNormal.style.filter = `
+        blur(${blurPx}px)
+        brightness(${brightness})
+        contrast(${contrast})
+        grayscale(${(100 - b) / 100 * 0.5})
+      `;
+
+      // Эффект "дёргается" при плохих настройках
+      if (b < 20 || u < 20) {
+        videoNormal.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+      } else {
+        videoNormal.style.transform = "translate(0, 0)";
+      }
+    }
+  }
+
+  // Слушаем все ползунки
+  [sliderBitrate, sliderBuffer, sliderFocus].forEach(slider => {
+    slider.addEventListener("input", updateVideoEffects);
+  });
+
+  // Первый рендер
+  updateVideoEffects();
+  
+  // Небольшая анимация "дёрганья" видео каждые 500мс
+  setInterval(updateVideoEffects, 500);
+})();
+</script>
+
+</body>
+</html>

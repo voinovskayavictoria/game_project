@@ -2,62 +2,114 @@
 {% block title %}{{ member.name }} — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<article class="person-detail">
-  <div class="person-detail__head">
-    <img src="{{ url_for('static', filename=member.photo) }}"
-         alt="{{ member.name }}" class="person-photo person-photo--lg">
-    <div>
-      <h1>{{ member.name }}</h1>
-      <div class="person-role">{{ member.role }}</div>
-      <ul class="facts">
-        {% if member.age %}<li><strong>Возраст:</strong> {{ member.age }}</li>{% endif %}
-        {% if member.since %}<li><strong>В PRIME с:</strong> {{ member.since }}</li>{% endif %}
-      </ul>
-      <p class="lead">{{ member.bio }}</p>
-    </div>
+
+<style>
+  /* Оформление профиля сотрудника */
+  .profile-header {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    background: #0d1b2a; /* Темный фон PRIME */
+    padding: 40px;
+    border-radius: 8px;
+    color: #e8e8e8;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  
+  .profile-photo {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #c9a227;
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.2);
+  }
+  
+  .profile-info h1 {
+    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+    color: #fff;
+  }
+  
+  .profile-role {
+    font-size: 1.2rem;
+    color: #c9a227;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+  
+  .profile-facts {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+    display: flex;
+    gap: 20px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #a0aec0;
+  }
+  
+  .profile-quote {
+    font-style: italic;
+    font-size: 1.1rem;
+    color: #cbd5e0;
+    border-left: 3px solid #c9a227;
+    padding-left: 15px;
+    margin-bottom: 20px;
+  }
+
+  .profile-body {
+    max-width: 800px;
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+
+  .profile-body h2 {
+    color: #c9a227;
+    font-size: 1.3rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .profile-header { flex-direction: column; align-items: center; text-align: center; }
+    .profile-facts { justify-content: center; }
+    .profile-quote { border-left: none; border-top: 3px solid #c9a227; padding-left: 0; padding-top: 15px; }
+  }
+</style>
+
+<a class="back-link" href="{{ url_for('team') }}" style="display: inline-block; margin-bottom: 20px; color: #c9a227; text-decoration: none; font-weight: bold; font-family: monospace;">
+  ← Вернуться к команде
+</a>
+<!-- Шапка профиля -->
+<div class="profile-header">
+  <img src="{{ url_for('static', filename=member.photo) }}" alt="{{ member.name }}" class="profile-photo">
+  
+  <div class="profile-info">
+    <h1>{{ member.name }}</h1>
+    <div class="profile-role">{{ member.role }}</div>
+    
+    <ul class="profile-facts">
+      {% if member.age %}<li><strong>Возраст:</strong> {{ member.age }}</li>{% endif %}
+      {% if member.since %}<li><strong>В PRIME с:</strong> {{ member.since }}</li>{% endif %}
+    </ul>
+
+    {% if member.quote %}
+      <div class="profile-quote">«{{ member.quote }}»</div>
+    {% endif %}
   </div>
+</div>
 
-  {% if member.education %}
-    <h2>Образование</h2>
-    <ul class="plain-list">
-      {% for line in member.education %}<li>{{ line }}</li>{% endfor %}
-    </ul>
-  {% endif %}
+<!-- Основная информация -->
+<div class="profile-body">
+  <h2>О сотруднике</h2>
+  <p>{{ member.bio }}</p>
 
-  {% if member.career %}
-    <h2>Карьера</h2>
-    <pre class="career">{% for line in member.career %}{{ line }}
-{% endfor %}</pre>
-  {% endif %}
-
-  {% if member.projects %}
-    <h2>Проекты</h2>
-    <ul class="plain-list">
-      {% for p in member.projects %}
-        <li>
-          <a href="{{ p.link }}">{{ p.title }}</a><br>
-          <small>{{ p.period }} · статус: {{ p.status }}</small>
-        </li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
-  {% if member.partner_links %}
-    <h2>Партнёры</h2>
-    <ul class="plain-list">
-      {% for l in member.partner_links %}
-        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
-  {% if member.extra_links %}
-    <h2>Связанные ресурсы</h2>
-    <ul class="plain-list">
-      {% for l in member.extra_links %}
-        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-</article>
 {% endblock %}

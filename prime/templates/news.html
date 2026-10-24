@@ -2,19 +2,114 @@
 {% block title %}Новости — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<h1>Новости</h1>
 
-{% for year, items in by_year.items() %}
-  <section class="news-year">
-    <h2>{{ year }}</h2>
-    <ul class="news-list">
-      {% for n in items %}
-        <li>
-          <time>{{ n.date }}</time>
-          <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
-        </li>
-      {% endfor %}
-    </ul>
-  </section>
-{% endfor %}
+<style>
+  .news-page h1 { margin-bottom: 40px; font-size: 2.5rem; border-bottom: 2px solid #c9a227; padding-bottom: 15px; }
+  
+  .year-block { margin-bottom: 50px; }
+  .year-title { font-size: 2rem; color: #c9a227; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 25px; font-family: monospace; letter-spacing: 2px; }
+  
+  .news-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+    gap: 25px; 
+  }
+  
+  /* Обычная карточка */
+  .news-card {
+    background: #0d1b2a;
+    color: #e8e8e8;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #1e2d3d;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .news-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    border-color: #c9a227;
+  }
+  
+  /* БЛАГОРОДНО-КРАСНАЯ КАРТОЧКА */
+  .news-card--special {
+    background: linear-gradient(145deg, #2a0808, #170202);
+    border-color: #8b1c1c;
+    box-shadow: 0 5px 15px rgba(139, 28, 28, 0.2);
+  }
+  
+  .news-card--special:hover {
+    border-color: #ff4d4d;
+    box-shadow: 0 15px 30px rgba(139, 28, 28, 0.5);
+  }
+  
+  .news-card--special .news-date { color: #ff4d4d; }
+  .news-card--special .news-title a { color: #fff; }
+  .news-card--special .news-title a:hover { color: #ffcccc; }
+  .news-card--special .news-short { color: #d1bebe; }
+
+  /* Общие стили текста */
+  .news-date { font-family: monospace; color: #c9a227; font-size: 0.9rem; margin-bottom: 12px; }
+  .news-title { font-size: 1.2rem; margin: 0 0 15px 0; line-height: 1.4; flex-grow: 1; }
+  .news-title a { color: #fff; text-decoration: none; transition: color 0.2s; }
+  .news-title a:hover { color: #c9a227; }
+  .news-short { color: #a0aec0; font-size: 0.95rem; line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
+
+  /* Стили для кнопки "Читать далее" */
+  .news-read-more { 
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid #c9a227;
+    color: #c9a227; 
+    text-decoration: none; 
+    font-size: 0.85rem; 
+    font-weight: bold; 
+    font-family: monospace; 
+    letter-spacing: 1px; 
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .news-read-more:hover { 
+    background: #c9a227;
+    color: #000; 
+  }
+
+  /* Кнопка в красной карточке */
+  .news-card--special .news-read-more {
+    border-color: #8b1c1c;
+    color: #ffcccc;
+    background: rgba(139, 28, 28, 0.3);
+  }
+  .news-card--special .news-read-more:hover {
+    background: #8b1c1c;
+    color: #fff;
+    border-color: #ff4d4d;
+  }
+</style>
+
+<div class="news-page">
+  <h1>Новости компании</h1>
+
+  {% for year, items in by_year.items() %}
+    <div class="year-block">
+      <div class="year-title">{{ year }}</div>
+      <div class="news-grid">
+        {% for n in items %}
+          <div class="news-card {% if n.external_link %}news-card--special{% endif %}">
+            <div class="news-date">{{ n.date }}</div>
+            <h3 class="news-title">
+              <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
+            </h3>
+            <p class="news-short">{{ n.short }}</p>
+            <a class="news-read-more" href="{{ url_for('news_item', slug=n.slug) }}">Читать далее →</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
 {% endblock %}

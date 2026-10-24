@@ -294,15 +294,31 @@
         setTimeout(function(){ scrollReady = true; }, 900);
         if (conversation) conversation.classList.add("is-reading");
 
+        // === ОПРЕДЕЛЕНИЕ БРАУЗЕРА ===
+        function detectBrowser() {
+          var ua = navigator.userAgent;
+          if (ua.indexOf("Firefox") > -1) return "Firefox";
+          if (ua.indexOf("Edg/") > -1) return "Edge";
+          if (ua.indexOf("OPR/") > -1 || ua.indexOf("Opera") > -1) return "Opera";
+          if (ua.indexOf("Chrome") > -1) return "Chrome";
+          if (ua.indexOf("Safari") > -1) return "Safari";
+          return "Неизвестно";
+        }
+
         var TZ = "неизвестно";
         try { TZ = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
         var LANG   = navigator.language || "неизвестно";
         var SCREEN = (screen.width || 0) + "x" + (screen.height || 0);
+        var BROWSER = detectBrowser();
         
         fetch(window.location.pathname, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: "action=meta&screen=" + encodeURIComponent(SCREEN) + "&tz=" + encodeURIComponent(TZ) + "&lang=" + encodeURIComponent(LANG),
+          body: "action=meta"
+              + "&screen="  + encodeURIComponent(SCREEN)
+              + "&tz="      + encodeURIComponent(TZ)
+              + "&lang="    + encodeURIComponent(LANG)
+              + "&browser=" + encodeURIComponent(BROWSER),
         });
 
         var firstRound = {
@@ -428,7 +444,6 @@
     {% elif chat.bot and bot_cracked %}
       
       <script>
-        // Убираем темный фильтр от теста! Экран должен быть ярким.
         document.body.style.filter = "none";
       </script>
 
@@ -446,11 +461,11 @@
           <div class="od17-access__title">ДОСТУП К АРХИВУ OD-17 РАЗРЕШЕН</div>
           <div class="od17-access__row">
             <span class="od17-access__label">LOGIN:</span>
-            <span class="od17-access__value">{{ od17.login }}</span>
+            <span class="od17-access__value">anon-17</span>
           </div>
           <div class="od17-access__row">
             <span class="od17-access__label">PASSWORD:</span>
-            <span class="od17-access__value">{{ od17.password }}</span>
+            <span class="od17-access__value">1704</span>
           </div>
         </div>
 
@@ -468,9 +483,7 @@
         var i = 0;
         var nextLine = function () {
           if (i >= LINES.length) {
-            // Печатаем фрагмент
             fragEl.style.display = "block";
-            // Показываем плашку с логином и паролем
             setTimeout(function() {
               od17El.style.opacity = "1";
               od17El.style.transform = "translateY(0)";
@@ -482,14 +495,11 @@
           div.textContent = LINES[i];
           linesEl.appendChild(div);
           i++;
-          // Ускорил печать до 400мс, чтобы не ждать вечность
           setTimeout(nextLine, 400);
         };
 
-        // Начинаем печатать через полсекунды
         setTimeout(nextLine, 500);
 
-        // Выход по клику или ESC
         function closeOverlay() {
           window.location.reload();
         }

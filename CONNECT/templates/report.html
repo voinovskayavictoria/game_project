@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ОТЧЁТ — CONNECT</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: #2a2620; color: #1a1a1a;
+    font-family: "Courier Prime", "Courier New", monospace;
+  }
+  .paper {
+    max-width: 820px; margin: 40px auto; padding: 60px 70px 80px;
+    background: #f4efe1;
+    background-image:
+      linear-gradient(rgba(0,0,0,.03) 1px, transparent 1px),
+      radial-gradient(circle at 20% 30%, rgba(0,0,0,.02), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(0,0,0,.02), transparent 40%);
+    background-size: 100% 28px, 100% 100%, 100% 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 0 60px rgba(120,90,40,.08);
+    position: relative;
+    border: 1px solid #d8cfb8;
+  }
+  .paper::before {
+    content: ""; position: absolute; top: 0; left: 60px; right: 60px;
+    height: 2px; background: #b91c1c; opacity: .4;
+  }
+
+  .paper__head { text-align: center; margin-bottom: 36px; }
+  .paper__title {
+    font-family: "Courier Prime", monospace;
+    font-size: 22px; letter-spacing: 4px; font-weight: 700;
+    margin: 0 0 8px; text-transform: uppercase;
+  }
+  .paper__sub {
+    font-size: 12px; letter-spacing: 2px; color: #6b5f4a;
+    text-transform: uppercase; margin: 0;
+  }
+  .paper__rule {
+    margin: 22px 0 30px; height: 1px; background: #b8aa8a;
+  }
+
+  .point { margin-bottom: 26px; }
+  .point__num {
+    font-size: 12px; letter-spacing: 2px; font-weight: 700;
+    color: #6b5f4a; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .point__text {
+    font-family: "Courier Prime", monospace;
+    font-size: 14px; line-height: 2.0; color: #1a1a1a;
+  }
+  .point__line {
+    display: inline-block; min-width: 120px;
+    border-bottom: 1px solid #6b5f4a;
+    position: relative; vertical-align: baseline;
+    padding: 0 6px;
+  }
+  .point__input {
+    font-family: "Caveat", cursive;
+    font-size: 22px; line-height: 1;
+    color: #1a2a5a; background: transparent;
+    border: 0; outline: none;
+    text-align: center;
+    width: 100%; min-width: 120px;
+    padding: 0 4px;
+    letter-spacing: 1px;
+    position: relative; z-index: 1;
+    caret-color: #b91c1c;
+  }
+  .point__input::placeholder {
+    color: #b8aa8a; font-style: italic;
+    font-family: "Courier Prime", monospace; font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .point__input:focus {
+    background: rgba(255, 240, 180, .35);
+    box-shadow: 0 0 0 1px rgba(185, 28, 28, .2);
+  }
+
+  /* автоподстановка вводимого текста — JS копирует value в .point__echo */
+  .point__echo {
+    display: none;
+  }
+
+  .point__mark {
+    font-size: 14px; margin-left: 6px;
+    font-weight: 700;
+  }
+  .point__mark--ok  { color: #166534; }
+  .point__mark--bad { color: #b91c1c; }
+
+  .conclusion {
+    margin-top: 40px; padding-top: 24px;
+    border-top: 1px dashed #b8aa8a;
+    font-size: 13px; line-height: 1.9;
+  }
+  .conclusion__sign {
+    margin-top: 26px; display: flex;
+    justify-content: space-between; align-items: flex-end;
+    font-size: 12px; letter-spacing: 1px; color: #6b5f4a;
+  }
+  .conclusion__sign b {
+    font-family: "Caveat", cursive; font-size: 22px; color: #1a2a5a;
+    border-bottom: 1px solid #6b5f4a; padding: 0 20px 2px;
+    min-width: 160px; text-align: center; display: inline-block;
+  }
+
+  .submit-row {
+    margin-top: 36px; text-align: center;
+  }
+  .submit-btn {
+    font-family: "Courier Prime", monospace;
+    font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+    background: #1a1a1a; color: #f4efe1;
+    border: 0; padding: 14px 28px; cursor: pointer;
+    font-weight: 700;
+  }
+  .submit-btn:hover { background: #b91c1c; }
+
+  .score {
+    margin-top: 30px; padding: 18px 22px;
+    background: rgba(185, 28, 28, .07);
+    border-left: 3px solid #b91c1c;
+    font-size: 13px; line-height: 1.7;
+  }
+  .score b { color: #b91c1c; }
+
+  .back {
+    display: inline-block; margin-top: 16px;
+    font-size: 11px; letter-spacing: 2px; color: #6b5f4a;
+    text-decoration: none; border-bottom: 1px solid #b8aa8a;
+  }
+  .back:hover { color: #b91c1c; }
+</style>
+</head>
+<body>
+
+<div class="paper">
+
+  <header class="paper__head">
+    <h1 class="paper__title">{{ r.title }}</h1>
+    <p class="paper__sub">{{ r.subtitle }}</p>
+  </header>
+  <div class="paper__rule"></div>
+
+  <form method="post" id="report-form">
+
+    {% for f in r.fields %}
+      <div class="point">
+        <div class="point__num">ПУНКТ {{ f.point }}</div>
+        <div class="point__text">
+          {{ f.prefix }}<span class="point__line"><input
+            class="point__input"
+            type="text"
+            name="{{ f.id }}"
+            id="in-{{ f.id }}"
+            value="{{ form.get(f.id, '') }}"
+            placeholder="{{ f.placeholder }}"
+            {% if submitted %}readonly{% endif %}
+          ></span>{{ f.suffix }}
+          {% if submitted and f.id in results %}
+            {% if results[f.id] %}
+              <span class="point__mark point__mark--ok">✓</span>
+            {% else %}
+              <span class="point__mark point__mark--bad">✗</span>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+
+    <div class="conclusion">
+      <div class="point__num">ЗАКЛЮЧЕНИЕ</div>
+      <p>{{ r.conclusion }}</p>
+      <div class="conclusion__sign">
+        <span>Подпись следователя:</span>
+        <b>CONNECT / {{ session.get('sys_user', 'anon') }}</b>
+      </div>
+    </div>
+
+    {% if not submitted %}
+      <div class="submit-row">
+        <button class="submit-btn" type="submit">{{ r.submit_label }}</button>
+      </div>
+    {% endif %}
+  </form>
+
+  {% if submitted %}
+    <div class="score">
+      <b>РЕЗУЛЬТАТ: {{ score }} / {{ r.max_score }}</b><br>
+      {% if score >= 12 %}
+        Отчёт принят. Дело закрыто. Агентство получает полный доступ к архиву.
+      {% elif score >= 7 %}
+        Отчёт принят частично. Часть выводов требует уточнения.
+      {% else %}
+        Отчёт отклонён. Слишком много расхождений с материалами дела.
+      {% endif %}
+    </div>
+    <a class="back" href="{{ url_for('report_reset') }}">→ ПЕРЕПИСАТЬ ОТЧЁТ</a>
+  {% endif %}
+
+  <a class="back" href="{{ url_for('dead_drop') }}">← ВЕРНУТЬСЯ В DEAD DROP</a>
+
+</div>
+
+<script>
+  // Эффект «печатается от руки»: при вводе — символы появляются с задержкой,
+  // поле расширяется под текст, курсор-каретка мигает.
+  document.querySelectorAll('.point__input').forEach(function (inp) {
+    if (inp.readOnly) return;
+    inp.addEventListener('input', function () {
+      // автоширина под текст
+      const len = inp.value.length;
+      inp.style.width = Math.max(120, 12 + len * 11) + 'px';
+    });
+    // фокус — подсветка строки
+    inp.addEventListener('focus', function () {
+      inp.closest('.point__line').style.background = 'rgba(255, 240, 180, .35)';
+    });
+    inp.addEventListener('blur', function () {
+      inp.closest('.point__line').style.background = '';
+    });
+  });
+
+  // Автосабмит по Enter не нужен — форма отправляется кнопкой.
+</script>
+
+</body>
+</html>
