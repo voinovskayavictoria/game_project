@@ -282,7 +282,6 @@
     <a href="{{ url_for('catalog') }}">// catalog</a>
     <a href="{{ url_for('hunt') }}">// hunt</a>
     <a href="{{ url_for('panopticon') }}">// panopticon</a>
-    <a href="{{ url_for('sanitizer') }}">// sanitizer</a>
     <a href="{{ url_for('dead_drop') }}" class="is-active">// dead-drop</a>
     <a href="{{ url_for('logout') }}" class="dd__nav--warn">terminate</a>
   </nav>
@@ -295,18 +294,13 @@
 
 {% if unlocked %}
 
-  <div class="dd__ok">{{ d.unlocked_message }}</div>
-  <a class="dd__cta" href="{{ d.unlocked_link }}">→ открыть канал {{ d.unlocked_link }}</a>
-
   {% if plot_text %}
     <div class="plot-ending">
       <div class="plot-ending__head">[СЮЖЕТНАЯ КОНЦОВКА]</div>
       <div class="plot-ending__text">{{ plot_text }}</div>
     </div>
     <div style="margin-top:24px;text-align:center;">
-      <a href="{{ url_for('report') }}" class="dd__btn" style="display:inline-block;width:auto;">
-        ОФОРМИТЬ ОТЧЁТ →
-      </a>
+      <a class="dd__cta" href="{{ url_for('inbox') }}">→ вернуться в inbox</a>
     </div>
   {% endif %}
 

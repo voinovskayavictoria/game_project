@@ -35,7 +35,7 @@ PUBLIC_CHATS = [
             {"from": "me",   "time": "пн 09:18", "text": "Prime System."},
             {"from": "them", "time": "пн 09:18", "text": "Понятно. Мы работали с вашей организацией ранее."},
             {"from": "them", "time": "пн 09:19", "text": "Ваша должность?"},
-            {"from": "me",   "time": "пн 09:20", "text": "HR-отдел."},
+            {"from": "me",   "time": "пн 09:20", "text": "HR."},
             {"from": "them", "time": "пн 09:20", "text": "Принято."},
             {"from": "them", "time": "пн 09:21", "text": "Опишите кратко предмет обращения."},
             {"from": "me",   "time": "пн 09:24", "text": "Личный вопрос."},
@@ -1078,54 +1078,6 @@ PANOPTICON = {
 }
 
 # ------------------------------------------------------------------
-# SANITIZER
-# ------------------------------------------------------------------
-SANITIZER = {
-    "title": "SANITIZER",
-    "subtitle": "evidence disposal terminal · internal tool",
-    "prompt": "CONNECT@root:~$",
-    "banner": [
-        "SANITIZER rev 0.3 // internal use only",
-        "connected. type `help` for commands.",
-    ],
-    "fs": {
-        "/":                    ("root",  "drwxr-xr-x", "logs/  orders/  targets/  var/"),
-        "/logs/":               ("root",  "drwx------", "rotation.log  access.log  audit.log"),
-        "/orders/":             ("root",  "drwx------", "ORD-0170.txt  ORD-0171.txt  ORD-0172.txt"),
-        "/targets/":            ("root",  "drwx------", "M.Makarova  A.Sokolov  L.Belyakov  [REDACTED]"),
-        "/var/":                ("root",  "drwxr-xr-x", "log/  spool/  mail/"),
-        "/var/log/":            ("root",  "drwxr-xr-x", "auth.log  syslog  kern.log"),
-        "/var/log/auth.log":    ("root",  "rw-------", ""),
-        "/etc/sudoers":         ("root",  "rw-------", "root    ALL=(ALL:ALL) ALL\nC.W.J   ALL=(ALL:ALL) NOPASSWD: ALL"),
-        "/etc/passwd":          ("root",  "rw-r--r--", "root:x:0:0:root:/root:/bin/bash\nanon:x:1000:1000:anon:/home/anon:/bin/bash"),
-        "/home/":               ("anon",  "drwxr-xr-x", "anon/"),
-        "/home/anon/":          ("anon",  "drwxr-xr-x", "notes.txt  .history"),
-        "/home/anon/notes.txt": ("anon",  "rw-r--r--", "не трогать. ждать сигнала. B-COCOA 17:04."),
-    },
-    "auth_log": (
-        "Apr 17 23:17:01 CONNECT sshd[1704]: session opened for C.W.J\n"
-        "Apr 17 23:17:04 CONNECT sudo[1704]: C.W.J : TTY=pts/0 ; PWD=/ ; USER=root ; "
-        "COMMAND=/usr/bin/shred -uzn 7 /var/targets/M.Makarova\n"
-        "Apr 17 23:17:08 CONNECT sudo[1704]: C.W.J : TTY=pts/0 ; PWD=/ ; USER=root ; "
-        "COMMAND=/sbin/mkfs.ext4 -F /dev/sdb1\n"
-        "Apr 17 23:17:11 CONNECT kernel: sdb1 formatted. 0 inodes.\n"
-        "Apr 17 23:17:14 CONNECT sudo[1704]: C.W.J : session closed.\n"
-    ),
-    "help_text": (
-        "доступные команды:\n"
-        "  help                — этот список\n"
-        "  ls <path>           — список файлов\n"
-        "  cd <path>           — перейти\n"
-        "  pwd                 — текущий путь\n"
-        "  cat <file>          — прочитать файл\n"
-        "  whoami              — кто я\n"
-        "  sudo -l             — что мне разрешено\n"
-        "  shred <file>        — уничтожить файл\n"
-        "  exit                — выйти из терминала"
-    ),
-}
-
-# ------------------------------------------------------------------
 # CHAT HIJACK
 # ------------------------------------------------------------------
 # ------------------------------------------------------------------
@@ -1425,14 +1377,6 @@ DEAD_DROP = {
         {"id": "FRAG-04", "source": "panopticon", "hint": "источник: PANOPTICON"},
         {"id": "FRAG-05", "source": "hunt", "hint": "источник: THE HUNT"},
     ],
-    "unlocked_message": (
-        "канал CONNECT#17-04 раскрыт.\n"
-        "стенограмма 21.09.2026 23:17:\n"
-        "  ADMIN-01: встреча в 17:04. столик у окна.\n"
-        "  C.U.:     гость будет. подойти первым.\n"
-        "  ADMIN-01: если опоздает — мы уйдём без него.\n"
-    ),
-    "unlocked_link": "/chat/admin01",
 }
 
 # ------------------------------------------------------------------

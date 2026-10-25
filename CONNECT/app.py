@@ -9,7 +9,7 @@ from data import (
     PUBLIC_CHATS, SECRET_CHATS, CONTROL,
     DRESSES, DRESSES_NOTE, DRESSES_FOOTER, DRESSES_RENTAL,
     HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
-    PANOPTICON, SANITIZER, DEAD_DROP,
+    PANOPTICON, DEAD_DROP,
     CHAT_HIJACK, PLOT_ENDINGS, PLOT_ENDINGS_SECRET,
     BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
     REQUEST_UNLOCK,
@@ -681,8 +681,6 @@ def opaque(slug):
         return hunt_item(arg)
     if kind == "panopticon":
         return panopticon()
-    if kind == "sanitizer":
-        return sanitizer()
     if kind == "dead_drop":
         return dead_drop()
 
@@ -1634,120 +1632,6 @@ def panopticon_cam_events(cam_id):
         unlocked=unlocked,
         chats=SECRET_CHATS,
     )
-
-
-# ------------------------------------------------------------------
-# SANITIZER
-# ------------------------------------------------------------------
-@app.route("/sanitizer", methods=["GET", "POST"])
-def sanitizer():
-    if not is_secret():
-        return redirect(url_for("inbox"))
-
-    _remember("sanitizer")
-
-    if "san_log" not in session:
-        session["san_log"] = list(SANITIZER["banner"])
-        session["san_cwd"] = "/"
-        session["san_wrong"] = 0
-        session["san_locked"] = False
-
-    if session.get("san_locked"):
-        return render_template("sanitizer.html",
-                               s=SANITIZER, output=session["san_log"],
-                               locked=True, chats=SECRET_CHATS)
-
-    if request.method == "POST":
-        cmd = request.form.get("cmd", "").strip()
-        out = []
-
-        if is_suspicious_text(cmd):
-            return shutdown(reason="keyword")
-
-        parts = cmd.split()
-        name = parts[0] if parts else ""
-        arg = parts[1] if len(parts) > 1 else ""
-
-        cwd = session.get("san_cwd", "/")
-
-        def path_join(arg):
-            if not arg:
-                return cwd
-            if arg.startswith("/"):
-                return arg
-            if arg in (".", "./"):
-                return cwd
-            if arg == "..":
-                return cwd.rstrip("/").rsplit("/", 1)[0] + "/" or "/"
-            return (cwd.rstrip("/") + "/" + arg).replace("//", "/")
-
-        out.append(f"{SANITIZER['prompt']} {cmd}")
-
-        if name == "help":
-            out.append(SANITIZER["help_text"])
-        elif name == "pwd":
-            out.append(cwd)
-        elif name == "whoami":
-            out.append("anon")
-        elif name == "cd":
-            target = path_join(arg)
-            if target in SANITIZER["fs"] or (target.rstrip("/") + "/") in SANITIZER["fs"]:
-                session["san_cwd"] = target if target.endswith("/") else target + "/"
-                if session["san_cwd"] == "//":
-                    session["san_cwd"] = "/"
-            else:
-                out.append(f"cd: {target}: No such file or directory")
-        elif name == "ls":
-            target = path_join(arg) if arg else cwd
-            key = target if target in SANITIZER["fs"] else target.rstrip("/") + "/"
-            if key in SANITIZER["fs"]:
-                owner, perms, content = SANITIZER["fs"][key]
-                out.append(f"{perms}  {owner}  {content}")
-            else:
-                out.append(f"ls: {target}: No such file or directory")
-        elif name == "cat":
-            target = path_join(arg)
-            if target == "/var/log/auth.log":
-                out.append(SANITIZER["auth_log"])
-            elif target in SANITIZER["fs"]:
-                owner, perms, content = SANITIZER["fs"][target]
-                if "r" in perms[1:4] or owner == "anon":
-                    out.append(content or "[пусто]")
-                else:
-                    out.append(f"cat: {target}: Permission denied")
-            else:
-                out.append(f"cat: {target}: No such file or directory")
-        elif name == "sudo" and arg == "-l":
-            out.append("User anon may run the following commands:")
-            out.append("  (root) NOPASSWD: /usr/bin/shred")
-            out.append("  (root) NOPASSWD: /sbin/mkfs.ext4")
-        elif name == "shred":
-            target = path_join(arg)
-            out.append(f"shred: {target}: operation not permitted")
-            out.append("hint: you are not ROOT.")
-        elif name == "exit":
-            session["san_log"] = list(SANITIZER["banner"])
-            out.append("session closed.")
-        elif name == "":
-            pass
-        else:
-            session["san_wrong"] = session.get("san_wrong", 0) + 1
-            out.append(f"{name}: command not found")
-            if session["san_wrong"] >= 3:
-                session["san_locked"] = True
-                out.append("TOO MANY FAILED COMMANDS. LOCKING IP ...")
-                session["san_log"] = session["san_log"] + out
-                return render_template("sanitizer.html",
-                                       s=SANITIZER, output=session["san_log"],
-                                       locked=True, chats=SECRET_CHATS)
-
-        session["san_log"] = session["san_log"] + out
-        session.modified = True
-
-    return render_template("sanitizer.html",
-                           s=SANITIZER, output=session["san_log"],
-                           locked=False, chats=SECRET_CHATS)
-
 
 # ------------------------------------------------------------------
 # DEAD DROP
