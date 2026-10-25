@@ -1390,6 +1390,14 @@ def hunt_item(hid):
         chats=SECRET_CHATS,
     )
 
+def _wants_json():
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
+def _json_state(state):
+    _, game = eng.public_view(state)
+    return jsonify(game)
+
 
 @app.route("/hunt/<hid>/game", methods=["GET", "POST"])
 def hunt_game(hid):
@@ -1417,6 +1425,8 @@ def hunt_game(hid):
 
         if not _state_ok(state, hid):
             session.pop(HUNT_STATE_KEY, None)
+            if _wants_json():
+                return jsonify({"redirect": url_for("hunt_item", hid=hid)})
             return redirect(url_for("hunt_item", hid=hid))
 
         if action == "move":
@@ -1427,15 +1437,18 @@ def hunt_game(hid):
                 session["hunt_choice"] = "caught"
             session[HUNT_STATE_KEY] = state
             session.modified = True
+            if _wants_json():
+                return _json_state(state)
             return redirect(url_for("hunt_game", hid=hid))
 
         if action == "use":
-            item = request.form.get("item", "")
-            eng.step(state, 0, 0, use=item)
+            eng.step(state, 0, 0, use=request.form.get("item", ""))
             if state["status"] == "caught":
                 session["hunt_choice"] = "caught"
             session[HUNT_STATE_KEY] = state
             session.modified = True
+            if _wants_json():
+                return _json_state(state)
             return redirect(url_for("hunt_game", hid=hid))
 
         if action == "chase_done":
@@ -1443,6 +1456,8 @@ def hunt_game(hid):
                 eng.finish_chase(state, True)
                 session[HUNT_STATE_KEY] = state
                 session.modified = True
+            if _wants_json():
+                return _json_state(state)
             return redirect(url_for("hunt_game", hid=hid))
 
         if action == "choice" and state["status"] == "found":
@@ -1459,6 +1474,8 @@ def hunt_game(hid):
                 session.modified = True
                 return redirect(url_for("hunt_game_result"))
 
+        if _wants_json():
+            return _json_state(state)
         return redirect(url_for("hunt_game", hid=hid))
 
     # GET
@@ -1794,6 +1811,19 @@ def debug_plot():
     motive_arch = session.get("dress_motive_arch", "use")
     if hijack_role and quiz_key:
         plot_text = _get_plot_ending(hijack_role, quiz_key, motive_arch)
+    else:
+        # отладка: показать только модификаторы, без базового финала
+        mods = []
+        if motive_arch in PLOT_MOTIVE_MODS:
+            mods.append(PLOT_MOTIVE_MODS[motive_arch])
+        hunt = session.get("hunt_choice")
+        if hunt in PLOT_EXTRA_MODS:
+            mods.append(PLOT_EXTRA_MODS[hunt])
+        mods.append(
+            PLOT_EXTRA_MODS["panopticon_rescued"] if session.get("panopticon_rescued")
+            else PLOT_EXTRA_MODS["panopticon_failed"]
+        )
+        plot_text = "(БАЗА НЕ ПРОЙДЕНА — показаны только модификаторы)\n\n" + "\n\n".join(mods)
 
     return f"""
     <!doctype html>
