@@ -1,0 +1,52 @@
+/* static/css/hijack_rows.css */
+.hijack-row { margin: 14px 0; padding-left: 12px; border-left: 3px solid var(--rc, #444); }
+.hijack-row__title { font-size: 11px; letter-spacing: .14em; margin-bottom: 8px; color: var(--rc, #7c8794); font-weight: 700; }
+.hijack-row__title b { margin-right: 8px; }
+.hijack-row__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+#hijack-count { color: #fff; }
+
+/* цвета строк */
+.hijack-row--2 { --rc: #22d3ee; }   /* голубая — как зашёл */
+.hijack-row--3 { --rc: #fbbf24; }   /* жёлтая — что сказать */
+.hijack-row--4 { --rc: #a78bfa; }   /* фиолетовая — как себя подать */
+
+.hijack-row--2 .hijack-chip, .hijack-row--3 .hijack-chip, .hijack-row--4 .hijack-chip {
+  border: 1px solid var(--rc); color: var(--rc); background: rgba(255,255,255,.02);
+}
+.hijack-row--2 .hijack-chip:hover, .hijack-row--3 .hijack-chip:hover, .hijack-row--4 .hijack-chip:hover {
+  background: rgba(255,255,255,.08);
+}
+.hijack-row .hijack-chip.is-picked {
+  background: var(--rc); color: #050607; font-weight: 700; box-shadow: 0 0 14px var(--rc);
+}
+
+/* строка 1 — радужный кубик «назвать себя» */
+.hijack-row--1 { border-left: 3px solid transparent;
+  border-image: linear-gradient(180deg,#ff2a3d,#fbbf24,#4ade80,#22d3ee,#a78bfa) 1; }
+.hijack-row--1 .hijack-row__title {
+  background: linear-gradient(90deg,#ff2a3d,#fbbf24,#4ade80,#22d3ee,#a78bfa,#ff2a3d);
+  background-size: 200% 100%; -webkit-background-clip: text; background-clip: text;
+  color: transparent; animation: hj-rainbow 3s linear infinite;
+}
+.hijack-chip--name {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; cursor: text; color: #fff; font-weight: 700;
+  border: 2px solid transparent; border-radius: 3px;
+  background:
+    linear-gradient(#0a0d12,#0a0d12) padding-box,
+    linear-gradient(90deg,#ff2a3d,#fbbf24,#4ade80,#22d3ee,#a78bfa,#ff2a3d) border-box;
+  background-size: 100% 100%, 200% 100%;
+  animation: hj-rainbow 3s linear infinite, hj-pulse 1.6s ease-in-out infinite;
+}
+.hijack-must {
+  font-size: 10px; letter-spacing: .12em; padding: 2px 6px; color: #050607;
+  background: linear-gradient(90deg,#ff2a3d,#fbbf24,#4ade80,#22d3ee,#a78bfa);
+}
+.hijack-chip--name input {
+  background: #050607; border: 0; border-bottom: 2px solid #fbbf24; color: #fff;
+  font: inherit; padding: 4px 6px; outline: none; min-width: 240px;
+}
+@keyframes hj-rainbow { to { background-position: 200% 0; } }
+@keyframes hj-pulse { 50% { box-shadow: 0 0 22px rgba(167,139,250,.6); } }
+
+#hijack-send[disabled] { opacity: .3; cursor: not-allowed; }

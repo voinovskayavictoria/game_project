@@ -6,6 +6,7 @@
 """
 import os
 import re
+from difflib import SequenceMatcher
 
 from flask import Flask, render_template, request, redirect, url_for
 from jinja2 import ChoiceLoader, FileSystemLoader
@@ -29,10 +30,12 @@ def _norm(text):
     return re.sub(r"[\W_]+", "", t, flags=re.UNICODE)
 
 
-def _match(val, correct_list):
+def _match(val, correct_list, fuzzy=True):
+    """совпадение с допуском на опечатки (Ordit Data, проститутции и т.п.)"""
     v = _norm(val)
     if not v:
         return False
+    tokens = [_norm(t) for t in re.findall(r"\w+", (val or "").lower().replace("ё", "е"))]
     for c in correct_list:
         c = _norm(c)
         if not c:
@@ -41,6 +44,12 @@ def _match(val, correct_list):
             return True
         if len(c) > 3 and c in v:     # короткие шаблоны — только точное совпадение
             return True
+        if fuzzy and len(c) >= 5:
+            if SequenceMatcher(None, v, c).ratio() >= 0.8:
+                return True
+            for t in tokens:
+                if len(t) >= 5 and SequenceMatcher(None, t, c).ratio() >= 0.8:
+                    return True
     return False
 
 
@@ -51,7 +60,7 @@ def _check(values):
         t = f["type"]
         if t == "text":
             max_score += 1
-            ok = _match(values.get(f["id"], ""), f["correct"])
+            ok = _match(values.get(f["id"], ""), f["correct"], f.get("fuzzy", True))
             results[f["id"]] = ok
             score += ok
         elif t == "multi":

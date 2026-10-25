@@ -41,15 +41,40 @@
       <div class="pan-cam__unlocked-frag">ФРАГМЕНТ: <b>{{ cam.fragment }}</b></div>
     </div>
   {% endif %}
-{% if unlocked and cam.id == "CAM-05" and not session.get('panopticon_rescued') %}
-  <form method="post" action="{{ url_for('panopticon_rescue', cam_id=cam.id) }}" style="margin-top: 24px;">
-    <button type="submit" class="dress-btn" style="width: 100%;">
-      // СООБЩИТЬ О КОМНАТЕ 1704
-    </button>
-  </form>
-{% endif %}
-  
 
+  {% if unlocked and cam.id == "CAM-05" %}
+    {% if not session.get('panopticon_decided') %}
+      <div class="hijack-final hijack-final--bad" style="margin-top: 24px; text-align: left;">
+        <div class="hijack-final__title" style="color: var(--red);">[ РЕШЕНИЕ ]</div>
+        <div style="color: var(--ink-2); font-size: 13px; line-height: 1.7; margin-bottom: 18px;">
+          В комнате 1704 женщина. Оператор смотрит на неё вручную.<br>
+          Передать данные о комнате тем, кто может её вывести, или промолчать.<br>
+          Выбор делается один раз.
+        </div>
+        <form method="post" action="{{ url_for('panopticon_rescue', cam_id=cam.id) }}"
+              style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button type="submit" name="choice" value="report" class="dress-btn">
+            // СООБЩИТЬ О КОМНАТЕ 1704
+          </button>
+          <button type="submit" name="choice" value="silent" class="dress-btn dress-btn--ghost">
+            // НЕ СООБЩАТЬ
+          </button>
+        </form>
+      </div>
+    {% elif session.get('panopticon_rescued') %}
+      <div class="pan-cam__unlocked" style="margin-top: 24px;">
+        <div class="pan-cam__unlocked-head">[ СООБЩЕНИЕ ОТПРАВЛЕНО ]</div>
+        <div style="color: var(--ink-2); font-size: 13px;">Комната 1704 передана. Женщину выведут до рассвета.</div>
+      </div>
+    {% else %}
+      <div class="hijack-final hijack-final--bad" style="margin-top: 24px;">
+        <div class="hijack-final__title">[ ВЫ ПРОМОЛЧАЛИ ]</div>
+        <div class="hijack-final__text">Запись осталась в архиве. Утром комнату освободят.</div>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <div class="hunt-game__actions" style="margin-top: 24px;">
     <a href="{{ url_for('panopticon_cam', cam_id=cam.id) }}" class="dress-btn dress-btn--ghost">← к камере</a>
     <a href="{{ url_for('panopticon') }}" class="dress-btn dress-btn--ghost">← к сетке</a>
   </div>
