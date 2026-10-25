@@ -34,11 +34,25 @@
       <span class="logo-mark">◆</span>
       PRIME <span class="logo-sub">SYSTEMS</span>
     </a>
-    <nav class="main-nav">
+        <nav class="main-nav">
       <a href="{{ url_for('about') }}">О компании</a>
       <a href="{{ url_for('team') }}">Команда</a>
       <a href="{{ url_for('projects') }}">Проекты</a>
-      <a href="{{ url_for('news') }}">Новости</a>
+      
+      <!-- ССЫЛКА НА НОВОСТИ С МИГАЮЩЕЙ ТОЧКОЙ -->
+      <a href="{{ url_for('news') }}" style="position: relative; display: inline-flex; align-items: center; gap: 6px;">
+        Новости
+        <span style="
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          background-color: #ff4d4d;
+          border-radius: 50%;
+          box-shadow: 0 0 8px #ff4d4d;
+          animation: blink-dot 1.2s infinite;
+        "></span>
+      </a>
+      
     </nav>
   </div>
 </header>

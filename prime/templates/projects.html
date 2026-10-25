@@ -2,25 +2,140 @@
 {% block title %}Проекты — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<h1>Проекты</h1>
 
-<h2>Активные</h2>
-<ul class="project-list">
-  {% for p in active %}
-    <li>
-      <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
-      <span class="muted">({{ p.period }})</span> — {{ p.short }}
-    </li>
-  {% endfor %}
-</ul>
+<style>
+  .projects-page h1 { margin-bottom: 40px; font-size: 2.5rem; border-bottom: 2px solid #c9a227; padding-bottom: 15px; }
+  
+  .projects-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 50px;
+    align-items: start;
+  }
 
-<h2>Архивные</h2>
-<ul class="project-list project-list--archive">
-  {% for p in archived %}
-    <li>
-      <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
-      <span class="muted">({{ p.period }})</span> — {{ p.short }}
-    </li>
-  {% endfor %}
-</ul>
+  .column-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: #0d1b2a;
+    margin-top: 0;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+  }
+
+  .project-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .project-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .project-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+
+  /* Универсальная плашка */
+  .project-badge {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  .badge-blue { background: #3182ce; color: #fff; }
+  .badge-green { background: #38a169; color: #fff; }
+  .badge-orange { background: #dd6b20; color: #fff; }
+  .badge-purple { background: #805ad5; color: #fff; }
+  .badge-gray { background: #cbd5e0; color: #4a5568; }
+
+  .project-card__status {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  .status-active { color: #38a169; }
+  .status-archived { color: #718096; }
+
+  .project-card__title { font-size: 1.3rem; margin: 0 0 10px 0; }
+  .project-card__title a { color: #0d1b2a; text-decoration: none; transition: color 0.2s; }
+  .project-card__title a:hover { color: #c9a227; }
+
+  .project-card__period { font-family: monospace; color: #a0aec0; font-size: 0.85rem; margin-bottom: 15px; }
+  .project-card__desc { color: #4a5568; font-size: 0.95rem; line-height: 1.5; flex-grow: 1; margin-bottom: 20px; }
+
+  @media (max-width: 850px) {
+    .projects-split { grid-template-columns: 1fr; gap: 40px; }
+  }
+</style>
+
+<div class="projects-page">
+  <h1>Проекты компании</h1>
+
+  <div class="projects-split">
+    
+    <!-- ЛЕВАЯ КОЛОНКА: АКТИВНЫЕ -->
+    <div>
+      <h2 class="column-title">Активные</h2>
+      <div class="project-column">
+        {% for p in active %}
+          <div class="project-card">
+            {% if p.badge %}
+              <div class="project-badge badge-{{ p.badge_type }}">{{ p.badge }}</div>
+            {% endif %}
+            <div class="project-card__status status-active">В работе</div>
+            <h3 class="project-card__title">
+              <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
+            </h3>
+            <div class="project-card__period">{{ p.period }}</div>
+            <p class="project-card__desc">{{ p.short }}</p>
+            <a href="{{ url_for('project', slug=p.slug) }}" style="color: #c9a227; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Подробнее →</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА: АРХИВ -->
+    <div>
+      <h2 class="column-title">Архив</h2>
+      <div class="project-column">
+        {% for p in archived %}
+          <div class="project-card">
+            {% if p.badge %}
+              <div class="project-badge badge-{{ p.badge_type }}">{{ p.badge }}</div>
+            {% endif %}
+            <div class="project-card__status status-archived">
+              {% if p.status == 'suspended' %}Приостановлен{% else %}Архив{% endif %}
+            </div>
+            <h3 class="project-card__title">
+              <a href="{{ url_for('project', slug=p.slug) }}">{{ p.title }}</a>
+            </h3>
+            <div class="project-card__period">{{ p.period }}</div>
+            <p class="project-card__desc">{{ p.short }}</p>
+            <a href="{{ url_for('project', slug=p.slug) }}" style="color: #718096; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Подробнее →</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
 {% endblock %}
