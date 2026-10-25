@@ -1,16 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Команда — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Команда</h1>
-<div class="team-grid">
-  {% for m in team %}
-    <article class="person">
-      <img src="{{ url_for('static', filename=m.photo) }}" alt="" class="person__photo">
-      <div class="person__name">{{ m.name }}</div>
-      <div class="person__role">{{ m.role }}</div>
-      <a class="link-more" href="{{ url_for('team_member', slug=m.slug) }}">Профиль →</a>
-    </article>
-  {% endfor %}
-</div>
+    <h1>Команда</h1>
+    
+    <div class="wip-banner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        База данных сотрудников находится в разработке. Загружена только часть профилей.
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+        <!-- Реальные сотрудники -->
+        {% for member in team %}
+        <div class="card">
+            <div style="width: 64px; height: 64px; background: #e0e7ff; color: var(--accent); border-radius: 16px; margin-bottom: 24px; display: flex; justify-content: center; align-items: center; font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700;">
+                {{ member.name[0] }}
+            </div>
+            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; margin-bottom: 4px;">{{ member.name }}</h3>
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;">{{ member.role }}</div>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">{{ member.bio }}</p>
+        </div>
+        {% endfor %}
+
+        <!-- Фейковая "битая" карточка 1 -->
+        <div class="card" style="opacity: 0.6; border-style: dashed;">
+            <div class="skeleton" style="width: 64px; height: 64px; border-radius: 16px; margin-bottom: 24px;"></div>
+            <div class="skeleton" style="width: 60%; height: 24px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="width: 40%; height: 16px; margin-bottom: 20px;"></div>
+            <div class="skeleton" style="width: 100%; height: 12px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 80%; height: 12px;"></div>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #ef4444; font-weight: bold; font-family: 'Space Grotesk', sans-serif;">ОШИБКА ЗАГРУЗКИ ДАННЫХ</div>
+        </div>
+
+        <!-- Фейковая "битая" карточка 2 -->
+        <div class="card" style="opacity: 0.6; border-style: dashed;">
+            <div class="skeleton" style="width: 64px; height: 64px; border-radius: 16px; margin-bottom: 24px;"></div>
+            <div class="skeleton" style="width: 70%; height: 24px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="width: 50%; height: 16px; margin-bottom: 20px;"></div>
+            <div class="skeleton" style="width: 100%; height: 12px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 90%; height: 12px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 60%; height: 12px;"></div>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #ef4444; font-weight: bold; font-family: 'Space Grotesk', sans-serif;">ОШИБКА ЗАГРУЗКИ ДАННЫХ</div>
+        </div>
+    </div>
 {% endblock %}

@@ -1,30 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Проекты — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Проекты</h1>
+    <h1>Внутренние проекты</h1>
+    <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 50px;">Список текущих инициатив компании ORBIT DATA.</p>
 
-<h2 class="section-title">Активные</h2>
-<div class="cards">
-  {% for p in active %}
-    <a class="card" href="{{ url_for('project', slug=p.slug) }}">
-      <span class="chip chip--active">ACTIVE</span>
-      <h3 class="card__title">{{ p.title }}</h3>
-      <p class="card__desc">{{ p.summary }}</p>
-      <div class="card__meta">{{ p.period }}</div>
-    </a>
-  {% endfor %}
-</div>
-
-<h2 class="section-title">Архивные</h2>
-<div class="cards">
-  {% for p in archived %}
-    <a class="card card--archived" href="{{ url_for('project', slug=p.slug) }}">
-      <span class="chip chip--archived">ARCHIVED</span>
-      <h3 class="card__title">{{ p.title }}</h3>
-      <p class="card__desc">{{ p.summary }}</p>
-      <div class="card__meta">{{ p.period }}{% if p.lead %} · Lead: {{ p.lead }}{% endif %}</div>
-    </a>
-  {% endfor %}
-</div>
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        {% for project in projects %}
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 300px;">
+                <div style="font-family: 'Space Grotesk', monospace; color: var(--text-muted); margin-bottom: 8px; font-size: 0.85rem; font-weight: 700; letter-spacing: 1px;">ID: {{ project.id | upper }}</div>
+                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; margin-bottom: 8px;">{{ project.title }}</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 600px;">{{ project.desc }}</p>
+            </div>
+            <div style="text-align: right; min-width: 150px;">
+                <span class="badge {% if project.status == 'Активен' %}badge-active{% else %}badge-wip{% endif %}" style="margin-bottom: 16px; display: inline-block;">
+                    {{ project.status }}
+                </span>
+                <div>
+                {% if project.status == 'Активен' %}
+                    <a href="{{ project.link }}" style="background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; display: inline-block; transition: background 0.2s;">Ознакомиться</a>
+                {% else %}
+                    <span style="background: #f3f4f6; color: #9ca3af; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; display: inline-block; cursor: not-allowed;">В разработке</span>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 {% endblock %}

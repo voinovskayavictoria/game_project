@@ -1,15 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Новости — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Новости</h1>
-
-<ul class="news-list news-list--full">
-  {% for n in news %}
-    <li>
-      <span class="news-list__date">{{ n.date }}</span>
-      <a href="{{ url_for('news_item', slug=n.slug) }}">{{ n.title }}</a>
-    </li>
-  {% endfor %}
-</ul>
+    <h1>Новости</h1>
+    
+    <div class="card" style="text-align: center; padding: 80px 20px; border-style: dashed; background: #fafafa;">
+        <div style="width: 60px; height: 60px; background: #e5e7eb; border-radius: 50%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </div>
+        <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; margin-bottom: 10px; color: var(--text-main);">Модуль новостей не подключен</h2>
+        <p style="color: var(--text-muted); font-size: 1rem;">Раздел находится в разработке. База данных новостей пуста или недоступна.</p>
+    </div>
 {% endblock %}

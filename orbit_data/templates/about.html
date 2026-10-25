@@ -1,37 +1,27 @@
 {% extends "base.html" %}
-{% block title %}О компании — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<h1 class="page-title">О компании</h1>
-<p class="lead">{{ SITE.description }}</p>
-
-<section class="block">
-  <h2 class="section-title">История</h2>
-  <ul class="timeline">
-    {% for year, text in history %}
-      <li>
-        <span class="timeline__year">{{ year }}</span>
-        <span class="timeline__text">{{ text }}</span>
-      </li>
-    {% endfor %}
-  </ul>
-</section>
-
-<section class="block">
-  <h2 class="section-title">Направления</h2>
-  <div class="cards">
-    <div class="card card--static">
-      <h3 class="card__title">Аналитика данных</h3>
-      <p class="card__desc">Платформа для обработки и визуализации корпоративных данных.</p>
+    <h1>О компании</h1>
+    
+    <div class="wip-banner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        Внимание: текст раздела находится на модерации и будет добавлен в ближайшее время.
     </div>
-    <div class="card card--static">
-      <h3 class="card__title">Инфраструктура</h3>
-      <p class="card__desc">Распределённые хранилища и сервисы.</p>
+    
+    <div style="max-width: 700px;">
+        <p style="color: var(--text-main); font-size: 1.2rem; margin-bottom: 24px; font-weight: 500;">
+            ORBIT DATA — это команда профессионалов, специализирующихся на обработке больших данных и обеспечении кибербезопасности.
+        </p>
+        <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 20px;">
+            Компания была основана в 2019 году Алексеем Мельниковым после закрытия проекта Vector Labs. Мы переняли лучшие практики в области защиты информации и сфокусировались на разработке закрытых корпоративных контуров.
+        </p>
+        
+        <div style="margin-top: 30px;">
+            <div class="skeleton" style="width: 100%; height: 16px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="width: 95%; height: 16px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="width: 80%; height: 16px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="width: 100%; height: 16px; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="width: 40%; height: 16px;"></div>
+        </div>
     </div>
-    <div class="card card--static">
-      <h3 class="card__title">Защищённые сервисы</h3>
-      <p class="card__desc">Системы идентификации и защищённого обмена.</p>
-    </div>
-  </div>
-</section>
 {% endblock %}
