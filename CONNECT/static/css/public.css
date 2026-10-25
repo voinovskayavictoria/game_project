@@ -723,10 +723,14 @@ a:hover { text-decoration: underline; }
   border: 1px solid #2b6cb0;
   padding: 16px;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: transform .18s ease, border-color .2s, color .2s, background .2s;
   text-align: center;
   font-family: inherit;
   color: #d8dee7;
+  will-change: transform;
+}
+.quiz-fullscreen__card.is-shy{
+  cursor: not-allowed;
 }
 .quiz-fullscreen__card:hover {
   border-color: #ff2a3d;
@@ -880,4 +884,26 @@ html, body{
   line-height: 1.7;
   
   letter-spacing: 1px;
+}
+/* ---------- QUIZ: расползающиеся буквы ---------- */
+
+.quiz-question {
+  white-space: pre-line;
+  position: relative;
+}
+
+/* ---------- QUIZ: глитч-текст ---------- */
+.quiz-fullscreen__question{
+  white-space: pre-line;
+  transition: color .4s ease, text-shadow .4s ease;
+}
+
+/* на поздних вопросах — красный оттенок и лёгкое свечение */
+.quiz-fullscreen.lvl-4 .quiz-fullscreen__question{
+  color:#ff8a94;
+  text-shadow: 0 0 6px rgba(255,42,61,.25);
+}
+.quiz-fullscreen.lvl-5 .quiz-fullscreen__question{
+  color:#ff2a3d;
+  text-shadow: 0 0 10px rgba(255,42,61,.45);
 }

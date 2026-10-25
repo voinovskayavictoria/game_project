@@ -2,9 +2,149 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ЛАБИРИНТ — THE HUNT</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+  <style>
+    [hidden] { display:none !important; }
+
+    /* ---------- каркас: всё в один экран ---------- */
+    body.s-app { height:100vh; overflow:hidden; }
+    .hg {
+      --hg-red:#ff2a3d; --hg-green:#4ade80; --hg-amber:#ffcc33; --hg-cyan:#3fd7ff;
+      --hg-line:#1e2632; --hg-panel:#0a0d12; --hg-muted:#4a5364; --hg-ink:#d8dee7; --hg-ink2:#8b96a8;
+      --avail: calc(100vh - 150px);
+      flex:1; min-height:0; width:100%; max-width:1700px; margin:0 auto;
+      padding:14px 18px 10px; position:relative; z-index:1;
+      display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:16px;
+      font-family:"JetBrains Mono","Consolas",monospace;
+    }
+    .hg-stage { min-width:0; min-height:0; display:flex; flex-direction:column; align-items:center; }
+    @media (max-width:1000px){
+      body.s-app { height:auto; overflow:auto; }
+      .hg { display:block; --avail: 100vw; padding:12px; }
+      .hg-side { margin-top:14px; }
+    }
+
+    .hg-screen { position:relative; padding:10px; background:#040506; border:1px solid var(--hg-line); box-shadow:0 0 0 1px #000, 0 0 50px rgba(0,0,0,.8) inset; }
+    .hg-screen::before,.hg-screen::after { content:""; position:absolute; width:18px; height:18px; border:2px solid var(--hg-red); pointer-events:none; z-index:7; transition:border-color .2s; }
+    .hg-screen::before { top:-2px; left:-2px; border-right:0; border-bottom:0; }
+    .hg-screen::after  { bottom:-2px; right:-2px; border-left:0; border-top:0; }
+    .hg-screen__tag { position:absolute; top:-9px; left:26px; padding:0 8px; background:var(--bg,#030405); color:var(--hg-muted); font-size:10px; letter-spacing:2px; z-index:8; }
+    .hg-screen__tag--r { left:auto; right:26px; color:var(--hg-green); }
+
+    .hg-canvas-wrap { position:relative; line-height:0; overflow:hidden; }
+    #mazeSec .hg-canvas-wrap { width:min(100%, var(--avail)); aspect-ratio:1/1; }
+    #chaseSec .hg-canvas-wrap { width:min(100%, calc(var(--avail) * 2)); aspect-ratio:2/1; }
+    #game-canvas, #chase-canvas { display:block; width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; background:#000; }
+    .hg-canvas-wrap::after {
+      content:""; position:absolute; inset:0; pointer-events:none; mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.2) 2px, rgba(0,0,0,.2) 3px),
+        radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.6) 100%);
+    }
+    .hg-canvas-wrap::before { content:""; position:absolute; inset:0; pointer-events:none; z-index:2; }
+    .hg-screen.is-danger  .hg-canvas-wrap::before { animation:hgDanger 1.1s ease-in-out infinite; }
+    .hg-screen.is-critical .hg-canvas-wrap::before { animation:hgDanger .45s ease-in-out infinite; }
+    .hg-screen.is-danger::before,.hg-screen.is-danger::after,
+    .hg-screen.is-critical::before,.hg-screen.is-critical::after { border-color:#fff; }
+    @keyframes hgDanger { 0%,100%{box-shadow:inset 0 0 40px 2px rgba(255,42,61,0)} 50%{box-shadow:inset 0 0 70px 8px rgba(255,42,61,.55)} }
+    .hg-screen.is-shake { animation:hgShake .5s steps(8); }
+    @keyframes hgShake {
+      0%{transform:translate(0,0)} 12%{transform:translate(-6px,3px)} 25%{transform:translate(5px,-4px)} 37%{transform:translate(-4px,-2px)}
+      50%{transform:translate(6px,3px)} 62%{transform:translate(-3px,4px)} 75%{transform:translate(3px,-3px)} 100%{transform:translate(0,0)}
+    }
+    .hg-flash { position:absolute; inset:0; z-index:5; pointer-events:none; opacity:0; }
+    .hg-flash--red   { background:#ff2a3d; animation:hgFlash .9s ease-out 1; }
+    .hg-flash--green { background:#4ade80; animation:hgFlash .9s ease-out 1; }
+    @keyframes hgFlash { 0%{opacity:.55} 100%{opacity:0} }
+
+    .hg-hint { margin:10px 0 0; text-align:center; font-size:10px; letter-spacing:2px; color:var(--hg-muted); text-transform:uppercase; line-height:1.6; }
+
+    .hg-pad { display:none; margin:12px auto 0; grid-template-columns:repeat(3,58px); grid-template-rows:repeat(2,58px); gap:6px; justify-content:center; }
+    @media (max-width:1000px),(pointer:coarse){ .hg-pad{display:grid} }
+    .hg-pad__btn { font-family:inherit; font-size:20px; color:var(--hg-ink2); background:var(--hg-panel); border:1px solid var(--hg-line); cursor:pointer; padding:0; touch-action:manipulation; }
+    .hg-pad__btn:active { background:rgba(255,42,61,.18); border-color:var(--hg-red); color:#fff; }
+    .hg-pad__btn--up{grid-column:2;grid-row:1} .hg-pad__btn--left{grid-column:1;grid-row:2}
+    .hg-pad__btn--down{grid-column:2;grid-row:2} .hg-pad__btn--right{grid-column:3;grid-row:2}
+    .hg-pad__btn--wait{grid-column:3;grid-row:1;font-size:10px;letter-spacing:1px}
+
+    /* ---------- боковая панель ---------- */
+    .hg-side { min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-right:4px; scrollbar-width:thin; scrollbar-color:#1e2632 transparent; }
+    .hg-box { background:var(--hg-panel); border:1px solid var(--hg-line); border-left:2px solid var(--hg-red); padding:10px 14px 12px; flex-shrink:0; }
+    .hg-box--green{border-left-color:var(--hg-green)} .hg-box--amber{border-left-color:var(--hg-amber)} .hg-box--cyan{border-left-color:var(--hg-cyan)}
+    .hg-box__label { font-size:10px; letter-spacing:3px; color:var(--hg-red); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+    .hg-box--green .hg-box__label{color:var(--hg-green)} .hg-box--amber .hg-box__label{color:var(--hg-amber)} .hg-box--cyan .hg-box__label{color:var(--hg-cyan)}
+    .hg-box__label::before { content:"> "; }
+
+    .hg-row { display:flex; justify-content:space-between; align-items:baseline; padding:3px 0; border-bottom:1px dashed #141a23; font-size:11.5px; }
+    .hg-row:last-of-type { border-bottom:0; }
+    .hg-row span { color:var(--hg-muted); letter-spacing:2px; text-transform:uppercase; font-size:10px; }
+    .hg-row b { color:var(--hg-ink); font-weight:700; letter-spacing:1px; }
+    .is-red{color:var(--hg-red)!important} .is-green{color:var(--hg-green)!important} .is-amber{color:var(--hg-amber)!important} .is-cyan{color:var(--hg-cyan)!important}
+
+    .hg-meter { margin:8px 0 2px; }
+    .hg-meter__top { display:flex; justify-content:space-between; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--hg-muted); margin-bottom:4px; }
+    .hg-meter__top b { color:var(--hg-ink); letter-spacing:1px; }
+    .hg-meter__bar { height:8px; background:#05070a; border:1px solid var(--hg-line); position:relative; overflow:hidden; }
+    .hg-meter__fill {
+      position:absolute; inset:0 auto 0 0; width:0%; background:var(--hg-green); color:var(--hg-green);
+      box-shadow:0 0 10px currentColor; transition:width .35s ease, background .3s;
+      -webkit-mask-image:repeating-linear-gradient(90deg,#000 0 7px,transparent 7px 9px);
+              mask-image:repeating-linear-gradient(90deg,#000 0 7px,transparent 7px 9px);
+    }
+    .hg-meter--threat .hg-meter__fill { background:var(--hg-amber); color:var(--hg-amber); }
+    .hg-meter__fill.is-hot { background:var(--hg-red); color:var(--hg-red); }
+
+    #mini { display:block; width:100%; max-width:170px; margin:0 auto; image-rendering:pixelated; border:1px solid var(--hg-line); background:#020305; }
+
+    .hg-inv { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+    .hg-inv__btn {
+      font-family:inherit; text-align:center; cursor:pointer; padding:7px 4px;
+      background:#06080b; border:1px solid var(--hg-line); color:var(--hg-ink);
+      font-size:11px; letter-spacing:.3px; transition:all .12s; touch-action:manipulation; line-height:1.35;
+    }
+    .hg-inv__btn b { display:block; color:var(--hg-green); font-size:10px; }
+    .hg-inv__btn em { display:block; font-style:normal; color:var(--hg-amber); font-weight:700; }
+    .hg-inv__btn:hover:not([disabled]) { border-color:var(--hg-green); background:rgba(74,222,128,.06); }
+    .hg-inv__btn[disabled] { opacity:.35; cursor:not-allowed; }
+
+    .hg-log { font-size:11px; line-height:1.6; color:var(--hg-ink2); height:132px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
+    .hg-log div { animation:hgLogIn .25s ease; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hg-log .w{color:var(--hg-amber)} .hg-log .c{color:var(--hg-red);font-weight:700} .hg-log .g{color:var(--hg-green)} .hg-log .d{color:var(--hg-muted)}
+    @keyframes hgLogIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
+
+    .hg-legend { display:grid; gap:6px; font-size:11px; color:var(--hg-ink2); margin-top:8px; }
+    .hg-legend div { display:flex; align-items:center; gap:10px; }
+    .hg-legend i { width:11px; height:11px; display:inline-block; flex-shrink:0; }
+    .l-p{background:#4ade80;box-shadow:0 0 8px #4ade80} .l-g{background:#ffcc33;box-shadow:0 0 8px #ffcc33}
+    .l-k{background:#3fd7ff;box-shadow:0 0 8px #3fd7ff} .l-t{background:#ff2a3d;box-shadow:0 0 8px #ff2a3d}
+    .l-i{background:#b8c4d8;box-shadow:0 0 8px #b8c4d8}
+    details.hg-box > summary { cursor:pointer; list-style:none; margin:0; }
+    details.hg-box > summary::-webkit-details-marker { display:none; }
+    .hg-legend small { color:var(--hg-muted); display:block; margin-top:4px; line-height:1.55; }
+
+    /* ---------- оверлеи (концовки / забег) ---------- */
+    .hg-ov {
+      position:absolute; inset:0; z-index:6; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; text-align:center; line-height:1.6;
+      background:rgba(2,3,5,.86); padding:20px; font-family:inherit;
+    }
+    .hg-ov h2 { margin:0 0 12px; font-size:22px; letter-spacing:6px; color:var(--hg-red); text-transform:uppercase; }
+    .hg-ov--win h2 { color:var(--hg-green); }
+    .hg-ov p { margin:0 0 8px; font-size:13px; color:var(--hg-ink2); max-width:480px; }
+    .hg-ov .dress-btn { margin-top:14px; }
+    .hg-ov__btns { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+    .hg-ov__btns form { margin:0; }
+    .hg-ov.late { opacity:0; animation:hgLine .6s ease 1.1s forwards; }
+    @keyframes hgLine { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+    .hg-chase-say { min-height:60px; font-size:12px; line-height:1.6; margin-top:6px; }
+    .hg-chase-say .me   { color:var(--hg-green); }
+    .hg-chase-say .him  { color:var(--hg-amber); }
+    .hg-chase-say .bad  { color:var(--hg-red); }
+    .hg-trust { font-size:16px; letter-spacing:6px; color:var(--hg-green); }
+  </style>
 </head>
 <body class="s-app s-app--hijack">
 
@@ -14,232 +154,1174 @@
     <span class="s-name">CONNECT<span class="s-name--thin">//1704</span></span>
   </div>
   <div class="s-user">
+    <span class="s-session">// ЛАБИРИНТ · найди цель, не попадись егерям</span>
     <a href="{{ url_for('hunt') }}" class="s-nav-link">← hunt</a>
   </div>
 </header>
 
-<main class="hunt-game">
-  <h1 class="pan__title">ЛАБИРИНТ</h1>
-  <p class="pan__sub">найди цель. не попадись егерям.</p>
+<main class="hg">
 
-  <div class="hunt-game__info">
-    <span>ХОДОВ: <b id="turns">{{ game.turns }}</b></span>
-    <span>СТАТУС: <b id="status">{{ game.status }}</b></span>
+  <div class="hg-stage">
+
+    <!-- ================= ЛАБИРИНТ ================= -->
+    <section id="mazeSec" hidden>
+      <div class="hg-screen" id="screen">
+        <span class="hg-screen__tag">CAM // MAZE-17</span>
+        <span class="hg-screen__tag hg-screen__tag--r">● REC</span>
+        <div class="hg-canvas-wrap">
+          <canvas id="game-canvas" width="960" height="960"></canvas>
+          <div class="hg-flash" id="flash"></div>
+          <div class="hg-ov late" id="endOv" hidden></div>
+        </div>
+      </div>
+
+      <p class="hg-hint">↑↓←→ / WASD — ход · ПРОБЕЛ — замереть · 1 · 2 · 3 — предметы</p>
+
+      <div class="hg-pad" id="pad">
+        <button type="button" class="hg-pad__btn hg-pad__btn--up"    data-dx="0"  data-dy="-1">▲</button>
+        <button type="button" class="hg-pad__btn hg-pad__btn--left"  data-dx="-1" data-dy="0">◀</button>
+        <button type="button" class="hg-pad__btn hg-pad__btn--down"  data-dx="0"  data-dy="1">▼</button>
+        <button type="button" class="hg-pad__btn hg-pad__btn--right" data-dx="1"  data-dy="0">▶</button>
+        <button type="button" class="hg-pad__btn hg-pad__btn--wait"  data-dx="0"  data-dy="0">ЖДАТЬ</button>
+      </div>
+    </section>
+
+    <!-- ================= ЗАБЕГ ================= -->
+    <section id="chaseSec" hidden>
+      <div class="hg-screen" id="chaseScreen">
+        <span class="hg-screen__tag">CAM // RUN-17</span>
+        <span class="hg-screen__tag hg-screen__tag--r">● PURSUIT</span>
+        <div class="hg-canvas-wrap">
+          <canvas id="chase-canvas" width="720" height="360"></canvas>
+          <div class="hg-ov" id="chaseOv"></div>
+        </div>
+      </div>
+
+      <p class="hg-hint">ПРОБЕЛ / ↑ — прыжок · ↓ — пригнуться · фраза сверху — в прыжке, снизу — на земле</p>
+
+      <div class="hg-pad" id="chasePad">
+        <button type="button" class="hg-pad__btn hg-pad__btn--up"   id="cJump">▲</button>
+        <button type="button" class="hg-pad__btn hg-pad__btn--down" id="cDuck">▼</button>
+      </div>
+    </section>
+
   </div>
 
-  <p class="hunt-game__hint">
-    УПРАВЛЕНИЕ: ↑ ↓ ← → (или W A S D)
-  </p>
+  <aside class="hg-side">
 
-  <div class="hunt-game__canvas-wrap">
-    <canvas id="game-canvas" width="720" height="720"></canvas>
-  </div>
+    <div class="hg-box hg-box--green" id="pursuitBox" hidden>
+      <div class="hg-box__label">PURSUIT</div>
+      <div class="hg-meter">
+        <div class="hg-meter__top"><span>близость</span><b id="cGapVal">0%</b></div>
+        <div class="hg-meter__bar"><div class="hg-meter__fill" id="cGapBar"></div></div>
+      </div>
+      <div class="hg-row"><span>доверие</span><b class="hg-trust" id="cTrust">○○○○○</b></div>
+      <div class="hg-row"><span>время</span><b id="cTime">75</b></div>
+      <div class="hg-chase-say" id="cSay"></div>
+    </div>
 
-  {% if game.status == "found" %}
-    <div class="hunt-game__choice">
-      <h2>ТЫ НАШЁЛ ЦЕЛЬ</h2>
-      <p>Это он. Инженер. Разработчик. Он смотрит на тебя.</p>
-      <p>Что делать?</p>
-      <form method="post" style="display:inline;">
-        <input type="hidden" name="action" value="choice">
-        <input type="hidden" name="choice" value="reveal">
-        <button type="submit" class="dress-btn">// РАСКРЫТЬ ЕГО</button>
-      </form>
-      <form method="post" style="display:inline;">
-        <input type="hidden" name="action" value="choice">
-        <input type="hidden" name="choice" value="hide">
-        <button type="submit" class="dress-btn dress-btn--ghost">// СКРЫТЬ</button>
-      </form>
+    <div class="hg-box">
+      <div class="hg-box__label">TELEMETRY</div>
+      <div class="hg-row"><span>ходов</span><b id="turns">0</b></div>
+      <div class="hg-row"><span>статус</span><b id="status">—</b></div>
+      <div class="hg-row"><span>режим</span><b id="hudMode">—</b></div>
+      <div class="hg-row"><span>исследовано</span><b id="hudExplored">0%</b></div>
+      <div class="hg-row"><span>егерей</span><b id="hudGuards">—</b></div>
+      <div class="hg-row"><span>подкрепление</span><b id="hudAlarm">—</b></div>
+      <div class="hg-meter">
+        <div class="hg-meter__top"><span>сигнал цели</span><b id="sigVal">0%</b></div>
+        <div class="hg-meter__bar"><div class="hg-meter__fill" id="sigBar"></div></div>
+      </div>
+      <div class="hg-meter hg-meter--threat">
+        <div class="hg-meter__top"><span>угроза</span><b id="thrVal">—</b></div>
+        <div class="hg-meter__bar"><div class="hg-meter__fill" id="thrBar"></div></div>
+      </div>
     </div>
-  {% elif game.status == "caught" %}
-    <div class="hunt-game__caught">
-      <h2>ТЕБЯ НАШЛИ</h2>
-      <p>Егерь наступил на тебя. Выезд провален.</p>
-      <a href="{{ url_for('hunt') }}" class="dress-btn dress-btn--ghost">// выйти</a>
+
+    <div class="hg-box hg-box--green">
+      <div class="hg-box__label">INVENTORY</div>
+      <div class="hg-inv" id="inv"></div>
     </div>
-  {% endif %}
+
+    <div class="hg-box hg-box--cyan">
+      <div class="hg-box__label">MAP</div>
+      <canvas id="mini"></canvas>
+    </div>
+
+    <div class="hg-box hg-box--amber">
+      <div class="hg-box__label">EVENT LOG</div>
+      <div class="hg-log" id="log"></div>
+    </div>
+
+    <details class="hg-box hg-box--green">
+      <summary class="hg-box__label" style="margin:0">LEGEND</summary>
+      <div class="hg-legend">
+        <div><i class="l-p"></i> ты</div>
+        <div><i class="l-g"></i> егерь-патрульный (виден только рядом)</div>
+        <div><i class="l-k"></i> егерь-следопыт — идёт по твоим следам</div>
+        <div><i class="l-t"></i> цель — прячется, а заметив тебя, бежит</div>
+        <div><i class="l-i"></i> светящийся ящик — предмет, наступи на него</div>
+        <small>[1] Бутылка — летит на 6 клеток вперёд, егеря идут на шум.<br>
+               [2] Дымовая — дым на 8 ходов, в нём тебя не видно.<br>
+               [3] ЭМИ — оглушает егерей в радиусе 6 на 4 хода.</small>
+      </div>
+    </details>
+
+  </aside>
 </main>
 
+<!-- ============ ОБЩЕЕ: утилиты и спрайты ============ -->
 <script>
-(function() {
-  const canvas = document.getElementById("game-canvas");
-  const ctx = canvas.getContext("2d");
-  
-  const size = {{ labyrinth.size }};
-  const cellSize = canvas.width / size;
-  
-  const walls = {{ labyrinth.walls|tojson }};
-  const target = {{ labyrinth.target|tojson }};
-  const player = {{ game.player|tojson }};
-  const guards = {{ game.guards|tojson }};
-  
-  // ========== ФУНКЦИИ РИСОВАНИЯ ==========
-  
-  function drawFloor() {
-    // Пол — тёмный с еле заметной сеткой
-    ctx.fillStyle = "#08090b";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.strokeStyle = "#0e1014";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= size; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * cellSize, 0);
-      ctx.lineTo(i * cellSize, canvas.height);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(0, i * cellSize);
-      ctx.lineTo(canvas.width, i * cellSize);
-      ctx.stroke();
+window.HG = (function () {
+  function makeSprite(rows, pal) {
+    const c = document.createElement("canvas"); c.width = c.height = 16;
+    const g = c.getContext("2d");
+    rows.forEach((row, y) => {
+      for (let x = 0; x < 16; x++) {
+        const ch = row[x];
+        if (ch !== "." && pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); }
+      }
+    });
+    return c;
+  }
+  const SPR_PLAYER = makeSprite([
+    "................",".....hhhhhh.....","....hhhhhhhh....","....hvvvvvvh....","....hvvggvvh....","....hhhhhhhh....",
+    ".....bbbbbb.....","...bbbbbbbbbb...","..bbbbbbbbbbbb..","..bb.bbbbbb.bb..","..bb.bbbbbb.bb..",".....bbbbbb.....",
+    ".....bb..bb.....",".....bb..bb.....","....kkk..kkk....","................"
+  ], { h:"#1f6f45", v:"#0b1a12", g:"#7dffb0", b:"#2e8b57", k:"#10321f" });
+  const SPR_GUARD = makeSprite([
+    "................",".....dddddd.....","....dddddddd....","....dddddddd....","....dyyddyyd....","....dddddddd....",
+    ".....cccccc.....","..cccccccccccc..","..cc.cccccc.cc..","..cc.cccccc.cc.r","..cc.cccccc.cc.r",".....cccccc....r",
+    ".....cc..cc....r",".....cc..cc.....","....kkk..kkk....","................"
+  ], { d:"#2c2c32", y:"#ffcc33", c:"#4d4120", r:"#8a8f99", k:"#111114" });
+  const SPR_TARGET = makeSprite([
+    "................",".....hhhhhh.....","....hhhhhhhh....","....ssssssss....","....swwsswws....","....ssssssss....",
+    ".....ssmmss.....","...rrrrrrrrrr...","..rrrrrrrrrrrr..","..rr.rrrrrr.rr..","..ss.rrrrrr.ss..",".....rrrrrr.....",
+    ".....gg..gg.....",".....gg..gg.....","....kkk..kkk....","................"
+  ], { h:"#3a2a1a", s:"#d9a37a", w:"#e8f0ff", m:"#8a4a3a", r:"#d62339", g:"#4b5563", k:"#15171c" });
+
+  function hash(x, y, s) {
+    let n = Math.imul(x + 1013, 374761393) ^ Math.imul(y + 7919, 668265263) ^ Math.imul(s + 17, 1274126177);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  return {
+    makeSprite, SPR_PLAYER, SPR_GUARD, SPR_TARGET, hash,
+    clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+    lerp: (a, b, t) => a + (b - a) * t,
+    ease: t => 1 - Math.pow(1 - t, 3),
+    store: (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    load: (k, d) => { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    chase: null,
+    onChaseWin: null
+  };
+})();
+</script>
+
+<!-- ============ ЗАБЕГ (догонялки) ============ -->
+<script>
+(function () {
+  "use strict";
+  const { SPR_PLAYER, SPR_TARGET, hash, clamp } = window.HG;
+  const cv = document.getElementById("chase-canvas");
+  const c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+
+  const CW = cv.width, CH = cv.height, GROUND = 292, SC = 3;
+  const TIME_LIMIT = 75;
+
+  const GOOD = [
+    "Я не егерь!", "Я пришёл тебя вытащить!", "Я из независимого агентства!",
+    "Я знаю про C-17!", "Я не от Климова!", "Тебя ищут не только они!",
+    "Остановись, я на твоей стороне!", "Мне нужны твои показания!",
+    "Милана Макарова пропала!", "Ты не один, я помогу!"
+  ];
+  const BAD = [
+    "Стой, егерь!", "Сдавайся!", "Ты никуда не денешься!", "Охота окончена!",
+    "Мы тебя нашли!", "Я от Климова!", "Живым не уйдёшь!", "Работаем по протоколу!"
+  ];
+  const REPLY_GOOD = ["Что?..", "Кто ты такой?", "Ты... не егерь?", "Если ты врёшь...", "...ладно. Я слушаю."];
+  const REPLY_BAD  = ["Не подходи!", "Я так и знал!", "Отстань!", "Ты один из них!"];
+
+  const $ = id => document.getElementById(id);
+  const ov = $("chaseOv"), sayBox = $("cSay");
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  let st, last = 0, keyDuck = false, padDuck = false, lastWasPair = false;
+  let active = false, bagGood = [], winSent = false;
+  function nextGood() {
+    if (!bagGood.length) bagGood = GOOD.slice().sort(() => Math.random() - .5);
+    return bagGood.pop();
+  }
+
+  function reset() {
+    st = {
+      mode: "ready", t: 0, G: 45, e: 1.0, trust: 0, speed: 380, dist: 0, nextGap: 520,
+      objs: [], py: 0, vy: 0, duck: false, stumble: 0, inv: 0,
+      say: null, reply: null, shake: 0, flash: 0, bg: 0, pairId: 0, runT: 0
+    };
+    lastWasPair = false; winSent = false;
+    sayBox.innerHTML = "";
+    hud();
+  }
+
+  function showOv(cls, html) { ov.className = "hg-ov " + cls; ov.innerHTML = html; ov.hidden = false; }
+  function hideOv() { ov.hidden = true; }
+
+  function showReady() {
+    showOv("", "<h2>ДОГОНИ ЕГО!</h2>" +
+      "<p>Он думает, что ты ещё один егерь. Убеди его, что нет.</p>" +
+      "<p>Лови <b style='color:#4ade80'>правильные фразы</b>: верхнюю берёшь в прыжке, нижнюю на земле. " +
+      "Неправильные (угрозы!) пугают его ещё сильнее.</p>" +
+      "<p>Ящики перепрыгивай, балки пригибайся.</p>" +
+      "<button class='dress-btn' id='cStart'>// БЕЖАТЬ</button>");
+    $("cStart").addEventListener("click", start);
+  }
+  function showLose(why) {
+    showOv("", "<h2>ОН УШЁЛ</h2><p>" + why + "</p>" +
+      "<button class='dress-btn' id='cRetry'>// ЕЩЁ РАЗ</button>");
+    $("cRetry").addEventListener("click", () => { reset(); start(); });
+  }
+  function showWin() {
+    showOv("hg-ov--win", "<h2>ТЫ ДОГНАЛ ЕГО</h2><p>Он остановился. Дышит тяжело.</p><p>«...ладно. Я слушаю.»</p>" +
+      "<button class='dress-btn' id='cNext'>// ПРОДОЛЖИТЬ</button>");
+    const go = () => { if (winSent) return; winSent = true; if (window.HG.onChaseWin) window.HG.onChaseWin(); };
+    $("cNext").addEventListener("click", go);
+    setTimeout(go, 2400);
+  }
+
+  function start() {
+    if (st.mode !== "ready") return;
+    st.mode = "run";
+    hideOv();
+  }
+
+  function jump() {
+    if (!active) return;
+    if (st.mode === "ready") { start(); return; }
+    if (st.mode !== "run") return;
+    if (st.py <= 0 && st.vy <= 0 && !st.duck) st.vy = 760;
+  }
+  document.addEventListener("keydown", e => {
+    if (!active) return;
+    const k = e.key;
+    if (k === " " || k === "Spacebar" || k === "ArrowUp" || k === "w" || k === "W" || k === "ц" || k === "Ц") {
+      e.preventDefault(); jump();
+    } else if (k === "ArrowDown" || k === "s" || k === "S" || k === "ы" || k === "Ы") {
+      e.preventDefault(); keyDuck = true;
     }
-  }
-  
-  function drawWall(x, y) {
-    const px = x * cellSize;
-    const py = y * cellSize;
-    const p = cellSize / 16;  // размер "пикселя" для текстуры
-    
-    // База
-    ctx.fillStyle = "#1a2332";
-    ctx.fillRect(px, py, cellSize, cellSize);
-    
-    // Верхняя грань (светлее)
-    ctx.fillStyle = "#2b3a52";
-    ctx.fillRect(px, py, cellSize, p * 2);
-    
-    // Левая грань
-    ctx.fillStyle = "#232d40";
-    ctx.fillRect(px, py, p * 2, cellSize);
-    
-    // Кирпичики
-    ctx.fillStyle = "#16202e";
-    for (let i = 1; i < 4; i++) {
-      ctx.fillRect(px, py + i * (cellSize / 4), cellSize, 1);
-    }
-    ctx.fillRect(px + cellSize / 2, py, 1, cellSize / 4);
-    ctx.fillRect(px + cellSize / 4, py + cellSize / 2, 1, cellSize / 4);
-    ctx.fillRect(px + cellSize * 3/4, py + cellSize / 2, 1, cellSize / 4);
-  }
-  
-  function drawHuman(px, py, color, isEnemy) {
-    // Пиксельный человечек: голова, тело, руки, ноги
-    const p = cellSize / 8;  // 1 пиксель = 1/8 клетки
-    
-    // Голова
-    ctx.fillStyle = color;
-    ctx.fillRect(px + p * 2, py + p, p * 4, p * 3);
-    
-    // Волосы / шлем
-    ctx.fillStyle = isEnemy ? "#1a1a1a" : color;
-    ctx.fillRect(px + p * 2, py + p, p * 4, p);
-    
-    // Тело
-    ctx.fillRect(px + p * 2, py + p * 4, p * 4, p * 3);
-    
-    // Руки
-    ctx.fillRect(px + p, py + p * 4, p, p * 3);
-    ctx.fillRect(px + p * 6, py + p * 4, p, p * 3);
-    
-    // Ноги
-    ctx.fillRect(px + p * 2, py + p * 7, p * 1.5, p);
-    ctx.fillRect(px + p * 4.5, py + p * 7, p * 1.5, p);
-    
-    // Глаза (для игрока — яркие)
-    if (!isEnemy) {
-      ctx.fillStyle = "#000";
-      ctx.fillRect(px + p * 2.5, py + p * 2, p * 0.8, p * 0.8);
-      ctx.fillRect(px + p * 4.7, py + p * 2, p * 0.8, p * 0.8);
-    }
-  }
-  
-  function drawPlayer(px, py) {
-    drawHuman(px, py, "#4ade80", false);
-    
-    // Свечение
-    ctx.shadowColor = "#4ade80";
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = "rgba(74, 222, 128, 0.15)";
-    ctx.fillRect(px + cellSize * 0.15, py + cellSize * 0.15, cellSize * 0.7, cellSize * 0.7);
-    ctx.shadowBlur = 0;
-  }
-  
-  function drawTarget(px, py) {
-    drawHuman(px, py, "#ff2a3d", false);
-    
-    // Пульсирующее свечение (красное)
-    ctx.shadowColor = "#ff2a3d";
-    ctx.shadowBlur = 20;
-    ctx.fillStyle = "rgba(255, 42, 61, 0.2)";
-    ctx.fillRect(px + cellSize * 0.1, py + cellSize * 0.1, cellSize * 0.8, cellSize * 0.8);
-    ctx.shadowBlur = 0;
-  }
-  
-  function drawGuard(px, py) {
-    drawHuman(px, py, "#ffcc33", true);
-    
-    // Тёмный плащ поверх
-    const p = cellSize / 8;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-    ctx.fillRect(px + p * 1.5, py + p * 4, p * 5, p * 4);
-    
-    // Свечение (жёлтое, тусклое)
-    ctx.shadowColor = "#ffcc33";
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = "rgba(255, 204, 51, 0.1)";
-    ctx.fillRect(px + cellSize * 0.15, py + cellSize * 0.15, cellSize * 0.7, cellSize * 0.7);
-    ctx.shadowBlur = 0;
-  }
-  
-  // ========== РИСУЕМ СЦЕНУ ==========
-  
-  drawFloor();
-  
-  // Стены
-  walls.forEach(([x, y]) => drawWall(x, y));
-  
-  // Цель (инженер)
-  drawTarget(target[0] * cellSize, target[1] * cellSize);
-  
-  // Егеря
-  guards.forEach(g => {
-    drawGuard(g.pos[0] * cellSize, g.pos[1] * cellSize);
   });
-  
-  // Игрок
-  drawPlayer(player[0] * cellSize, player[1] * cellSize);
-  
-  // ========== УПРАВЛЕНИЕ С КЛАВИАТУРЫ ==========
-  
-  const isPlaying = {{ 'true' if game.status == 'playing' else 'false' }};
-  
-  if (isPlaying) {
-    let isMoving = false;
-    
-    document.addEventListener("keydown", (e) => {
-      if (isMoving) return;
-      
-      let dx = 0, dy = 0;
-      if (e.key === "ArrowUp" || e.key === "w" || e.key === "ц" || e.key === "W" || e.key === "Ц")    { dy = -1; }
-      if (e.key === "ArrowDown" || e.key === "s" || e.key === "ы" || e.key === "S" || e.key === "Ы")  { dy = 1; }
-      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "ф" || e.key === "A" || e.key === "Ф")  { dx = -1; }
-      if (e.key === "ArrowRight" || e.key === "d" || e.key === "в" || e.key === "D" || e.key === "В") { dx = 1; }
-      
-      if (dx === 0 && dy === 0) return;
-      
-      e.preventDefault();
-      isMoving = true;
-      
-      const form = document.createElement("form");
-      form.method = "post";
-      form.innerHTML = `
-        <input type="hidden" name="action" value="move">
-        <input type="hidden" name="dx" value="${dx}">
-        <input type="hidden" name="dy" value="${dy}">
-      `;
-      document.body.appendChild(form);
-      form.submit();
+  document.addEventListener("keyup", e => {
+    const k = e.key;
+    if (k === "ArrowDown" || k === "s" || k === "S" || k === "ы" || k === "Ы") keyDuck = false;
+  });
+  const bJ = $("cJump"), bD = $("cDuck");
+  bJ.addEventListener("touchstart", e => { e.preventDefault(); jump(); }, { passive: false });
+  bJ.addEventListener("mousedown", jump);
+  ["touchstart", "mousedown"].forEach(ev => bD.addEventListener(ev, e => { e.preventDefault(); padDuck = true; }, { passive: false }));
+  ["touchend", "touchcancel", "mouseup", "mouseleave"].forEach(ev => bD.addEventListener(ev, () => { padDuck = false; }));
+
+  function bubW(text) { c.font = "bold 14px 'JetBrains Mono', monospace"; return Math.ceil(c.measureText(text).width) + 26; }
+
+  function spawn() {
+    const x = CW + 40;
+    if (lastWasPair || Math.random() < .5) {
+      if (Math.random() < .5) st.objs.push({ t: "crate", x, w: 38, h: 38 });
+      else st.objs.push({ t: "beam", x, w: 84 });
+      st.nextGap = rnd(400, 540);
+      lastWasPair = false;
+    } else {
+      const good = nextGood(), bad = pick(BAD);
+      const goodHi = Math.random() < .5;
+      const wg = bubW(good), wb = bubW(bad);
+      st.pairId++;
+      st.objs.push({ t: "bub", x, w: wg, text: good, good: true,  hi: goodHi,  pid: st.pairId, used: false });
+      st.objs.push({ t: "bub", x, w: wb, text: bad,  good: false, hi: !goodHi, pid: st.pairId, used: false });
+      st.nextGap = Math.max(wg, wb) + rnd(360, 460);
+      lastWasPair = true;
+    }
+  }
+
+  const PX = 110, PW = 26;
+  function pRect() {
+    const h = st.duck ? 24 : 44, bottom = GROUND - st.py;
+    return { x: PX, y: bottom - h, w: PW, h };
+  }
+  function oRect(o) {
+    if (o.t === "crate") return { x: o.x, y: GROUND - o.h, w: o.w, h: o.h };
+    if (o.t === "beam")  return { x: o.x, y: GROUND - 58, w: o.w, h: 26 };
+    return o.hi ? { x: o.x, y: GROUND - 113, w: o.w, h: 30 }
+                : { x: o.x, y: GROUND - 34,  w: o.w, h: 30 };
+  }
+  const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+  function addSay(cls, txt) {
+    const d = document.createElement("div");
+    d.className = cls; d.textContent = txt;
+    sayBox.appendChild(d);
+    while (sayBox.children.length > 4) sayBox.removeChild(sayBox.firstChild);
+  }
+
+  function takeBubble(o) {
+    st.objs.forEach(q => { if (q.t === "bub" && q.pid === o.pid) q.used = true; });
+    st.say = { text: o.text, t: 1.5, good: o.good };
+    addSay("me", "Ты: «" + o.text + "»");
+    if (o.good) {
+      st.trust++;
+      st.e = Math.max(.2, st.e - .16);
+      st.G = Math.max(0, st.G - 4);
+      const r = REPLY_GOOD[Math.min(st.trust - 1, REPLY_GOOD.length - 1)];
+      st.reply = { text: r, t: 1.9 };
+      addSay("him", "Он: «" + r + "»");
+      if (st.trust >= 5) st.e = 0;
+    } else {
+      st.e = Math.min(1.25, st.e + .12);
+      st.G = Math.min(100, st.G + 8);
+      const r = pick(REPLY_BAD);
+      st.reply = { text: r, t: 1.5 };
+      addSay("bad", "Он: «" + r + "»");
+    }
+  }
+
+  function update(dt) {
+    st.runT += dt;
+    if (st.mode !== "run") { st.bg += 60 * dt; return; }
+
+    st.t += dt;
+    st.duck = (keyDuck || padDuck) && st.py <= 0;
+    st.speed = Math.min(500, 380 + st.t * 3);
+    const v = st.stumble > 0 ? st.speed * .55 : st.speed;
+    if (st.stumble > 0) st.stumble -= dt;
+    if (st.inv > 0) st.inv -= dt;
+    if (st.shake > 0) st.shake -= dt;
+    if (st.flash > 0) st.flash -= dt;
+    if (st.say) { st.say.t -= dt; if (st.say.t <= 0) st.say = null; }
+    if (st.reply) { st.reply.t -= dt; if (st.reply.t <= 0) st.reply = null; }
+    st.bg += v * dt;
+
+    if (st.py > 0 || st.vy > 0) {
+      const g = (keyDuck || padDuck) ? 5200 : 2100;
+      st.vy -= g * dt;
+      st.py += st.vy * dt;
+      if (st.py <= 0) { st.py = 0; st.vy = 0; }
+    }
+
+    st.dist += v * dt;
+    if (st.dist >= st.nextGap) { spawn(); st.dist = 0; }
+    st.objs.forEach(o => { o.x -= v * dt; });
+    st.objs = st.objs.filter(o => o.x + o.w > -30);
+
+    const pr = pRect();
+    for (const o of st.objs) {
+      if (o.t === "bub") {
+        if (!o.used && hit(pr, oRect(o))) takeBubble(o);
+      } else if (st.inv <= 0 && hit(pr, oRect(o))) {
+        st.stumble = .7; st.inv = 1.1; st.shake = .3; st.flash = .25;
+        st.G = Math.min(100, st.G + 9);
+        st.say = { text: "ох!", t: .7, good: false };
+      }
+    }
+
+    if (st.e < 1 && st.trust < 5) st.e = Math.min(1, st.e + .02 * dt);
+    st.G = clamp(st.G + (st.e - .85) * 14 * dt, 0, 100);
+
+    if (st.G <= 2) { st.mode = "win"; showWin(); }
+    else if (st.G >= 100) { st.mode = "lose"; showLose("Он скрылся за поворотом. Слишком далеко."); }
+    else if (TIME_LIMIT - st.t <= 0) { st.mode = "lose"; showLose("Время вышло. Егеря уже близко."); }
+  }
+
+  function hud() {
+    const near = Math.round(100 - st.G);
+    $("cGapVal").textContent = near + "%";
+    $("cGapBar").style.width = near + "%";
+    let pips = "";
+    for (let i = 0; i < 5; i++) pips += i < st.trust ? "●" : "○";
+    $("cTrust").textContent = pips;
+    $("cTime").textContent = Math.max(0, Math.ceil(TIME_LIMIT - st.t));
+  }
+
+  function drawBG() {
+    c.fillStyle = "#05070a"; c.fillRect(0, 0, CW, CH);
+    const g = c.createLinearGradient(0, 0, 0, GROUND);
+    g.addColorStop(0, "#080b11"); g.addColorStop(1, "#0d131d");
+    c.fillStyle = g; c.fillRect(0, 0, CW, GROUND);
+
+    const off1 = st.bg * .18;
+    for (let i = -1; i < CW / 70 + 2; i++) {
+      const idx = Math.floor(off1 / 70) + i;
+      const x = idx * 70 - off1;
+      const h = 90 + Math.floor(hash(idx, 3, 5) * 90);
+      c.fillStyle = "#0a0f18"; c.fillRect(x, GROUND - h, 58, h);
+      c.fillStyle = "#0e1522";
+      for (let k = 0; k < h; k += 12) c.fillRect(x, GROUND - h + k, 58, 2);
+      for (let k = 0; k < 6; k++) {
+        const hv = hash(idx, k, 9);
+        if (hv > .55) {
+          c.fillStyle = hv > .9 ? "#8a1420" : "#1f6b43";
+          c.fillRect(x + 6 + Math.floor(hv * 40), GROUND - h + 6 + k * 14, 3, 3);
+        }
+      }
+    }
+    const off2 = st.bg * .45;
+    for (let i = -1; i < CW / 210 + 2; i++) {
+      const idx = Math.floor(off2 / 210) + i;
+      const x = idx * 210 - off2;
+      c.fillStyle = "#101826"; c.fillRect(x, 0, 16, GROUND);
+      c.fillStyle = "#18233a"; c.fillRect(x, 0, 3, GROUND);
+    }
+    const off3 = st.bg * .7;
+    c.fillStyle = "#111a2b"; c.fillRect(0, 0, CW, 14);
+    c.fillStyle = "#1b2842"; c.fillRect(0, 12, CW, 2);
+    for (let i = -1; i < CW / 120 + 2; i++) {
+      const x = (Math.floor(off3 / 120) + i) * 120 - off3;
+      c.fillStyle = "#0a1020"; c.fillRect(x, 0, 8, 22);
+    }
+    c.fillStyle = "#0b1018"; c.fillRect(0, GROUND, CW, CH - GROUND);
+    c.fillStyle = "#2b3a58"; c.fillRect(0, GROUND, CW, 3);
+    const offF = st.bg;
+    c.fillStyle = "#151d2b";
+    for (let i = -1; i < CW / 48 + 2; i++) {
+      const x = (Math.floor(offF / 48) + i) * 48 - offF;
+      c.fillRect(x, GROUND + 6, 2, CH - GROUND);
+    }
+    c.fillStyle = "#10161f"; c.fillRect(0, GROUND + 26, CW, 2);
+  }
+
+  function drawCrate(o) {
+    const r = oRect(o);
+    c.fillStyle = "#2a1d12"; c.fillRect(r.x, r.y, r.w, r.h);
+    c.fillStyle = "#5a3e22"; c.fillRect(r.x, r.y, r.w, 4);
+    c.fillStyle = "#3d2a17"; c.fillRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6);
+    c.fillStyle = "#ffcc33";
+    for (let i = 0; i < r.w; i += 12) c.fillRect(r.x + i, r.y + r.h - 6, 6, 3);
+    c.fillStyle = "#5a3e22"; c.fillRect(r.x + r.w / 2 - 1, r.y + 4, 2, r.h - 8);
+  }
+  function drawBeam(o) {
+    const r = oRect(o);
+    c.fillStyle = "#26334d";
+    c.fillRect(r.x + 8, 14, 3, r.y - 14);
+    c.fillRect(r.x + r.w - 11, 14, 3, r.y - 14);
+    c.fillStyle = "#3b4d73"; c.fillRect(r.x, r.y, r.w, r.h);
+    c.fillStyle = "#516594"; c.fillRect(r.x, r.y, r.w, 3);
+    c.fillStyle = "#ff2a3d";
+    for (let i = 6; i < r.w - 6; i += 18) c.fillRect(r.x + i, r.y + 10, 8, 4);
+  }
+  function drawBubble(o) {
+    if (o.used) return;
+    const r = oRect(o);
+    c.fillStyle = "#06080b"; c.fillRect(r.x - 2, r.y - 2, r.w + 4, r.h + 4);
+    c.fillStyle = "#ffcc33"; c.fillRect(r.x, r.y, r.w, 2); c.fillRect(r.x, r.y + r.h - 2, r.w, 2);
+    c.fillRect(r.x, r.y, 2, r.h); c.fillRect(r.x + r.w - 2, r.y, 2, r.h);
+    c.fillStyle = "rgba(255,204,51,.08)"; c.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
+    c.fillStyle = "#e8eef8";
+    c.font = "bold 14px 'JetBrains Mono', monospace";
+    c.textAlign = "center";
+    c.fillText(o.text, r.x + r.w / 2, r.y + 20);
+  }
+
+  function drawChar(spr, x, bottom, bob, squash, flip, tint) {
+    const w = 16 * SC;
+    const h = squash ? 30 : 16 * SC;
+    const y = bottom - h - bob;
+    c.fillStyle = "rgba(0,0,0,.5)";
+    c.fillRect(x + 8, GROUND - 3, w - 16, 3);
+    c.save();
+    if (tint) c.globalAlpha = tint;
+    if (flip) { c.translate(x + w, y); c.scale(-1, 1); c.drawImage(spr, 0, 0, w, h); }
+    else c.drawImage(spr, x, y, w, h);
+    c.restore();
+  }
+
+  function speech(text, x, y, col) {
+    c.font = "bold 13px 'JetBrains Mono', monospace";
+    const w = Math.ceil(c.measureText(text).width) + 16;
+    const bx = clamp(x - w / 2, 4, CW - w - 4);
+    c.fillStyle = "rgba(2,3,5,.9)"; c.fillRect(bx, y - 22, w, 22);
+    c.fillStyle = col; c.fillRect(bx, y - 22, w, 2);
+    c.textAlign = "center"; c.fillStyle = col;
+    c.fillText(text, bx + w / 2, y - 7);
+  }
+
+  function frame(now) {
+    if (!active) return;
+    const dt = Math.min(.05, (now - last) / 1000 || .016);
+    last = now;
+    update(dt);
+    hud();
+
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    if (st.shake > 0) c.translate(Math.round(rnd(-4, 4)), Math.round(rnd(-3, 3)));
+    drawBG();
+
+    st.objs.forEach(o => {
+      if (o.t === "crate") drawCrate(o);
+      else if (o.t === "beam") drawBeam(o);
+    });
+    st.objs.forEach(o => { if (o.t === "bub") drawBubble(o); });
+
+    const ex = 150 + st.G * 5.2;
+    const eBob = st.mode === "run" ? Math.floor(st.runT * (4 + st.e * 8)) % 2 * 3 : 0;
+    const glowE = c.createRadialGradient(ex + 24, GROUND - 24, 0, ex + 24, GROUND - 24, 60);
+    glowE.addColorStop(0, "rgba(255,42,61,.28)"); glowE.addColorStop(1, "rgba(0,0,0,0)");
+    c.save(); c.globalCompositeOperation = "lighter"; c.fillStyle = glowE; c.fillRect(ex - 40, GROUND - 90, 130, 100); c.restore();
+    drawChar(SPR_TARGET, ex, GROUND, eBob, false, false);
+
+    const pr = pRect();
+    const pBob = (st.py <= 0 && st.mode === "run") ? Math.floor(st.runT * 9) % 2 * 3 : 0;
+    const blink = st.inv > 0 && Math.floor(st.runT * 16) % 2 === 0;
+    const glowP = c.createRadialGradient(PX + 13, pr.y + pr.h / 2, 0, PX + 13, pr.y + pr.h / 2, 60);
+    glowP.addColorStop(0, "rgba(74,222,128,.25)"); glowP.addColorStop(1, "rgba(0,0,0,0)");
+    c.save(); c.globalCompositeOperation = "lighter"; c.fillStyle = glowP; c.fillRect(PX - 50, pr.y - 50, 130, 130); c.restore();
+    drawChar(SPR_PLAYER, PX - 11, GROUND - st.py, pBob, st.duck, false, blink ? .35 : 1);
+
+    if (st.say)   speech(st.say.text, PX + 13, pr.y - 6, st.say.good ? "#4ade80" : "#ff6677");
+    if (st.reply) speech(st.reply.text, ex + 24, GROUND - 56, "#ffcc33");
+
+    if (st.flash > 0) { c.fillStyle = "rgba(255,42,61," + (st.flash * 1.2).toFixed(2) + ")"; c.fillRect(0, 0, CW, CH); }
+
+    if (st.mode === "run" && st.G > 85) {
+      c.fillStyle = "#ff2a3d"; c.font = "bold 16px 'JetBrains Mono', monospace"; c.textAlign = "right";
+      c.fillText("ОН УХОДИТ ▶", CW - 12, 50);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  window.HG.chase = {
+    open() {
+      if (active) return;
+      active = true; keyDuck = false; padDuck = false;
+      reset(); showReady();
+      last = 0;
+      requestAnimationFrame(frame);
+    },
+    close() { active = false; }
+  };
+})();
+</script>
+
+<!-- ============ ЛАБИРИНТ (без перезагрузок) ============ -->
+<script>
+(function () {
+  "use strict";
+  const { SPR_PLAYER, SPR_GUARD, SPR_TARGET, hash, clamp, lerp, ease, store, load } = window.HG;
+  const $ = id => document.getElementById(id);
+
+  const canvas = $("game-canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  const GAME_URL = {{ url_for('hunt_game', hid=hunt_id)|tojson }};
+  const HUNT_URL = {{ url_for('hunt')|tojson }};
+  const SIZE  = {{ labyrinth.size }};
+  const WALLS = {{ labyrinth.walls|tojson }};
+  let G = {{ game|tojson }};
+
+  const VIEW = 15, CS = 64, U = CS / 16, W = canvas.width;
+  const VIS_R = 6;
+  const DUR = 170;
+
+  const wallSet = new Set(WALLS.map(w => w[0] + "," + w[1]));
+  const isWall = (x, y) => x < 0 || y < 0 || x >= SIZE || y >= SIZE || wallSet.has(x + "," + y);
+
+  /* ---------- память между перезагрузками (только если игрок сам обновит страницу) ---------- */
+  const sig = "s" + G.seed;
+  if (load("hg_sig", null) !== sig) {
+    store("hg_sig", sig); store("hg_explored", []); store("hg_log", []);
+    store("hg_logged", -1); store("hg_psig", null);
+  }
+  const exp = new Uint8Array(SIZE * SIZE);
+  load("hg_explored", []).forEach(i => { exp[i] = 1; });
+  let logLines = load("hg_log", []);
+
+  /* ---------- статическая карта ---------- */
+  const buf = document.createElement("canvas");
+  buf.width = buf.height = SIZE * 16;
+  const b = buf.getContext("2d");
+
+  function drawFloorTile(tx, ty) {
+    const ox = tx * 16, oy = ty * 16, r = hash(tx, ty, 1);
+    b.fillStyle = r < .33 ? "#0d1118" : r < .66 ? "#0f131b" : "#0b0f15";
+    b.fillRect(ox, oy, 16, 16);
+    b.fillStyle = "#171d29"; b.fillRect(ox, oy, 16, 1); b.fillRect(ox, oy, 1, 16);
+    b.fillStyle = "#1c2433";
+    [[2,2],[13,2],[2,13],[13,13]].forEach(p => b.fillRect(ox + p[0], oy + p[1], 1, 1));
+    for (let i = 0; i < 7; i++) {
+      const a = Math.floor(hash(tx, ty, 10 + i) * 16), c = Math.floor(hash(tx, ty, 30 + i) * 16);
+      b.fillStyle = hash(tx, ty, 50 + i) > .75 ? "#222c3d" : "#0a0d13";
+      b.fillRect(ox + a, oy + c, 1, 1);
+    }
+    if (hash(tx, ty, 99) > .93) {
+      const y = 4 + Math.floor(hash(tx, ty, 98) * 8);
+      b.fillStyle = "#12333a"; b.fillRect(ox + 2, oy + y, 12, 1); b.fillRect(ox + 13, oy + y, 1, 3);
+      b.fillStyle = "#1f7a86"; b.fillRect(ox + 13, oy + y + 3, 1, 1);
+    }
+    if (isWall(tx, ty - 1)) {
+      [0.55, 0.38, 0.22, 0.1].forEach((a, i) => { b.fillStyle = "rgba(0,0,0," + a + ")"; b.fillRect(ox, oy + i, 16, 1); });
+    }
+    if (isWall(tx - 1, ty)) { b.fillStyle = "rgba(0,0,0,.32)"; b.fillRect(ox, oy, 2, 16); }
+  }
+
+  function drawWallTile(tx, ty) {
+    const ox = tx * 16, oy = ty * 16;
+    b.fillStyle = "#1a2438"; b.fillRect(ox, oy, 16, 16);
+    for (let i = 0; i < 22; i++) {
+      const a = Math.floor(hash(tx, ty, 200 + i) * 16), c = Math.floor(hash(tx, ty, 300 + i) * 16);
+      b.fillStyle = hash(tx, ty, 400 + i) > .5 ? "#1f2b42" : "#151e30";
+      b.fillRect(ox + a, oy + c, 1, 1);
+    }
+    b.fillStyle = "#0f1624";
+    b.fillRect(ox, oy + 5, 16, 1); b.fillRect(ox, oy + 10, 16, 1);
+    b.fillRect(ox + 8, oy, 1, 5); b.fillRect(ox + 4, oy + 6, 1, 4);
+    b.fillRect(ox + 12, oy + 6, 1, 4); b.fillRect(ox + 8, oy + 11, 1, 5);
+    if (!isWall(tx, ty - 1)) {
+      b.fillStyle = "#44598a"; b.fillRect(ox, oy, 16, 1);
+      b.fillStyle = "#34476e"; b.fillRect(ox, oy + 1, 16, 1);
+      b.fillStyle = "#26365a"; b.fillRect(ox, oy + 2, 16, 1);
+    }
+    if (!isWall(tx - 1, ty)) { b.fillStyle = "#2f4066"; b.fillRect(ox, oy, 1, 16); }
+    if (!isWall(tx + 1, ty)) { b.fillStyle = "#0c1220"; b.fillRect(ox + 15, oy, 1, 16); }
+    if (!isWall(tx, ty + 1)) {
+      b.fillStyle = "#121b2c"; b.fillRect(ox, oy + 14, 16, 1);
+      b.fillStyle = "#090e18"; b.fillRect(ox, oy + 15, 16, 1);
+    }
+    const led = hash(tx, ty, 777);
+    if (led > .94) {
+      const a = 3 + Math.floor(hash(tx, ty, 778) * 10), c = 3 + Math.floor(hash(tx, ty, 779) * 8);
+      b.fillStyle = led > .975 ? "#8a1420" : "#1f6b43";
+      b.fillRect(ox + a, oy + c, 2, 1);
+    }
+  }
+
+  for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+    if (isWall(x, y)) drawWallTile(x, y); else drawFloorTile(x, y);
+  }
+  const staticCv = document.createElement("canvas");
+  staticCv.width = staticCv.height = SIZE * CS;
+  const sctx = staticCv.getContext("2d");
+  sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(buf, 0, 0, SIZE * CS, SIZE * CS);
+
+  /* ---------- видимость и производные ---------- */
+  function hasLOS(x0, y0, x1, y1) {
+    const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy, x = x0, y = y0;
+    while (!(x === x1 && y === y1)) {
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; x += sx; }
+      if (e2 < dx)  { err += dx; y += sy; }
+      if (x === x1 && y === y1) break;
+      if (isWall(x, y)) return false;
+    }
+    return true;
+  }
+
+  const vis = new Float32Array(SIZE * SIZE);
+  const visAt = (x, y) => (x < 0 || y < 0 || x >= SIZE || y >= SIZE) ? 0 : vis[y * SIZE + x];
+
+  function computeVis() {
+    vis.fill(0);
+    const px = G.player[0], py = G.player[1];
+    for (let y = Math.max(0, py - VIS_R - 1); y <= Math.min(SIZE - 1, py + VIS_R + 1); y++) {
+      for (let x = Math.max(0, px - VIS_R - 1); x <= Math.min(SIZE - 1, px + VIS_R + 1); x++) {
+        const d = Math.hypot(x - px, y - py);
+        if (d <= VIS_R + 0.5 && hasLOS(px, py, x, y)) {
+          vis[y * SIZE + x] = clamp(1.15 - (d / (VIS_R + 0.5)) * 0.85, 0.3, 1);
+          exp[y * SIZE + x] = 1;
+        }
+      }
+    }
+    const a = []; for (let i = 0; i < exp.length; i++) if (exp[i]) a.push(i);
+    store("hg_explored", a);
+  }
+
+  let D = {};
+  function derive() {
+    const px = G.player[0], py = G.player[1], T = G.target.pos;
+    const ending = G.status !== "playing";
+    const tD = Math.hypot(px - T[0], py - T[1]);
+    const tSeen = visAt(T[0], T[1]) > 0;
+    const mode = G.target.mode;
+    const tShow = ending || (tSeen && (mode !== "hide" || tD <= 2.2));
+
+    const maxD = Math.hypot(SIZE, SIZE) * 0.7;
+    let base = clamp(Math.round((1 - tD / maxD) * 100), 3, 100);
+    if (mode === "hide") base = Math.round(base * 0.6);
+    if (mode === "flee") base = Math.min(100, base + 8);
+    const signal = clamp(base + Math.round((hash(G.turns, 7, 3) - .5) * 14), 3, 100);
+
+    let nearest = 99;
+    G.guards.forEach(g => { if (!g.stun) nearest = Math.min(nearest, Math.hypot(px - g.pos[0], py - g.pos[1])); });
+    const chasing = G.guards.filter(g => g.mode === "chase" && !g.stun).length;
+    let thrLabel = "НИЗКАЯ", thrPct = clamp(Math.round((1 - nearest / 10) * 100), 4, 100);
+    if (nearest <= 7)   thrLabel = "СРЕДНЯЯ";
+    if (nearest <= 4.5) thrLabel = "ВЫСОКАЯ";
+    if (nearest <= 2.5) thrLabel = "КРИТИЧЕСКАЯ";
+    if (chasing)        { thrLabel = "ПОГОНЯ"; thrPct = Math.max(thrPct, 85); }
+
+    let expCount = 0; for (let i = 0; i < exp.length; i++) expCount += exp[i];
+    const exploredPct = Math.min(100, Math.round((expCount / (SIZE * SIZE)) * 100));
+
+    D = { px, py, ending, tD, tSeen, tShow, signal, nearest, chasing, thrLabel, thrPct, exploredPct,
+          critical: !ending && (nearest <= 2.5 || (chasing && nearest <= 4.5)) };
+  }
+
+  /* ---------- HUD ---------- */
+  function paintHud() {
+    const labels = { playing: "В ПОИСКЕ", chase: "ЦЕЛЬ ВПЕРЕДИ", found: "ЦЕЛЬ ОСТАНОВЛЕНА", caught: "ОБНАРУЖЕН" };
+    const st = $("status");
+    st.textContent = labels[G.status] || G.status;
+    st.className = (G.status === "found" || G.status === "chase") ? "is-green" : G.status === "caught" ? "is-red" : "is-amber";
+    $("turns").textContent = G.turns;
+
+    const m = $("hudMode");
+    m.textContent = G.sneak ? "КРАДУСЬ" : (G.turns ? "ДВИЖЕНИЕ" : "—");
+    m.className = G.sneak ? "is-cyan" : "";
+    $("hudExplored").textContent = D.exploredPct + "%";
+    const gs = $("hudGuards");
+    gs.textContent = G.guards.length + (D.chasing ? " · погоня " + D.chasing : "");
+    gs.className = D.chasing ? "is-red" : "";
+    $("hudAlarm").textContent = G.alarm_in + " х.";
+    $("sigVal").textContent = D.signal + "%";
+    $("sigBar").style.width = D.signal + "%";
+    $("thrVal").textContent = D.thrLabel;
+    const tb = $("thrBar"); tb.style.width = D.thrPct + "%";
+    tb.classList.toggle("is-hot", D.nearest <= 4.5 || D.chasing > 0);
+
+    const screen = $("screen");
+    screen.classList.toggle("is-critical", D.critical);
+    screen.classList.toggle("is-danger", !D.critical && !D.ending && (D.nearest <= 4.5 || D.chasing > 0));
+  }
+
+  /* ---------- журнал ---------- */
+  const logEl = $("log");
+  function appendLog(l) {
+    const d = document.createElement("div");
+    if (l.c) d.className = l.c;
+    d.textContent = l.t;
+    logEl.appendChild(d);
+    while (logEl.children.length > 8) logEl.removeChild(logEl.firstChild);
+  }
+  logLines.slice(-8).forEach(appendLog);
+
+  function pushLog() {
+    const last = load("hg_logged", -1);
+    if (last === G.turns) return;
+    const t = String(G.turns).padStart(3, "0");
+    const fresh = [];
+    (G.events || []).forEach(e => fresh.push({ t: "[" + t + "] " + e[0], c: e[1] || "" }));
+    const ps = load("hg_psig", null);
+    if (G.status === "playing" && ps !== null && Math.abs(D.signal - ps) >= 6) {
+      fresh.push(D.signal > ps ? { t: "[" + t + "] сигнал цели растёт: " + D.signal + "%", c: "g" }
+                               : { t: "[" + t + "] сигнал цели слабеет: " + D.signal + "%", c: "d" });
+    }
+    store("hg_psig", D.signal);
+    store("hg_logged", G.turns);
+    fresh.forEach(l => { logLines.push(l); appendLog(l); });
+    logLines = logLines.slice(-8);
+    store("hg_log", logLines);
+  }
+
+  /* ---------- инвентарь ---------- */
+  const ITEMS = [
+    { k: "bottle", key: "1", name: "Бутылка", desc: "летит на 6 клеток вперёд — егеря идут на шум" },
+    { k: "smoke",  key: "2", name: "Дымовая", desc: "дым на 8 ходов — в нём тебя не видно" },
+    { k: "emp",    key: "3", name: "ЭМИ",     desc: "оглушает егерей в радиусе 6 на 4 хода" }
+  ];
+  const invBox = $("inv");
+  const invBtns = ITEMS.map(it => {
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "hg-inv__btn"; btn.title = it.desc;
+    btn.addEventListener("click", () => useItem(it.k));
+    invBox.appendChild(btn);
+    return btn;
+  });
+  function buildInv() {
+    ITEMS.forEach((it, i) => {
+      const n = G.inv[it.k] || 0;
+      invBtns[i].disabled = G.status !== "playing" || n <= 0 || busy;
+      invBtns[i].innerHTML = "<b>[" + it.key + "]</b>" + it.name + "<em>×" + n + "</em>";
     });
   }
+
+  /* ---------- сеть: ходы без перезагрузки ---------- */
+  let busy = false, lastSend = 0;
+  async function send(fields) {
+    if (busy) return;
+    busy = true; buildInv();
+    try {
+      const r = await fetch(GAME_URL, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "fetch", "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(fields)
+      });
+      const j = await r.json();
+      if (j.redirect) { location.href = j.redirect; return; }
+      applyState(j);
+    } catch (e) {
+      busy = false; buildInv();
+      location.reload();
+    }
+  }
+  function useItem(k) {
+    if (G.status !== "playing" || busy || !(G.inv[k] > 0)) return;
+    send({ action: "use", item: k });
+  }
+  function move(dx, dy) {
+    if (G.status !== "playing" || busy) return;
+    const now = performance.now();
+    if (now - lastSend < 110) return;
+    lastSend = now;
+    send({ action: "move", dx: dx, dy: dy });
+  }
+  window.HG.onChaseWin = () => send({ action: "chase_done", result: "win" });
+
+  /* ---------- состояние анимации ---------- */
+  let prev = null, tweenStart = 0, dirX = 1, lastStatus = null;
+  let glitchSlice = null, glitchUntil = 0;
+
+  function modeUI() {
+    const st = G.status;
+    $("mazeSec").hidden = st === "chase";
+    $("chaseSec").hidden = st !== "chase";
+    $("pursuitBox").hidden = st !== "chase";
+    if (st === "chase") window.HG.chase.open(); else window.HG.chase.close();
+
+    const ov = $("endOv"), screen = $("screen"), flash = $("flash");
+    if (st === "found") {
+      ov.className = "hg-ov hg-ov--win late";
+      ov.innerHTML =
+        "<h2>ЦЕЛЬ ОСТАНОВЛЕНА</h2>" +
+        "<p>Он выдохся. И, кажется, услышал тебя.</p>" +
+        "<p>Инженер. Разработчик. Он смотрит и ничего не говорит.</p>" +
+        "<p><b style='color:#d8dee7'>Что делать?</b></p>" +
+        "<div class='hg-ov__btns'>" +
+        "<form method='post' action='" + GAME_URL + "'><input type='hidden' name='action' value='choice'><input type='hidden' name='choice' value='reveal'><button type='submit' class='dress-btn'>// РАСКРЫТЬ ЕГО</button></form>" +
+        "<form method='post' action='" + GAME_URL + "'><input type='hidden' name='action' value='choice'><input type='hidden' name='choice' value='hide'><button type='submit' class='dress-btn dress-btn--ghost'>// СКРЫТЬ</button></form>" +
+        "</div>";
+      ov.hidden = false;
+    } else if (st === "caught") {
+      ov.className = "hg-ov late";
+      ov.innerHTML =
+        "<h2>ТЕБЯ НАШЛИ</h2><p>Егерь наступил на тебя.</p><p>Выезд провален. Маршрут записан.</p>" +
+        "<div class='hg-ov__btns'><a class='dress-btn dress-btn--ghost' href='" + HUNT_URL + "'>// выйти</a></div>";
+      ov.hidden = false;
+    } else {
+      ov.hidden = true;
+    }
+
+    if (lastStatus !== st) {
+      if (st === "caught") { flash.className = "hg-flash hg-flash--red"; screen.classList.add("is-shake"); }
+      else if (st === "found") { flash.className = "hg-flash hg-flash--green"; }
+      else { flash.className = "hg-flash"; screen.classList.remove("is-shake"); }
+      lastStatus = st;
+    }
+  }
+
+  function applyState(ng) {
+    const old = G;
+    if (ng.seed === old.seed && ng.turns === old.turns + 1) {
+      prev = { player: old.player.slice(), guards: old.guards.map(g => g.pos.slice()), target: old.target.pos.slice() };
+    } else {
+      prev = null;
+    }
+    if (ng.player[0] > old.player[0]) dirX = 1;
+    else if (ng.player[0] < old.player[0]) dirX = -1;
+    G = ng;
+    tweenStart = performance.now();
+    busy = false;
+    computeVis(); derive(); paintHud(); pushLog(); buildInv(); modeUI();
+  }
+
+  /* ---------- рисование ---------- */
+  const motes = [];
+  for (let i = 0; i < 50; i++) motes.push({
+    x: Math.random() * W, y: Math.random() * W,
+    vx: (Math.random() - .5) * .2, vy: -.06 - Math.random() * .25,
+    s: Math.random() < .25 ? 4 : 3, a: .06 + Math.random() * .18
+  });
+
+  function drawSprite(spr, cx, cy, flip, bob, glow, gp) {
+    const x = Math.round(cx * CS), y = Math.round(cy * CS - bob * U);
+    ctx.fillStyle = "rgba(0,0,0,.55)";
+    ctx.fillRect(Math.round(cx * CS + CS * .22), Math.round(cy * CS + CS * .86), Math.round(CS * .56), Math.round(U * 1.4));
+    if (glow) {
+      const mx = x + CS / 2, my = y + CS / 2, r = CS * gp;
+      const g = ctx.createRadialGradient(mx, my, 0, mx, my, r);
+      g.addColorStop(0, glow); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = g; ctx.fillRect(mx - r, my - r, r * 2, r * 2);
+      ctx.restore();
+    }
+    ctx.save();
+    if (flip < 0) { ctx.translate(x + CS, y); ctx.scale(-1, 1); ctx.drawImage(spr, 0, 0, CS, CS); }
+    else ctx.drawImage(spr, x, y, CS, CS);
+    ctx.restore();
+  }
+  function mark(cx, cy, ch, col) {
+    ctx.fillStyle = col;
+    ctx.font = "bold 34px 'JetBrains Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(ch, Math.round(cx * CS + CS / 2), Math.round(cy * CS - 8));
+  }
+  const PK_COL = { bottle: "#7dffb0", smoke: "#b8c4d8", emp: "#3fd7ff" };
+
+  function throwTarget() {
+    let lx = G.player[0], ly = G.player[1];
+    for (let i = 0; i < 6; i++) {
+      const nx = lx + G.facing[0], ny = ly + G.facing[1];
+      if (isWall(nx, ny)) break;
+      lx = nx; ly = ny;
+    }
+    return [lx, ly];
+  }
+
+  const mini = $("mini");
+  const MM = 6; mini.width = mini.height = SIZE * MM;
+  const mctx = mini.getContext("2d");
+  let camXc = 0, camYc = 0, lastMini = -1;
+  function drawMini(now) {
+    const tick = Math.floor(now / 350);
+    if (tick === lastMini) return;
+    lastMini = tick;
+    mctx.fillStyle = "#020305"; mctx.fillRect(0, 0, mini.width, mini.height);
+    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+      if (!exp[y * SIZE + x] && !D.ending) continue;
+      mctx.fillStyle = isWall(x, y) ? "#141c2b" : "#2a3a58";
+      mctx.fillRect(x * MM, y * MM, MM, MM);
+    }
+    G.pickups.forEach(p => {
+      if (exp[p[1] * SIZE + p[0]]) { mctx.fillStyle = PK_COL[p[2]]; mctx.fillRect(p[0] * MM + 2, p[1] * MM + 2, 2, 2); }
+    });
+    mctx.strokeStyle = "rgba(63,215,255,.45)"; mctx.lineWidth = 1;
+    mctx.strokeRect(camXc * MM + .5, camYc * MM + .5, VIEW * MM - 1, VIEW * MM - 1);
+    G.guards.forEach(g => {
+      if (D.ending || visAt(g.pos[0], g.pos[1]) > 0) {
+        mctx.fillStyle = g.type === "tracker" ? "#3fd7ff" : "#ffcc33";
+        mctx.fillRect(g.pos[0] * MM, g.pos[1] * MM, MM, MM);
+      }
+    });
+    if (D.tShow) { mctx.fillStyle = "#ff2a3d"; mctx.fillRect(G.target.pos[0] * MM, G.target.pos[1] * MM, MM, MM); }
+    if (tick % 2 === 0 || D.ending) { mctx.fillStyle = "#4ade80"; mctx.fillRect(D.px * MM - 1, D.py * MM - 1, MM + 2, MM + 2); }
+  }
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (G.status === "chase") return;
+
+    const isPlaying = G.status === "playing";
+    const ending = !isPlaying;
+    const px0 = D.px, py0 = D.py;
+    const TARGET_POS = G.target.pos, TARGET_MODE = G.target.mode;
+    const p = prev ? clamp((now - tweenStart) / DUR, 0, 1) : 1;
+    const e = ease(p);
+    const pulse = .5 + .5 * Math.sin(now / 260);
+
+    const pPos = [G.player[0], G.player[1]];
+    if (prev) { pPos[0] = lerp(prev.player[0], G.player[0], e); pPos[1] = lerp(prev.player[1], G.player[1], e); }
+    const gPos = G.guards.map((g, i) => (prev && prev.guards[i])
+      ? [lerp(prev.guards[i][0], g.pos[0], e), lerp(prev.guards[i][1], g.pos[1], e)] : [g.pos[0], g.pos[1]]);
+    const tPos = prev ? [lerp(prev.target[0], TARGET_POS[0], e), lerp(prev.target[1], TARGET_POS[1], e)] : TARGET_POS.slice();
+
+    camXc = clamp(pPos[0] - (VIEW - 1) / 2, 0, SIZE - VIEW);
+    camYc = clamp(pPos[1] - (VIEW - 1) / 2, 0, SIZE - VIEW);
+    const camPx = Math.round(camXc * CS), camPy = Math.round(camYc * CS);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, W);
+    ctx.save();
+    ctx.translate(-camPx, -camPy);
+
+    // 1. карта
+    ctx.drawImage(staticCv, camPx, camPy, W, W, camPx, camPy, W, W);
+
+    // 2. зоны вокруг егерей
+    G.guards.forEach(g => {
+      if (g.stun) return;
+      const gx = g.pos[0], gy = g.pos[1], rad = g.mode === "chase" ? 2 : 1;
+      for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
+        const cx = gx + dx, cy = gy + dy;
+        if (isWall(cx, cy)) continue;
+        if (!ending && visAt(cx, cy) <= 0) continue;
+        ctx.fillStyle = "rgba(255,42,61," + (.07 + .06 * pulse) + ")";
+        ctx.fillRect(cx * CS, cy * CS, CS, CS);
+        ctx.fillStyle = "rgba(255,42,61,.11)";
+        for (let k = 0; k < 16; k += 4) ctx.fillRect(cx * CS, cy * CS + k * U, CS, Math.round(U));
+      }
+    });
+
+    // 2b. предметы
+    G.pickups.forEach(pk => {
+      if (!ending && visAt(pk[0], pk[1]) <= 0) return;
+      const col = PK_COL[pk[2]] || "#fff";
+      const cx = pk[0] * CS + CS / 2, cy = pk[1] * CS + CS / 2 + Math.sin(now / 300 + pk[0]) * 2;
+      const r = CS * .7;
+      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      gr.addColorStop(0, col + "55"); gr.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = gr; ctx.fillRect(cx - r, cy - r, r * 2, r * 2); ctx.restore();
+      ctx.fillStyle = "#06080b"; ctx.fillRect(Math.round(cx - U * 4), Math.round(cy - U * 4), Math.round(U * 8), Math.round(U * 8));
+      ctx.fillStyle = col;       ctx.fillRect(Math.round(cx - U * 3), Math.round(cy - U * 3), Math.round(U * 6), Math.round(U * 6));
+      ctx.fillStyle = "#06080b"; ctx.fillRect(Math.round(cx - U), Math.round(cy - U), Math.round(U * 2), Math.round(U * 2));
+    });
+
+    // 2c. дым
+    G.smoke.forEach(c => {
+      if (!ending && visAt(c[0], c[1]) <= 0) return;
+      const a = Math.min(.62, .18 + c[2] * .06) * (.85 + .15 * Math.sin(now / 200 + c[0] * 3 + c[1]));
+      ctx.fillStyle = "rgba(170,185,205," + a.toFixed(3) + ")";
+      ctx.fillRect(c[0] * CS, c[1] * CS, CS, CS);
+      ctx.fillStyle = "rgba(220,230,245," + (a * .5).toFixed(3) + ")";
+      const o = Math.floor((now / 120 + c[0] * 7 + c[1] * 5) % 8);
+      ctx.fillRect(c[0] * CS + o * U * 2, c[1] * CS + ((o * 5) % 12) * U, U * 4, U * 3);
+    });
+
+    // 2d. прицел бутылки
+    if (isPlaying && G.inv.bottle > 0) {
+      const T = throwTarget();
+      if (T[0] !== px0 || T[1] !== py0) {
+        const cx = T[0] * CS + CS / 2, cy = T[1] * CS + CS / 2, rr = CS * (.28 + .06 * pulse);
+        ctx.strokeStyle = "rgba(125,255,176,.7)"; ctx.lineWidth = 2;
+        ctx.strokeRect(Math.round(cx - rr), Math.round(cy - rr), Math.round(rr * 2), Math.round(rr * 2));
+        ctx.fillStyle = "rgba(125,255,176,.7)"; ctx.fillRect(Math.round(cx - 2), Math.round(cy - 2), 4, 4);
+      }
+    }
+
+    // 3. цель
+    if (D.tShow) {
+      const tp = .5 + .5 * Math.sin(now / 340);
+      const tBob = TARGET_MODE === "flee" ? Math.floor(now / 160) % 2 : Math.floor(now / 420) % 2;
+      const cx = tPos[0] * CS + CS / 2, cy = tPos[1] * CS + CS / 2, rr = CS * (.6 + .6 * tp);
+      ctx.strokeStyle = "rgba(255,42,61," + (.15 + .35 * (1 - tp)) + ")";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(Math.round(cx - rr), Math.round(cy - rr), Math.round(rr * 2), Math.round(rr * 2));
+      drawSprite(SPR_TARGET, tPos[0], tPos[1], (px0 > TARGET_POS[0]) ? -1 : 1, tBob, "rgba(255,42,61," + (.38 + .2 * tp) + ")", 1.1);
+      if (TARGET_MODE === "flee" && !ending) mark(tPos[0], tPos[1], "!", "#ff6677");
+      if (G.status === "found") {
+        const s = CS * .62, c = CS * .22;
+        ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 3;
+        const L = cx - s, R = cx + s, T = cy - s, B = cy + s;
+        ctx.beginPath();
+        ctx.moveTo(L, T + c); ctx.lineTo(L, T); ctx.lineTo(L + c, T);
+        ctx.moveTo(R - c, T); ctx.lineTo(R, T); ctx.lineTo(R, T + c);
+        ctx.moveTo(L, B - c); ctx.lineTo(L, B); ctx.lineTo(L + c, B);
+        ctx.moveTo(R - c, B); ctx.lineTo(R, B); ctx.lineTo(R, B - c);
+        ctx.stroke();
+      }
+    } else if (!ending && TARGET_MODE === "hide" && D.tSeen && D.tD <= 5 && Math.random() < .09) {
+      ctx.fillStyle = "rgba(63,215,255,.22)";
+      ctx.fillRect(TARGET_POS[0] * CS, TARGET_POS[1] * CS + Math.floor(Math.random() * 12) * U, CS, U * 2);
+    }
+
+    // 4. егеря и тепловые метки
+    G.guards.forEach((g, i) => {
+      const gx = g.pos[0], gy = g.pos[1];
+      const seen = ending || visAt(gx, gy) > 0;
+      if (seen) {
+        const bob = g.stun ? 0 : Math.floor(now / (g.mode === "chase" ? 200 : 380) + i) % 2;
+        const glow = g.stun ? "rgba(63,215,255,.35)" : g.type === "tracker" ? "rgba(63,215,255,.30)" : "rgba(255,204,51,.28)";
+        drawSprite(SPR_GUARD, gPos[i][0], gPos[i][1], (px0 > gx) ? 1 : -1, bob, glow, 0.9);
+        if (g.stun)                   mark(gPos[i][0], gPos[i][1], "z", "#3fd7ff");
+        else if (g.mode === "chase")  mark(gPos[i][0], gPos[i][1], "!", "#ff2a3d");
+        else if (g.mode === "search") mark(gPos[i][0], gPos[i][1], "?", "#ffcc33");
+      } else if (!g.stun) {
+        const d = Math.hypot(px0 - gx, py0 - gy);
+        if (d <= 6.5) {
+          const a = (.35 + .4 * pulse) * (1 - d / 8);
+          const cx = gx * CS + CS / 2, cy = gy * CS + CS / 2;
+          ctx.fillStyle = "rgba(255,42,61," + a + ")";
+          ctx.fillRect(Math.round(cx - U * 2), Math.round(cy - U * 2), Math.round(U * 4), Math.round(U * 4));
+          ctx.strokeStyle = "rgba(255,42,61," + a * .8 + ")"; ctx.lineWidth = 1;
+          const rr = CS * (.35 + .5 * ((now / 900 + i * .3) % 1));
+          ctx.strokeRect(Math.round(cx - rr), Math.round(cy - rr), Math.round(rr * 2), Math.round(rr * 2));
+        }
+      }
+    });
+
+    // 5. игрок
+    const pBob = (prev && p < 1) ? 0 : (G.sneak ? 0 : Math.floor(now / 450) % 2);
+    drawSprite(SPR_PLAYER, pPos[0], pPos[1], dirX, pBob, G.sneak ? "rgba(63,215,255,.22)" : "rgba(74,222,128,.32)", 1.0);
+
+    // 6. туман войны
+    if (isPlaying) {
+      const x0 = Math.max(0, Math.floor(camPx / CS)), x1 = Math.min(SIZE - 1, x0 + VIEW);
+      const y0 = Math.max(0, Math.floor(camPy / CS)), y1 = Math.min(SIZE - 1, y0 + VIEW);
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const v = vis[y * SIZE + x];
+        const a = v > 0 ? 1 - v * 0.98 : (exp[y * SIZE + x] ? 0.80 : 1);
+        if (a <= 0.01) continue;
+        ctx.fillStyle = "rgba(2,3,5," + a.toFixed(3) + ")";
+        ctx.fillRect(x * CS, y * CS, CS, CS);
+      }
+      const fl = 1 + Math.sin(now / 70) * .015 + (Math.random() < .02 ? -.06 : 0);
+      const lx = pPos[0] * CS + CS / 2, ly = pPos[1] * CS + CS / 2, lr = CS * (VIS_R + 1) * fl;
+      const lg = ctx.createRadialGradient(lx, ly, CS * .4, lx, ly, lr);
+      lg.addColorStop(0, "rgba(120,255,176,.10)");
+      lg.addColorStop(.5, "rgba(40,90,60,.04)");
+      lg.addColorStop(1, "rgba(0,0,0,.35)");
+      ctx.fillStyle = lg; ctx.fillRect(camPx, camPy, W, W);
+    }
+    ctx.restore();
+
+    // 7. пыль
+    ctx.fillStyle = "#9fb4d4";
+    motes.forEach(m => {
+      m.x += m.vx; m.y += m.vy;
+      if (m.y < -4) { m.y = W + 4; m.x = Math.random() * W; }
+      if (m.x < -4) m.x = W + 4;
+      if (m.x > W + 4) m.x = -4;
+      ctx.globalAlpha = m.a;
+      ctx.fillRect(Math.round(m.x), Math.round(m.y), m.s, m.s);
+    });
+    ctx.globalAlpha = 1;
+
+    // 8. глитч при угрозе
+    if ((D.critical || G.status === "caught") && now > glitchUntil && Math.random() < .06) {
+      glitchSlice = { y: Math.floor(Math.random() * W * .85), h: 10 + Math.floor(Math.random() * 56), dx: (Math.random() - .5) * 54 };
+      glitchUntil = now + 90;
+    }
+    if (glitchSlice && now < glitchUntil) {
+      ctx.drawImage(canvas, 0, glitchSlice.y, W, glitchSlice.h, glitchSlice.dx, glitchSlice.y, W, glitchSlice.h);
+      ctx.fillStyle = "rgba(255,42,61,.08)"; ctx.fillRect(0, glitchSlice.y, W, glitchSlice.h);
+    }
+    if (G.status === "caught") { ctx.fillStyle = "rgba(255,42,61," + (.10 + .08 * pulse) + ")"; ctx.fillRect(0, 0, W, W); }
+    if (G.status === "found")  { ctx.fillStyle = "rgba(74,222,128," + (.04 + .03 * pulse) + ")"; ctx.fillRect(0, 0, W, W); }
+
+    drawMini(now);
+  }
+
+  /* ---------- управление ---------- */
+  document.addEventListener("keydown", function (e) {
+    if (G.status !== "playing") return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    let dx = 0, dy = 0;
+    const k = e.key;
+    if (k === "1") { e.preventDefault(); useItem("bottle"); return; }
+    if (k === "2") { e.preventDefault(); useItem("smoke");  return; }
+    if (k === "3") { e.preventDefault(); useItem("emp");    return; }
+    if (k === "ArrowUp"    || k === "w" || k === "W" || k === "ц" || k === "Ц") dy = -1;
+    else if (k === "ArrowDown"  || k === "s" || k === "S" || k === "ы" || k === "Ы") dy = 1;
+    else if (k === "ArrowLeft"  || k === "a" || k === "A" || k === "ф" || k === "Ф") dx = -1;
+    else if (k === "ArrowRight" || k === "d" || k === "D" || k === "в" || k === "В") dx = 1;
+    else if (k === " " || k === "Spacebar") { /* ждать: dx=dy=0 */ }
+    else return;
+    e.preventDefault();
+    move(dx, dy);
+  });
+  document.querySelectorAll("#pad .hg-pad__btn").forEach(btn => {
+    btn.addEventListener("click", () => move(parseInt(btn.dataset.dx, 10), parseInt(btn.dataset.dy, 10)));
+  });
+
+  /* ---------- старт ---------- */
+  computeVis(); derive(); paintHud(); buildInv(); modeUI();
+  // записать текущий ход в журнал, если страницу только что открыли
+  (function firstLog() {
+    const last = load("hg_logged", -1);
+    if (last === -1 || last !== G.turns) pushLog();
+  })();
+  requestAnimationFrame(frame);
 })();
 </script>
 
