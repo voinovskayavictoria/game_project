@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">
+        <a href="/projects" style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Назад к проектам
+        </a>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px;">
+        <div>
+            <h1 style="margin-bottom: 10px;">CONNECT</h1>
+            <p style="font-size: 1.2rem; color: var(--text-muted);">Защищенный контур для профессионалов</p>
+        </div>
+        <span class="badge badge-active" style="font-size: 1rem; padding: 8px 16px;">Активен (Тест)</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-bottom: 60px;">
+        <div>
+            <h2 style="font-size: 1.4rem; margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">О проекте</h2>
+            <p style="color: var(--text-main); font-size: 1.05rem; margin-bottom: 20px; line-height: 1.7;">
+                <strong>CONNECT</strong> — это закрытая платформа для корпоративного общения и обмена конфиденциальными данными. 
+                Система создана специально для юридических фирм и их VIP-клиентов, требующих абсолютной анонимности и безопасности.
+            </p>
+            <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 20px; line-height: 1.7;">
+                История платформы начинается в 2018 году. Изначально проект разрабатывался компанией PRIME SYSTEMS по заказу юридической фирмы HAEIL & PARTNERS. 
+                В 2019 году права на дальнейшую поддержку и развитие инфраструктуры CONNECT были переданы компании ORBIT DATA.
+            </p>
+            
+            <h2 style="font-size: 1.4rem; margin-top: 40px; margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">Для кого</h2>
+            <ul style="color: var(--text-muted); font-size: 1rem; line-height: 1.8; margin-left: 20px; margin-bottom: 30px;">
+                <li>Юридические компании (закрытые каналы связи с клиентами).</li>
+                <li>Финансовые организации (обмен документами под NDA).</li>
+                <li>Корпоративные партнеры (безопасное обсуждение сделок).</li>
+            </ul>
+        </div>
+
+        <div>
+            <div class="card" style="position: sticky; top: 120px; background: #f8fafc; border-color: #cbd5e1;">
+                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; margin-bottom: 15px;">Вход в систему</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">
+                    Для доступа к веб-приложению вам потребуются корпоративные учетные данные.
+                </p>
+                <a href="{{ app_link }}" style="display: block; text-align: center; background: var(--accent); color: #fff; padding: 14px 20px; border-radius: 8px; font-weight: 600; font-size: 1rem; transition: background 0.2s; margin-bottom: 15px;">
+                    Открыть веб-приложение
+                </a>
+                <div style="font-size: 0.8rem; color: #ef4444; text-align: center; font-weight: bold;">
+                    ⚠ Внимание: тестовый стенд v0.8
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

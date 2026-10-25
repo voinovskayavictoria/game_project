@@ -7,14 +7,27 @@
 
 <div class="team-grid team-grid--wide">
   {% for person in team %}
-    <article class="person">
-      <img src="{{ url_for('static', filename=person.photo) }}"
-           alt="{{ person.name }}" class="person-photo">
-      <h3>{{ person.name }}</h3>
-      <div class="person-role">{{ person.role }}</div>
-      <p>{{ person.short }}</p>
-      <a href="{{ url_for('team_member', slug=person.slug) }}">Подробнее →</a>
-    </article>
+    {% if person.wip %}
+      <!-- ЗАБЛОКИРОВАННАЯ АНКЕТА -->
+      <article class="person" style="background: #f8fafc; border: 1px dashed #cbd5e0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;">⚙️</div>
+        <h3 style="color: #718096; margin-bottom: 10px;">{{ person.name }}</h3>
+        <div class="person-role" style="color: #a0aec0; font-size: 0.9rem;">{{ person.role }}</div>
+        <div style="margin-top: 20px; font-size: 0.8rem; font-weight: bold; color: #b8312f; text-transform: uppercase; letter-spacing: 1px;">
+          Анкета в доработке
+        </div>
+      </article>
+    {% else %}
+      <!-- ОБЫЧНАЯ АНКЕТА -->
+      <article class="person">
+        <img src="{{ url_for('static', filename=person.photo) }}"
+             alt="{{ person.name }}" class="person-photo">
+        <h3>{{ person.name }}</h3>
+        <div class="person-role">{{ person.role }}</div>
+        <p>{{ person.short }}</p>
+        <a href="{{ url_for('team_member', slug=person.slug) }}">Подробнее →</a>
+      </article>
+    {% endif %}
   {% endfor %}
 </div>
 {% endblock %}

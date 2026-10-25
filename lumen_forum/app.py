@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, abort, request
 from data import SITE, ARCHIVE, INTERVIEWS
+import os
 
 app = Flask(__name__)
 
@@ -40,4 +41,5 @@ def not_found(_e):
     return render_template("404.html"), 404
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5002, debug=True)
+    port = int(os.environ.get("PORT", 5002))
+    app.run(host="0.0.0.0", port=port)

@@ -2,123 +2,271 @@
 {% block title %}О компании — {{ SITE.name }}{% endblock %}
 
 {% block content %}
-<article class="about-page">
-  <h1>Архитекторы цифрового суверенитета</h1>
+
+<style>
+  /* Стили для компактной страницы "О компании" */
+  .about-hero {
+    text-align: center;
+    margin-bottom: 50px;
+    padding: 40px 20px;
+    background: #0d1b2a;
+    color: #fff;
+    border-radius: 8px;
+    border-bottom: 4px solid #c9a227;
+  }
+  .about-hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    margin: 0 0 15px 0;
+  }
+  .about-hero p {
+    font-size: 1.2rem;
+    color: #a0aec0;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  /* Сетка со статистикой */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 60px;
+  }
+  .stat-box {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    padding: 25px 15px;
+    text-align: center;
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  }
+  .stat-box__num {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #c9a227;
+    font-family: 'Inter', sans-serif;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .stat-box__label {
+    font-size: 0.85rem;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  /* Основные направления (сетка) */
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-bottom: 60px;
+  }
+  .pillar {
+    background: #f8fafc;
+    padding: 30px;
+    border-radius: 6px;
+    border-top: 3px solid #0d1b2a;
+  }
+  .pillar h3 {
+    margin-top: 0;
+    color: #0d1b2a;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+  .pillar p {
+    color: #4a5568;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* Цитата манифеста */
+  .manifesto {
+    background: #0d1b2a;
+    color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    font-style: italic;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    border-left: 4px solid #c9a227;
+    margin-bottom: 60px;
+  }
+
+  /* ===== БЛОК КАРЬЕРЫ ===== */
+  .career-section {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .career-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #0d1b2a;
+    padding-bottom: 15px;
+  }
+  .career-header h2 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: #0d1b2a;
+  }
+  .career-requirements {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+  .career-req-item {
+    background: #edf2f7;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #2d3748;
+    border-left: 3px solid #c9a227;
+  }
   
-  <p class="lead">
-    PRIME SYSTEMS — это не просто IT-компания. Это закрытый экосистемный контур, обеспечивающий 
-    технологическую безопасность и стабильность ведущих корпораций и государственных структур. 
-    Мы стоим за кулисами стабильности вашего бизнеса.
+  /* Заблокированная форма */
+  .career-form-wip {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e0;
+    padding: 30px;
+    text-align: center;
+    border-radius: 6px;
+  }
+  .career-form-wip h3 {
+    color: #b8312f;
+    margin-top: 0;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .career-form-wip p {
+    color: #718096;
+    margin-bottom: 20px;
+  }
+  .career-form-wip input {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    background: #edf2f7;
+    color: #a0aec0;
+    cursor: not-allowed;
+  }
+  .career-form-wip button {
+    background: #cbd5e0;
+    color: #718096;
+    border: none;
+    padding: 12px 30px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: not-allowed;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .pillars-grid { grid-template-columns: 1fr; }
+    .career-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+</style>
+
+<!-- Шапка -->
+<div class="about-hero">
+  <h1>Архитекторы цифрового суверенитета</h1>
+  <p>PRIME SYSTEMS — закрытый экосистемный контур, обеспечивающий безопасность данных корпораций и государственных структур с 2014 года.</p>
+</div>
+
+<!-- Цифры -->
+<div class="stats-grid">
+  <div class="stat-box">
+    <div class="stat-box__num">12</div>
+    <div class="stat-box__label">лет на рынке</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-box__num">1500+</div>
+    <div class="stat-box__label">специалистов</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-box__num">40+</div>
+    <div class="stat-box__label">стран присутствия</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-box__num">99.9%</div>
+    <div class="stat-box__label">SLA доступности</div>
+  </div>
+</div>
+
+<!-- Направления -->
+<h2 style="font-family: 'Playfair Display', serif; font-size: 2rem; color: #0d1b2a; margin-bottom: 25px;">Наши компетенции</h2>
+<div class="pillars-grid">
+  <div class="pillar">
+    <h3>Кибербезопасность</h3>
+    <p>Разработка протоколов шифрования, устойчивых к перехвату и DPI-анализу. Защита критической инфраструктуры.</p>
+  </div>
+  <div class="pillar">
+    <h3>Закрытые контуры</h3>
+    <p>Создание изолированных сетей для конфиденциальной связи. Архитектуры, не оставляющие цифровых следов.</p>
+  </div>
+  <div class="pillar">
+    <h3>Аналитика данных</h3>
+    <p>Глубокая обработка Big Data, выявление скрытых угроз и прогнозирование рисков в реальном времени.</p>
+  </div>
+</div>
+
+<!-- Манифест -->
+<div class="manifesto">
+  «Мы не предсказываем будущее. Мы его программируем. А тот, кто контролирует код, контролирует реальность.»
+  <br><br>
+  <span style="color: #c9a227; font-weight: bold; font-style: normal; font-size: 0.9rem;">— Из внутреннего манифеста PRIME SYSTEMS, 2019 г.</span>
+</div>
+
+<!-- ================= БЛОК КАРЬЕРЫ ================= -->
+<div class="career-section">
+  <div class="career-header">
+    <h2>Карьера в PRIME SYSTEMS</h2>
+    <span style="background: #b8312f; color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">Прием закрыт</span>
+  </div>
+  
+  <p style="color: #4a5568; margin-bottom: 25px; font-size: 1.05rem;">
+    Мы всегда ищем специалистов высочайшего уровня. Если вы готовы работать 24/7, хранить абсолютную лояльность корпорации и не задавать лишних вопросов — мы ждем вас.
   </p>
 
-  <div class="grid-2" style="margin-top: 3rem;">
-    <div class="card">
-      <h3>Наша философия</h3>
-      <p>Мы верим, что будущее строится на абсолютном доверии и бескомпромиссной безопасности. 
-      В мире, где данные стали новой валютой, PRIME SYSTEMS — это швейцарский банк вашей информации. 
-      Наши алгоритмы работают быстрее, чем вы успеваете подумать о рисках.</p>
-    </div>
-    <div class="card">
-      <h3>Масштаб и влияние</h3>
-      <ul class="facts">
-        <li><strong>Основана:</strong> 2014 г.</li>
-        <li><strong>Специалистов:</strong> 1500+</li>
-        <li><strong>Офисы:</strong> Москва, Лондон, Дубай, Сеул</li>
-        <li><strong>Уровень допуска:</strong> Государственный</li>
-      </ul>
-    </div>
+  <div class="career-requirements">
+    <div class="career-req-item">Абсолютная конфиденциальность</div>
+    <div class="career-req-item">Стрессоустойчивость</div>
+    <div class="career-req-item">Готовность к аудиту связей</div>
   </div>
 
-  <h2 style="margin-top: 4rem; letter-spacing: 0.1em; text-transform: uppercase;">Наши компетенции</h2>
-  <ul class="plain-list" style="margin-top: 1.5rem;">
-    <li style="margin-bottom: 1rem;">
-      <strong>Абсолютная безопасность:</strong> Мы разрабатываем протоколы передачи данных, которые невозможно взломать. 
-      Наши клиенты спят спокойно, потому что мы не спим никогда.
-    </li>
-    <li style="margin-bottom: 1rem;">
-      <strong>Флагманские проекты:</strong> Мы обеспечиваем безопасность критической инфраструктуры и разрабатываем закрытые архитектуры для самых требовательных заказчиков. 
-      Мы не делаем публичных релизов — мы делаем историю.
-    </li>
-    <li style="margin-bottom: 1rem;">
-      <strong>Кадровый резерв:</strong> В PRIME SYSTEMS работают лучшие умы. 
-      Наш отдел HR отбирает специалистов, готовых посвятить себя корпорации целиком. Лояльность здесь ценится дороже золота.
-    </li>
-  </ul>
-
-  <h2 style="margin-top: 4rem; letter-spacing: 0.1em; text-transform: uppercase;">Совет директоров</h2>
-  <p class="lead" style="font-size: 1.1rem; margin-bottom: 2rem;">
-    Стратегическое видение компании определяют люди, чьи имена не нуждаются в представлении. 
-    Они видят цель, и они видят путь к ней. Через технологии. Через данные. Через нас с вами.
-  </p>
-  <a href="{{ url_for('team') }}" class="back-link" style="margin-top: 1rem; display: inline-block; color: #c9a227; text-decoration: none; border-bottom: 1px solid #c9a227; padding-bottom: 2px;">
-    → Познакомиться с руководством
-  </a>
-
-  <!-- ================= БЛОК КАРЬЕРЫ ================= -->
-  <div style="margin-top: 5rem; padding-top: 3rem; border-top: 2px solid #c9a227;">
-    <h2 style="letter-spacing: 0.1em; text-transform: uppercase; color: #c9a227;">
-      Карьера в PRIME SYSTEMS
-    </h2>
-    <p class="lead">
-      Мы не ищем сотрудников. Мы отбираем ресурс для построения будущего. 
-      Если вы готовы стать частью системы, у вас есть шанс. Но предупреждаем сразу: здесь не будет легко.
-    </p>
-
-    <div class="grid-2" style="margin-top: 2rem;">
-      <!-- ТРЕБОВАНИЯ -->
-      <div class="card" style="border-left: 3px solid #b8312f; background: #110a0a;">
-        <h3 style="color: #ff4d4d;">Бескомпромиссные требования</h3>
-        <ul class="plain-list" style="color: #ccc;">
-          <li style="margin-bottom: 0.8rem;"><strong>Абсолютная лояльность.</strong> Корпорация — это ваша семья, кров и приоритет. Личные интересы остаются за периметром.</li>
-          <li style="margin-bottom: 0.8rem;"><strong>Готовность к 24/7.</strong> У нас нет переработок. У нас есть только конечный результат. В любое время суток.</li>
-          <li style="margin-bottom: 0.8rem;"><strong>Цифровая гигиена.</strong> Мы проведем тотальный аудит ваших социальных сетей, финансов и связей. Ваше прошлое будет стерто. Ваше будущее принадлежит нам.</li>
-          <li style="margin-bottom: 0.8rem;"><strong>Стрессоустойчивость.</strong> Вы должны уметь молчать о том, что видите. Навсегда. NDA с пропиской о неразглашении подписывается кровью в прямом смысле слова (юридически).</li>
-        </ul>
-      </div>
-
-      <!-- ВАКАНСИИ -->
-      <div class="card" style="border-left: 3px solid #c9a227; background: #0a1017;">
-        <h3 style="color: #c9a227;">Открытые позиции</h3>
-        
-        <div style="margin-bottom: 1.5rem;">
-          <strong style="color: #fff; display: block; font-size: 1.1em; margin-bottom: 4px;">Специалист по сетевой безопасности</strong>
-          <span class="muted" style="font-size: 0.9em;">Опыт от 5 лет. Работа с закрытыми архитектурами. Знание протоколов защиты данных обязательно. Допуск к секретной информации уровня 3.</span>
-        </div>
-
-        <div style="margin-bottom: 1.5rem;">
-          <strong style="color: #fff; display: block; font-size: 1.1em; margin-bottom: 4px;">Инженер по базам данных</strong>
-          <span class="muted" style="font-size: 0.9em;">Готовность к частым командировкам (координаты не разглашаются). Работа с узлами связи и миграцией крупных дата-центров.</span>
-        </div>
-
-        <div style="margin-bottom: 0;">
-          <strong style="color: #fff; display: block; font-size: 1.1em; margin-bottom: 4px;">Специалист по подбору персонала</strong>
-          <span class="muted" style="font-size: 0.9em;">Поиск редких специалистов для закрытых проектов. Знание психологии. Умение хранить секреты. Пункт про моральные принципы — не для этой вакансии.</span>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top: 3rem; text-align: center;">
-      <!-- КНОПКА ВРЕМЕННО НЕДОСТУПНА -->
-      <button 
-         onclick="this.innerText='ВРЕМЕННО НЕДОСТУПНО'; this.style.borderColor='#b8312f'; this.style.color='#b8312f'; this.style.cursor='not-allowed'; this.disabled=true;" 
-         style="display: inline-block; padding: 1rem 3rem; background: transparent; border: 1px solid #c9a227; color: #c9a227; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: inherit; font-size: 1em;"
-         onmouseover="this.style.background='#c9a227'; this.style.color='#000';" 
-         onmouseout="this.style.background='transparent'; this.style.color='#c9a227';">
-        Отправить резюме
-      </button>
-      <p class="muted" style="margin-top: 1rem; font-size: 0.8em;">
-        * Прием заявок временно приостановлен. Следите за обновлениями.
-      </p>
+  <!-- Заблокированная форма -->
+  <div class="career-form-wip">
+    <h3>⚠ Анкета временно недоступна</h3>
+    <p>В связи с обновлением внутренних протоколов безопасности, регистрация новых заявок приостановлена. Следите за обновлениями.</p>
+    
+    <div style="max-width: 400px; margin: 0 auto; text-align: left;">
+      <label style="display: block; font-size: 0.8rem; color: #a0aec0; margin-bottom: 5px;">Ваше ФИО</label>
+      <input type="text" placeholder="Введите имя" disabled>
+      
+      <label style="display: block; font-size: 0.8rem; color: #a0aec0; margin-bottom: 5px;">Желаемая должность</label>
+      <input type="text" placeholder="Например, специалист по ИБ" disabled>
+      
+      <button type="button" disabled style="width: 100%; margin-top: 10px;">Отправить резюме</button>
     </div>
   </div>
-  <!-- =============================================== -->
+</div>
+<!-- =============================================== -->
 
-  <div style="margin-top: 5rem; padding: 2rem; border: 1px solid #2a2a2a; background: #0d1b2a; border-left: 3px solid #c9a227;">
-    <p class="muted" style="font-size: 0.95em; font-style: italic; margin: 0;">
-      «Мы не предсказываем будущее. Мы его программируем. А тот, кто контролирует код, контролирует реальность.»
-      <br><br>
-      — Из внутреннего манифеста PRIME SYSTEMS, 2019 г.
-    </p>
-  </div>
-</article>
 {% endblock %}
