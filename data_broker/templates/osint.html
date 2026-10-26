@@ -14,9 +14,10 @@
             --desk-bg: #1c1917; --paper-bg: #fcfaf5;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        /* ДЕСКТОПНАЯ ВЕРСИЯ (По умолчанию) */
         body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-        /* ЛЕВАЯ ПАНЕЛЬ (OSINT) */
         .sidebar { width: 320px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.02); z-index: 10; }
         .header { padding: 24px; border-bottom: 1px solid var(--border); }
         .header h1 { font-size: 1.1rem; font-weight: 700; }
@@ -35,7 +36,6 @@
         .check-icon { color: var(--success); font-size: 1rem; display: none; font-weight: bold; }
         .char-btn.solved .check-icon { display: block; }
 
-        /* ОСНОВНОЙ КОНТЕНТ */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; }
         .profile-view { display: none; flex-direction: column; gap: 24px; max-width: 1000px; margin: 0 auto; width: 100%; }
         .profile-view.active { display: flex; }
@@ -57,7 +57,6 @@
         .fact-item .status { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
         .fact-item.found .status { color: var(--success); }
 
-        /* ПОЛИЦЕЙСКИЙ ОТЧЕТ */
         .report-view { display: none; width: 100%; background: var(--desk-bg); height: 100vh; overflow-y: auto; padding: 40px 20px 80px; }
         .report-view.active { display: block; }
         
@@ -87,7 +86,6 @@
         .point__num { font-size: 15px; font-weight: 700; color: #111 !important; margin-bottom: 5px; display: inline-block; }
         .point__text { font-size: 15px; line-height: 1.6; color: #333 !important; margin-bottom: 10px; }
         
-        /* Поле ввода */
         .point__input-wrapper { display: flex; align-items: flex-end; width: 100%; }
         .point__input, .signature-input { 
             font-family: "Caveat", cursive; font-size: 24px; line-height: 1.2; 
@@ -108,13 +106,25 @@
         .score-box { margin-top: 40px; padding: 25px; background: rgba(185,28,28,.05); border: 1px solid #b91c1c; border-left: 6px solid #b91c1c; font-size: 15px; line-height: 1.6; display: none; position: relative; z-index: 1; }
         .score-box b { color: #b91c1c !important; font-size: 18px; text-transform: uppercase; display: block; margin-bottom: 10px; }
 
-        /* СПЕЦ-БЛОК ДЛЯ МИЛАНЫ */
         .special-point { background: rgba(185,28,28,0.05); border: 1px dashed #b91c1c; padding: 20px; margin-top: 20px; }
         .special-point .point__num { color: #b91c1c !important; }
         .special-point .point__input { border-bottom-color: #b91c1c !important; color: #b91c1c !important; }
         .special-point .point__input:focus { background: rgba(185,28,28,0.1) !important; }
 
-        @media (max-width: 700px) { .paper { padding: 40px 20px; } .paper::before { display: none; } .signature-block { flex-direction: column; gap: 20px; align-items: flex-start; } }
+        /* АДАПТИВНОСТЬ ДЛЯ МОБИЛОК И ПЛАНШЕТОВ */
+        @media (max-width: 900px) {
+            body { flex-direction: column; height: auto; overflow-y: auto; }
+            .sidebar { width: 100%; max-height: 35vh; border-right: none; border-bottom: 2px solid var(--border); }
+            .main-content { padding: 20px; overflow-y: visible; }
+            .report-view { height: auto; min-height: 100vh; padding: 20px 10px; }
+            .paper { padding: 30px 20px; box-shadow: none; border: none; }
+            .paper::before { display: none; } /* Убираем штамп на телефоне, чтобы не перекрывал текст */
+            .point__text { font-size: 14px; }
+            .point__input, .signature-input { font-size: 20px; }
+            textarea { font-size: 16px; } /* Предотвращает зум экрана на iOS */
+            .signature-block { flex-direction: column; align-items: flex-start; gap: 20px; }
+            .signature-line-wrapper { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -554,7 +564,6 @@
         function submitReport() {
             let reportScore = 0;
             
-            // Считаем баллы за правильные ответы в отчете
             for (const [id, answers] of Object.entries(reportAnswers)) {
                 const input = document.getElementById(id);
                 let val = input.value.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
@@ -574,15 +583,12 @@
                 }
             }
 
-            // Считаем бонус за имя следователя
             const invName = document.getElementById('investigator-name').value.trim().toLowerCase().replace(/ё/g, 'е');
             let nameBonus = 0;
             let nameBonusText = "";
 
             if (invName !== "") {
-                // Проверка на спец-имена (Войновская, Шульга, Калинкова)
                 const isSpecial = specialNames.some(name => invName.includes(name));
-                // Проверка на остальных из списка
                 const isGeneral = generalNames.some(name => invName.includes(name));
 
                 if (isSpecial) {
@@ -596,9 +602,8 @@
                 }
             }
 
-            // Итоговый подсчет
             const totalScore = foundFacts + reportScore + nameBonus;
-            const maxScore = totalFacts + 17 + 4; // макс факты + макс отчет + макс бонус имени
+            const maxScore = totalFacts + 17 + 4;
 
             const scoreBox = document.getElementById('score-box');
             const scoreTitle = document.getElementById('score-title');
