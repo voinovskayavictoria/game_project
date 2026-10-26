@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>DEV MODE — CONNECT</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+  <style>
+    .dev-cat { margin-bottom: 24px; border: 1px solid var(--line-2); padding: 16px; background: var(--panel); }
+    .dev-cat__title { font-family: var(--mono); color: var(--green); letter-spacing: 2px; margin-bottom: 12px; font-weight: 700; }
+    .dev-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .dev-btn { background: var(--bg); border: 1px solid var(--line-2); color: var(--ink); padding: 8px 12px; cursor: pointer; font-family: var(--mono); font-size: 12px; transition: all .15s; }
+    .dev-btn:hover { border-color: var(--green); color: var(--green); background: rgba(74, 222, 128, 0.05); }
+    .dev-btn.is-added { border-color: var(--green); color: var(--green); opacity: 0.6; cursor: default; }
+    
+    .cat-box { margin-top: 30px; padding: 24px; background: #0a0d12; border: 1px solid #1e2632; border-left: 3px solid var(--green); font-family: var(--mono); color: var(--ink); line-height: 1.6; white-space: pre-wrap; font-size: 13px; }
+    .cat-header { color: var(--green); font-weight: 700; margin-bottom: 12px; letter-spacing: 2px; }
+    
+    .dev-toast { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: #000; padding: 10px 20px; font-family: var(--mono); font-weight: 700; border-radius: 4px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9999; }
+    .dev-toast.is-active { opacity: 1; }
+  </style>
+</head>
+<body class="s-app">
+
+  <header class="s-topbar">
+    <div class="s-brand">
+      <span class="s-mark">C</span>
+      <span class="s-name">CONNECT<span class="s-name--thin">//DEV</span></span>
+    </div>
+    <div class="s-user">
+      <span class="s-session" style="color: var(--green);">uid: <b>root</b></span>
+      <a href="{{ url_for('inbox') }}" class="s-nav-link">// inbox</a>
+      <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
+    </div>
+  </header>
+
+  <main class="vault" style="max-width: 900px;">
+    <header class="vault__head">
+      <div class="vault__kicker" style="color: var(--green);">SYSTEM OVERRIDE</div>
+      <h1 class="vault__title">РЕЖИМ РАЗРАБОТЧИКА</h1>
+      <p class="vault__lead">Выдача фрагментов вручную, чтобы не проходить игру заново.</p>
+    </header>
+
+    <!-- Котик-успокоитель -->
+    <div class="cat-box">
+      <div class="cat-header">// СИСТЕМНЫЙ КОТ</div>
+      {{ dev.cat_text }}
+    </div>
+
+    <!-- Глобальные кнопки -->
+    <div style="margin: 30px 0; display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="dress-btn" onclick="devAction('/dev/full', 'ВСЕ ФРАГМЕНТЫ ВЫДАНЫ')">
+        // ВЫДАТЬ ВСЕ ФРАГМЕНТЫ
+      </button>
+      <button class="dress-btn dress-btn--ghost" style="border-color: #ff2a3d; color: #ff2a3d;" onclick="devAction('/dev/clear', 'ВСЁ ОЧИЩЕНО')">
+        // ОЧИСТИТЬ ФРАГМЕНТЫ
+      </button>
+    </div>
+
+    
+    <div class="dev-cat">
+  <div class="dev-cat__title">// СЮЖЕТНЫЕ ПЕРЕМЕННЫЕ</div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+    <label class="dev-btn" style="cursor:pointer;">
+      <input type="checkbox" onchange="setState('hunt_killed_guard', this.checked ? '1' : '')">
+      убил егеря (killer)
+    </label>
+    <label class="dev-btn" style="cursor:pointer;">
+      <input type="checkbox" onchange="setState('panopticon_rescued', this.checked ? '1' : '')">
+      сообщил о CAM-05 (rescued)
+    </label>
+    <label class="dev-btn" style="cursor:pointer;">
+      <input type="checkbox" onchange="setState('panopticon_found', this.checked ? '1' : '')">
+      увидел CAM-05 (found)
+    </label>
+    <label class="dev-btn" style="cursor:pointer;">
+      <input type="checkbox" onchange="setState('panopticon_decided', this.checked ? '1' : '')">
+      решение по CAM-05 принято
+    </label>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:12px;">
+    <select class="dev-btn" onchange="setState('hunt_choice', this.value)">
+      <option value="">hunt_choice = —</option>
+      <option value="reveal">reveal · раскрыл инженера</option>
+      <option value="hide">hide · скрыл инженера</option>
+      <option value="surrender">surrender · сдался егерю</option>
+    </select>
+
+    <select class="dev-btn" onchange="setState('quiz_key', this.value)">
+      <option value="">quiz_key = —</option>
+      <option value="aggression">aggression · Милана мертва</option>
+      <option value="paranoia">paranoia · Милана жива, её держат</option>
+      <option value="lies">lies · Милана мертва, дело закрыто</option>
+      <option value="distrust">distrust · Милана продана</option>
+      <option value="isolation">isolation · Милана мертва, никто не искал</option>
+      <option value="existential">existential · Милана мертва, официально её не было</option>
+      <option value="selfish">selfish · Милана возвращена в сегмент</option>
+      <option value="loss_of_self">loss_of_self · Милана стёрта</option>
+      <option value="curiosity">curiosity · Милана мертва, вы нашли поздно</option>
+      <option value="silent">silent · Милана свободна</option>
+      <option value="secret_x">secret_x · Милана свободна (секрет)</option>
+    </select>
+
+    <select class="dev-btn" onchange="setState('hijack_role', this.value)">
+      <option value="">hijack_role = —</option>
+      <option value="свой">свой · приняли за своего</option>
+      <option value="чужой">чужой · под чужим именем</option>
+      <option value="работник">работник · рядовой</option>
+      <option value="руководство">руководство · назвались начальством</option>
+      <option value="силовик">силовик · назвались охраной</option>
+      <option value="журналист">журналист · назвались прессой</option>
+      <option value="слабый">слабый · не назвались</option>
+      <option value="милана">милана · назвались Миланой</option>
+      <option value="реальный">реальный · настоящим именем</option>
+      <option value="мусор">мусор · ввели мусор</option>
+    </select>
+
+    <select class="dev-btn" onchange="setState('dress_motive_arch', this.value)">
+      <option value="">dress_motive_arch = —</option>
+      <option value="save">save · спасти</option>
+      <option value="use">use · использовать</option>
+      <option value="destroy">destroy · уничтожить</option>
+    </select>
+  </div>
+</div>
+{% for cat, frags in dev.fragments.items() %}
+<div class="dev-cat">
+  <div class="dev-cat__title">// {{ cat | upper }}</div>
+  <div class="dev-grid">
+    {% for f in frags %}
+      {% set is_added = f in current_frags %}
+      {% set desc = dev.fragment_descriptions.get(f, "") %}
+      <button class="dev-btn {% if is_added %}is-added{% endif %}" 
+              {% if is_added %}disabled{% endif %}
+              title="{{ desc }}"
+              onclick="addFragment('{{ f }}', this)">
+        <span style="display:block;">{{ f }}</span>
+        {% if desc %}
+        <span style="display:block; font-size:10px; opacity:0.7; margin-top:4px; text-align:left;">
+          {{ desc }}
+        </span>
+        {% endif %}
+      </button>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+  </main>
+
+  <div class="dev-toast" id="toast">Готово</div>
+
+  <script>
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('is-active');
+      setTimeout(() => t.classList.remove('is-active'), 2500);
+    }
+
+    function addFragment(frag, btn) {
+      const fd = new FormData();
+      fd.append('fragment', frag);
+      
+      fetch('/dev/add', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            btn.classList.add('is-added');
+            btn.disabled = true;
+            showToast(data.msg);
+          } else {
+            showToast('Ошибка: ' + (data.msg || 'неизвестно'));
+          }
+        })
+        .catch(() => showToast('Ошибка сети'));
+    }
+
+    function devAction(url, successMsg) {
+      fetch(url, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            showToast(successMsg);
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            showToast('Ошибка');
+          }
+        })
+        .catch(() => showToast('Ошибка сети'));
+    }
+
+    function setState(key, val) {
+  const fd = new FormData();
+  fd.append('key', key);
+  fd.append('val', val);
+  fetch('/dev/set', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) showToast(data.msg);
+      else showToast('Ошибка: ' + (data.msg || ''));
+    })
+    .catch(() => showToast('Ошибка сети'));
+}
+  </script>
+</body>
+</html>

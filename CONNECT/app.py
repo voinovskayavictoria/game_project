@@ -18,6 +18,7 @@ from data import (
     PLOT_EXTRA_MODS,
     FATE_BY_KEY, PLOT_HUNT_MODS,
     REPORT,
+    DEV_MODE,
 )
 import os
 import json
@@ -750,8 +751,16 @@ def login():
         if len(user) > 100 or len(pwd) > 100:
             return shutdown(reason="breach")
 
-        if is_suspicious_text(pwd) and pwd not in (PASSWORD_SECRET, PASSWORD_PUBLIC):
-            return shutdown(reason="keyword")
+        if (is_suspicious_text(pwd)
+        and pwd not in (PASSWORD_SECRET, PASSWORD_PUBLIC, DEV_MODE["password"])):
+             return shutdown(reason="keyword")
+        
+        if user == DEV_MODE["login"] and pwd == DEV_MODE["password"]:
+            session["authed"] = True
+            session["secret"] = True
+            session["is_dev"] = True   # <-- флаг разработчика
+            session["fails"] = 0
+            return redirect(url_for("dev_panel"))
 
         if user == LOGIN_SECRET and pwd == PASSWORD_SECRET:
             session["authed"] = True
@@ -773,6 +782,121 @@ def login():
 
     return render_template("login.html", error=False)
 
+@app.route("/dev", methods=["GET"])
+def dev_panel():
+    if not session.get("is_dev"):
+        return redirect(url_for("login"))
+    
+    # Собираем все фрагменты, которые есть в базе (для отображения)
+    all_frags = []
+    for cat, frags in DEV_MODE["fragments"].items():
+        for f in frags:
+            all_frags.append({"cat": cat, "val": f})
+            
+    current_frags = session.get("found_fragments", [])
+    
+    return render_template(
+        "dev.html",
+        dev=DEV_MODE,
+        all_frags=all_frags,
+        current_frags=current_frags,
+        chats=SECRET_CHATS,
+    )
+
+
+@app.route("/dev/add", methods=["POST"])
+def dev_add_fragment():
+    if not session.get("is_dev"):
+        return jsonify({"ok": False}), 403
+        
+    frag = request.form.get("fragment", "").strip()
+    if not frag:
+        return jsonify({"ok": False, "msg": "Пусто"})
+        
+    frags = set(session.get("found_fragments", []))
+    frags.add(frag)
+    session["found_fragments"] = list(frags)
+    session.modified = True
+    
+    return jsonify({"ok": True, "msg": f"Фрагмент {frag} добавлен"})
+
+
+@app.route("/dev/clear", methods=["POST"])
+def dev_clear_fragments():
+    if not session.get("is_dev"):
+        return jsonify({"ok": False}), 403
+        
+    session["found_fragments"] = []
+    session.modified = True
+    return jsonify({"ok": True, "msg": "Все фрагменты удалены"})
+
+
+@app.route("/dev/full", methods=["POST"])
+def dev_full_fragments():
+    if not session.get("is_dev"):
+        return jsonify({"ok": False}), 403
+        
+    # Выдать все фрагменты сразу
+    all_frags = []
+    for cat, frags in DEV_MODE["fragments"].items():
+        all_frags.extend(frags)
+        
+    session["found_fragments"] = all_frags
+    session.modified = True
+    return jsonify({"ok": True, "msg": "Выданы все фрагменты"})
+
+@app.route("/dev/set", methods=["POST"])
+def dev_set_state():
+    if not session.get("is_dev"):
+        return jsonify({"ok": False}), 403
+
+    key = request.form.get("key", "").strip()
+    val = request.form.get("val", "").strip()
+
+    allowed = {
+        "hunt_choice":        ["reveal", "hide", "surrender", ""],
+        "hunt_killed_guard":  ["1", ""],
+        "panopticon_rescued": ["1", ""],
+        "panopticon_found":   ["1", ""],
+        "panopticon_decided": ["1", ""],
+        "dress_motive_arch":  ["save", "use", "destroy", ""],
+        "quiz_key":           ["aggression","paranoia","lies","distrust","isolation",
+                               "existential","selfish","loss_of_self","curiosity",
+                               "silent","secret_x",""],
+        "hijack_role":        ["свой","чужой","работник","руководство","силовик",
+                               "журналист","слабый","милана","реальный","мусор",""],
+    }
+
+    if key not in allowed or val not in allowed[key]:
+        return jsonify({"ok": False, "msg": "Недопустимо"})
+
+    if val == "":
+        session.pop(key, None)
+    else:
+        if key == "hunt_killed_guard" and val == "1":
+            session[key] = True
+        elif key in ("panopticon_rescued", "panopticon_found", "panopticon_decided") and val == "1":
+            session[key] = True
+        else:
+            session[key] = val
+
+    session.modified = True
+    return jsonify({"ok": True, "msg": f"{key} = {val or '(пусто)'}"})
+
+@app.route("/dev/session")
+def dev_session():
+    if not session.get("is_dev"):
+        return "not dev", 403
+    return jsonify({
+        "found_fragments": session.get("found_fragments", []),
+        "hijack_role": session.get("hijack_role"),
+        "quiz_key": session.get("quiz_key"),
+        "dress_motive_arch": session.get("dress_motive_arch"),
+        "hunt_choice": session.get("hunt_choice"),
+        "hunt_killed_guard": session.get("hunt_killed_guard"),
+        "panopticon_rescued": session.get("panopticon_rescued"),
+        "panopticon_found": session.get("panopticon_found"),
+    })
 
 @app.route("/logout")
 def logout():
@@ -930,10 +1054,10 @@ def chat(chat_id):
 
             elif is_director and not session.get("account_deactivated"):
                 threats = [
-                    "КТО ЭТО БЛЯТЬ ТУТ",
+                    "???? КТО ЭТО ПИШЕТ ?",
                     "Кто сидит за аккаунтом Миланы Макаровой?",
-                    "Макарова задержана час назад.",
-                    "Аккаунт будет деактивирован.",
+                    "Макарова пропала некоторое время назад.",
+                    "Я сообщу в отдел кибербезопасности. Аккаунт будет деактивирован.",
                 ]
                 for t in threats:
                     state.append({
