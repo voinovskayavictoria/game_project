@@ -567,7 +567,13 @@ window.HG = (function () {
 
     tD = Math.hypot(px0 - TARGET_POS[0], py0 - TARGET_POS[1]);
     tSeen = visAt(TARGET_POS[0], TARGET_POS[1]) > 0;
-    tShow = ending || (tSeen && (TARGET_MODE !== "hide" || tD <= 2.2));
+// цель показывается, если:
+//  - игра закончена,
+//  - ИЛИ она в прямой видимости (не в hide, либо близко),
+//  - ИЛИ сигнал >= 70 (подсветка «цель рядом»)
+tShow = ending
+     || (tSeen && (TARGET_MODE !== "hide" || tD <= 2.2))
+     || (isPlaying && signal >= 70);
 
     const maxD = Math.hypot(SIZE, SIZE) * 0.7;
     let base = clamp(Math.round((1 - tD / maxD) * 100), 3, 100);
@@ -575,6 +581,11 @@ window.HG = (function () {
     if (TARGET_MODE === "flee") base = Math.min(100, base + 8);
     signal = clamp(base + Math.round((hash(TURNS, 7, 3) - .5) * 14), 3, 100);
     nearHot = isPlaying && signal >= 70;
+    
+    // подсветка цели при высоком сигнале — даже сквозь стены
+    if (isPlaying && signal >= 70) {
+      tShow = true;
+    }
 
     nearest = 99;
     GUARDS.forEach(g => { if (!g.stun) nearest = Math.min(nearest, Math.hypot(px0 - g.pos[0], py0 - g.pos[1])); });

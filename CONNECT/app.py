@@ -556,7 +556,9 @@ def _evaluate_hijack(chain, values):
     phrase = " ".join(parts)
 
     base_msg = (cfg["special_reactions"].get(role)
-                or cfg["role_reactions"][role_arch])
+                or cfg["role_reactions"].get(role_arch)
+                or cfg["role_reactions"]["мусор"])
+    
     entry_mod = cfg["entry_mods"].get(entry_id, "")
     if entry_mod:
         base_msg = entry_mod + "\n" + base_msg
