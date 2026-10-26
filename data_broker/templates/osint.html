@@ -549,8 +549,8 @@
             let html = `
                 <div class="input-card">
                     <label class="input-label">Выкачать цифровой след</label>
-                    <p class="input-hint">Введите факты: год рождения, место работы, должность, опишите личность одним словом и т.д.!ОДНО СЛОВО, МАЛЕНЬКИЕ БУКВЫ!</p>
-                    <textarea id="trace-input" placeholder="Например: 1995, прайм..."></textarea>
+                    <p class="input-hint">Введите факты: год рождения, место работы, должность, опишите личность одним словом и т.д.</p>
+                    <textarea id="trace-input" placeholder="Например: 1995, прайм, hr, нарцисс..."></textarea>
                     <button class="btn-analyze" onclick="analyzeTraces('${id}')">ПРОАНАЛИЗИРОВАТЬ ТЕКСТ</button>
                     <div class="results-grid" id="results-${id}">
             `;
@@ -673,6 +673,7 @@
                 }
             }
 
+            // Бонус за имя
             const invName = document.getElementById('investigator-name').value.trim().toLowerCase().replace(/ё/g, 'е');
             let nameBonus = 0;
             let nameBonusText = "";
@@ -692,31 +693,35 @@
                 }
             }
 
+            // СЧИТАЕМ ОБЩИЙ СЧЕТ (Улики + Отчет + Имя)
             const totalScore = foundFacts + reportScore + nameBonus;
-            const maxScore = totalFacts + 20 + 4; // 17 обычных + 3 за Милану + 3 за спасенных (итого 20 по отчету) + 4 за имя
+            const maxScore = totalFacts + 20 + 4; // Максимум 91 балл
+            
+            // Считаем процент от идеального прохождения
+            const percent = (totalScore / maxScore) * 100;
 
             const scoreBox = document.getElementById('score-box');
             const scoreTitle = document.getElementById('score-title');
             const scoreText = document.getElementById('score-text');
             
             scoreBox.style.display = 'block';
-            scoreTitle.innerText = `ИТОГОВЫЙ СЧЕТ: ${totalScore} / ${maxScore}`;
+            scoreTitle.innerText = `ИТОГОВЫЙ СЧЕТ: ${totalScore} / ${maxScore} (${Math.round(percent)}%)`;
             
             let milanaStatus = document.getElementById('r-q15').value.trim().toLowerCase();
-            let milanaBonus = (milanaStatus.includes('жива')) ? "<br><b>МИЛАНА СПАСЕНА! (Бонус: +3 балла)</b>" : "<br><span style='color:red'>Вы не смогли установить, что Милана жива. Бонус не начислен.</span>";
-
+            let milanaBonus = (milanaStatus.includes('жива')) ? "<br><b>МИЛАНА СПАСЕНА! (Бонус: +3 балла)</b>" : "";
             let rescuedStatus = document.getElementById('r-q16').value.trim().toLowerCase();
             let rescuedBonus = (rescuedStatus.includes('2') || rescuedStatus.includes('инженер')) ? "<br><b>ЖЕРТВЫ СПАСЕНЫ! (Бонус: +3 балла)</b>" : "";
 
-            if (reportScore >= 17) {
-                scoreText.innerHTML = "<b>ПРИГОВОР ВЫНЕСЕН.</b> Следствие собрало неопровержимые доказательства. Климов и Мельников предстанут перед судом." + milanaBonus + rescuedBonus + nameBonusText;
+            // Выдаем вердикт в зависимости от ОБЩЕГО процента
+            if (percent >= 70) {
                 scoreTitle.style.color = "#166534";
-            } else if (reportScore >= 8) {
-                scoreText.innerHTML = "<b>ДЕЛО ЧАСТИЧНО РАСКРЫТО.</b> Суд признал вину частично. Преступники понесут наказание, но не по всем пунктам." + milanaBonus + rescuedBonus + nameBonusText;
+                scoreText.innerHTML = "<b>ПРИГОВОР ВЫНЕСЕН.</b> Следствие собрало неопровержимые доказательства. Вы нашли практически все цифровые следы и составили безупречный отчет. Климов и Мельников предстанут перед судом." + milanaBonus + rescuedBonus + nameBonusText;
+            } else if (percent >= 40) {
                 scoreTitle.style.color = "#b45309";
+                scoreText.innerHTML = "<b>ДЕЛО ЧАСТИЧНО РАСКРЫТО.</b> Вы нашли достаточно улик, но в отчете или сборе данных есть пробелы. Преступники понесут наказание, но адвокаты сумеют смягчить приговор." + milanaBonus + rescuedBonus + nameBonusText;
             } else {
-                scoreText.innerHTML = "<b>ДЕЛО РАЗВАЛИЛОСЬ В СУДЕ.</b> Из-за недостатка выводов в отчете адвокаты вытащили злодеев." + milanaBonus + rescuedBonus + nameBonusText;
                 scoreTitle.style.color = "#b91c1c";
+                scoreText.innerHTML = "<b>ДЕЛО РАЗВАЛИЛОСЬ В СУДЕ.</b> Вы упустили слишком много цифровых следов и не смогли доказать вину. Адвокаты вытащили злодеев, а дело ушло в архив." + milanaBonus + rescuedBonus + nameBonusText;
             }
 
             scoreBox.scrollIntoView({ behavior: 'smooth' });
