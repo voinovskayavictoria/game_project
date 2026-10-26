@@ -1,0 +1,44 @@
+{
+  "name": "c17-game",
+  "version": "0.1.0",
+  "description": "CONNECT // 1704 — desktop messenger game",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "pack": "electron-packager . CONNECT --platform=win32 --arch=x64 --out=dist --overwrite"
+  },
+  "author": "Victoria Voinovskaya",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "24.9.1",
+    "@electron/packager": "^18.3.6"
+  },
+  "build": {
+    "appId": "com.c17game.app",
+    "productName": "CONNECT",
+    "win": {
+      "target": "nsis",
+      "signtoolOptions": {
+        "sign": null
+      }
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "connect-backend.exe",
+      "!dist",
+      "!node_modules/**/dist"
+    ],
+    "extraResources": [
+      {
+        "from": "connect-backend.exe",
+        "to": "connect-backend.exe"
+      }
+    ]
+  }
+}

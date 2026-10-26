@@ -1,0 +1,997 @@
+/* ==========================================================
+   CONNECT — публичная часть
+   ========================================================== */
+
+:root {
+  --bg: #ffffff; --bg-2: #f5f7fa; --bg-3: #eceff3;
+  --ink: #1a202c; --ink-2: #4a5568; --muted: #94a3b8;
+  --line: #e2e8f0;
+  --blue: #2563eb; --blue-2: #1d4ed8;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+  font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.login-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%); padding: 24px;
+}
+.login-box {
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, .08), 0 2px 6px rgba(15, 23, 42, .04);
+  padding: 40px 36px; width: 100%; max-width: 400px; text-align: center;
+}
+.login-box__logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.logo-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--blue); color: #fff; font-weight: 800; font-size: 22px;
+}
+.logo-mark--sm { width: 32px; height: 32px; border-radius: 9px; font-size: 16px; }
+.logo-text { font-size: 24px; font-weight: 800; letter-spacing: 1.5px; color: var(--ink); }
+.login-box__sub { font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 30px; }
+.login-box__title { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+.login-box__hint { color: var(--ink-2); font-size: 14px; margin: 0 0 24px; }
+.login-error {
+  background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+  padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 18px;
+}
+.login-form { text-align: left; }
+.login-form__label span {
+  display: block; font-size: 12px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+.login-form input {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 10px; font-family: inherit; font-size: 16px; outline: none;
+  transition: border-color .15s ease;
+}
+.login-form input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, .1); }
+.login-form button {
+  width: 100%; margin-top: 16px; background: var(--blue); color: #fff;
+  border: 0; border-radius: 10px; padding: 13px 20px;
+  font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background .15s ease;
+}
+.login-form button:hover { background: var(--blue-2); }
+.login-box__footer { margin: 24px 0 0; font-size: 13px; color: var(--muted); }
+.button-link { display: inline-block; color: var(--blue); font-weight: 600; }
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app__topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; border-bottom: 1px solid var(--line); background: #fff;
+}
+.app__brand { display: flex; align-items: center; gap: 10px; }
+.app__user { display: flex; align-items: center; gap: 16px; font-size: 14px; color: var(--ink-2); }
+.app__logout { font-size: 13px; color: var(--muted); }
+.app__logout:hover { color: #e11d48; }
+
+.app__body { flex: 1; display: grid; grid-template-columns: 340px 1fr; min-height: 0; }
+
+.sidebar {
+  border-right: 1px solid var(--line); background: var(--bg-2);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.sidebar__search { padding: 14px; border-bottom: 1px solid var(--line); }
+.sidebar__search input {
+  width: 100%; padding: 9px 14px; border: 1px solid var(--line);
+  border-radius: 10px; background: #fff; font-family: inherit; font-size: 14px; outline: none;
+}
+.sidebar__search input:focus { border-color: var(--blue); }
+.sidebar__list { flex: 1; overflow-y: auto; }
+
+.chat-item {
+  display: flex; gap: 12px; padding: 12px 16px;
+  border-bottom: 1px solid var(--line); color: var(--ink);
+  align-items: flex-start; transition: background .12s ease;
+}
+.chat-item:hover { background: #fff; text-decoration: none; }
+.chat-item.is-active { background: #fff; border-left: 3px solid var(--blue); padding-left: 13px; }
+.chat-item__avatar {
+  width: 42px; height: 42px; border-radius: 50%; color: #fff;
+  font-weight: 700; font-size: 14px; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+}
+.chat-item__body { flex: 1; min-width: 0; }
+.chat-item__name {
+  font-size: 14px; font-weight: 600; margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chat-item__last {
+  font-size: 13px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chat-item__badge {
+  background: var(--blue); color: #fff; font-size: 11px; font-weight: 700;
+  min-width: 20px; height: 20px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; padding: 0 6px;
+}
+
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--muted); background: var(--bg-3);
+}
+.empty__icon { font-size: 48px; margin-bottom: 12px; }
+.empty__title { font-size: 18px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+.empty__sub { font-size: 14px; }
+
+.conversation { display: flex; flex-direction: column; min-height: 0; background: var(--bg-3); }
+.conversation__head {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--line);
+}
+.conversation__name { font-weight: 700; font-size: 15px; }
+.conversation__with { color: var(--muted); font-size: 13px; }
+
+.conversation__messages {
+  flex: 1; overflow-y: auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.msg {
+  align-self: flex-start; max-width: 60%; background: #fff;
+  padding: 10px 14px; border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+}
+.msg--me {
+  align-self: flex-end; background: var(--blue); color: #fff;
+  border-radius: 14px 14px 4px 14px;
+}
+.msg__text { font-size: 14px; }
+.msg__time { font-size: 11px; margin-top: 4px; opacity: .6; text-align: right; }
+
+.conversation__input {
+  display: flex; gap: 10px; padding: 14px 24px;
+  background: #fff; border-top: 1px solid var(--line);
+}
+.conversation__input input {
+  flex: 1; padding: 10px 14px; border: 1px solid var(--line);
+  border-radius: 10px; font-family: inherit; font-size: 14px; outline: none;
+}
+.conversation__input input:focus { border-color: var(--blue); }
+.conversation__input button {
+  background: var(--blue); color: #fff; border: 0; border-radius: 10px;
+  padding: 0 20px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.conversation__input button:hover { background: var(--blue-2); }
+
+@media (max-width: 800px) {
+  .app__body { grid-template-columns: 1fr; }
+  .sidebar { max-height: 40vh; }
+  .msg { max-width: 80%; }
+}
+
+.msg--typing {
+  align-self: flex-start;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-style: italic;
+  padding: 4px 14px;
+  box-shadow: none;
+  animation: blinkSoft 1.2s ease-in-out infinite;
+}
+@keyframes blinkSoft {
+  0%, 100% { opacity: .4; }
+  50%      { opacity: 1; }
+}
+
+/* ==========================================================
+   ПАНЕЛЬ ОТВЕТОВ — карточки, а не чипы
+   ========================================================== */
+
+.reply {
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  padding: 20px 24px 22px;
+}
+
+.reply__title {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.reply__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.reply__btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  padding: 14px 18px;
+  background: #f9fafc;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .15s ease;
+  position: relative;
+}
+
+.reply__btn::after {
+  content: "→";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #cbd5e0;
+  font-size: 16px;
+  transition: all .15s ease;
+}
+
+.reply__btn:hover {
+  background: #ffffff;
+  border-color: var(--blue);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, .12);
+}
+.reply__btn:hover::after {
+  color: var(--blue);
+  right: 12px;
+}
+
+.reply__btn:active {
+  transform: scale(0.99);
+  background: #eef4ff;
+}
+
+.reply__btn-text {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 3px;
+  padding-right: 24px;
+}
+
+.reply__btn-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  padding-right: 24px;
+}
+
+/* ---------- Заглушка для read-only ---------- */
+
+.reply-disabled {
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  padding: 20px 24px;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ---------- Адаптив ---------- */
+
+@media (max-width: 720px) {
+  .reply__grid { grid-template-columns: 1fr; }
+}
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+.msg--system {
+  align-self: center !important;
+  max-width: 90% !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: none !important;
+}
+.msg--system .msg__text { color: #b91c1c; }
+.msg--system .msg__time { display: none; }
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+.msg--system {
+  align-self: center !important;
+  max-width: 90% !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: none !important;
+}
+.msg--system .msg__text { color: #b91c1c; }
+.msg--system .msg__time { display: none; }
+
+/* ---------- Онлайн / офлайн ---------- */
+
+.online-badge {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 13px;
+}
+.offline-badge {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ---------- Системная плашка ---------- */
+
+.msg--system {
+  align-self: center !important;
+  max-width: 90% !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: none !important;
+}
+.msg--system .msg__text { color: #b91c1c; }
+.msg--system .msg__time { display: none; }
+
+/* ---------- Индикатор «печатает…» ---------- */
+
+.msg--typing {
+  align-self: flex-start;
+  background: #fff;
+  border-radius: 14px 14px 14px 4px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  display: inline-flex;
+  gap: 4px;
+}
+.msg--typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  display: inline-block;
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.msg--typing span:nth-child(2) { animation-delay: .15s; }
+.msg--typing span:nth-child(3) { animation-delay: .30s; }
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+  30%           { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ---------- Read-only заглушка ---------- */
+
+.reply-disabled {
+  padding: 18px 24px;
+  background: #fff;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ==========================================================
+   ОВЕРЛЕЙ: пиксельная пасть бота
+   ========================================================== */
+
+.abyss {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  cursor: pointer;
+  animation: abyss-flicker-in .5s ease-out;
+}
+.abyss.is-active { display: flex; }
+
+@keyframes abyss-flicker-in {
+  0%   { opacity: 0; filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  70%  { opacity: .7; }
+  100% { opacity: 1; }
+}
+
+#abyss-canvas {
+  max-width: 90vw;
+  max-height: 60vh;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.abyss__lines {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  font-family: "JetBrains Mono", "Courier New", monospace;
+  font-size: 15px;
+  letter-spacing: 3px;
+  color: #ff2a3d;
+  text-transform: uppercase;
+  min-height: 100px;
+}
+.abyss__line {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: abyss-line-in .6s ease forwards;
+  text-shadow: 0 0 12px rgba(255, 42, 61, .5);
+}
+.abyss__line:nth-child(3) {
+  color: #c8ffcf;
+  font-size: 22px;
+  letter-spacing: 6px;
+  margin-top: 8px;
+}
+@keyframes abyss-line-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.abyss__hint {
+  margin-top: 40px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #4a5364;
+  text-transform: uppercase;
+  opacity: .6;
+  animation: abyss-hint-blink 2s ease-in-out infinite;
+}
+@keyframes abyss-hint-blink {
+  0%, 100% { opacity: .6; }
+  50%      { opacity: .2; }
+}
+
+/* ==========================================================
+   QUIZ — тест SYNAPSE-ASSISTANT
+   ========================================================== */
+
+.quiz {
+  padding: 40px;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.quiz__progress { margin-bottom: 30px; }
+.quiz__progress-bar {
+  height: 6px; background: #0a0d12;
+  border: 1px solid #1b1f22; overflow: hidden;
+}
+.quiz__progress-fill {
+  height: 100%; background: #2b6cb0;
+  transition: width .4s ease;
+}
+.quiz__progress-label {
+  margin-top: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px; letter-spacing: 2px;
+  color: #4a5364; text-transform: uppercase;
+}
+.quiz__progress-label b { color: #2b6cb0; }
+
+.quiz__question {
+  font-size: 18px; font-weight: 600;
+  color: #1a202c; text-align: center;
+  margin-bottom: 30px;
+  letter-spacing: 1px;
+}
+
+.quiz__options {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+.quiz-card {
+  background: #050607;
+  border: 1px solid #2b6cb0;
+  padding: 20px;
+  cursor: pointer;
+  transition: all .2s ease;
+  text-align: center;
+  font-family: inherit;
+  color: #d8dee7;
+}
+.quiz-card:hover {
+  border-color: #ff2a3d;
+  box-shadow: 0 0 30px rgba(255, 42, 61, .35);
+  transform: translateY(-2px);
+}
+.quiz-card--creepy {
+  animation: creepy-pulse 3s ease-in-out infinite;
+}
+@keyframes creepy-pulse {
+  0%, 100% { border-color: #2b6cb0; }
+  50%      { border-color: #ff2a3d; }
+}
+
+.svg-icon {
+  width: 100%; height: 180px;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(43, 108, 176, .3));
+}
+.svg-icon--creepy {
+  filter: drop-shadow(0 0 12px rgba(255, 42, 61, .5));
+}
+.glitch-eye {
+  animation: glitch-blink 2.4s ease-in-out infinite;
+}
+@keyframes glitch-blink {
+  0%, 90%, 100% { opacity: 1; }
+  95%           { opacity: 0; }
+}
+
+.quiz-card__label {
+  margin-top: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px; letter-spacing: 2px;
+  color: #8b96a8; text-transform: uppercase;
+}
+
+/* Провал */
+.quiz__fail {
+  text-align: center;
+  padding: 60px 30px;
+  border: 1px solid #ff2a3d;
+  background: rgba(255, 42, 61, .05);
+}
+.quiz__fail-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 16px; letter-spacing: 4px;
+  color: #ff2a3d; font-weight: 700;
+  margin-bottom: 14px;
+}
+.quiz__fail-text {
+  font-size: 14px; color: #4a5364;
+  margin-bottom: 26px;
+}
+.quiz__restart {
+  display: inline-block;
+  padding: 12px 26px;
+  background: #ff2a3d; color: #000;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px; letter-spacing: 3px;
+  text-transform: uppercase; font-weight: 700;
+  text-decoration: none;
+}
+.quiz__restart:hover { background: #ff4a5d; }
+
+/* ==========================================================
+   ABYSS — пасть после победы
+   ========================================================== */
+.abyss {
+  position: fixed; inset: 0; background: #000;
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  cursor: pointer;
+}
+.abyss.is-active { display: flex; }
+#abyss-canvas { max-width: 90vw; max-height: 55vh; image-rendering: pixelated; }
+.abyss__lines {
+  margin-top: 30px;
+  display: flex; flex-direction: column; gap: 6px;
+  align-items: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px; letter-spacing: 3px;
+  color: #ff2a3d; text-transform: uppercase;
+  min-height: 100px;
+}
+.abyss__line {
+  opacity: 0; transform: translateY(6px);
+  animation: abyss-line-in .6s ease forwards;
+}
+.abyss__line:nth-child(3) {
+  color: #c8ffcf; font-size: 22px;
+  letter-spacing: 6px; margin-top: 8px;
+}
+@keyframes abyss-line-in { to { opacity: 1; transform: translateY(0); } }
+.abyss__hint {
+  margin-top: 40px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px; letter-spacing: 2px;
+  color: #4a5364; text-transform: uppercase;
+  opacity: .6;
+}
+
+.quiz__history {
+  border-bottom: 1px solid #1b1f22;
+  padding-bottom: 24px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+.quiz__history .msg {
+  max-width: 80%;
+}
+.msg--system {
+  background: #0a0d12;
+  border: 1px dashed #ff2a3d;
+  color: #ff2a3d;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  align-self: center;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* ==========================================================
+   QUIZ INLINE — тест внутри чата
+   ========================================================== */
+
+.quiz-trigger {
+  margin-top: 12px;
+}
+
+.quiz-inline {
+  margin-top: 20px;
+  padding: 24px;
+  background: #050607;
+  border: 1px solid #ff2a3d;
+  border-left: 3px solid #ff2a3d;
+  animation: quiz-inline-in .4s ease-out;
+}
+@keyframes quiz-inline-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.quiz__progress { margin-bottom: 24px; }
+.quiz__progress-bar {
+  height: 6px; background: #0a0d12;
+  border: 1px solid #1b1f22; overflow: hidden;
+}
+.quiz__progress-fill {
+  height: 100%; background: #ff2a3d;
+  transition: width .4s ease;
+}
+.quiz__progress-label {
+  margin-top: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px; letter-spacing: 2px;
+  color: #8b96a8; text-transform: uppercase;
+}
+.quiz__progress-label b { color: #ff2a3d; }
+
+.quiz__question {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px; font-weight: 700;
+  color: #d8dee7; text-align: center;
+  margin-bottom: 22px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.quiz__options {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.quiz-card {
+  background: #0a0d12;
+  border: 1px solid #2b6cb0;
+  padding: 14px;
+  cursor: pointer;
+  transition: all .2s ease;
+  text-align: center;
+  font-family: inherit;
+  color: #d8dee7;
+}
+.quiz-card:hover {
+  border-color: #ff2a3d;
+  box-shadow: 0 0 24px rgba(255, 42, 61, .35);
+  transform: translateY(-2px);
+}
+.quiz-card--creepy {
+  animation: creepy-pulse 3s ease-in-out infinite;
+}
+@keyframes creepy-pulse {
+  0%, 100% { border-color: #2b6cb0; }
+  50%      { border-color: #ff2a3d; }
+}
+
+.svg-icon {
+  width: 100%; height: 140px;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(43, 108, 176, .3));
+}
+.svg-icon--creepy {
+  filter: drop-shadow(0 0 12px rgba(255, 42, 61, .5));
+}
+.glitch-eye { animation: glitch-blink 2.4s ease-in-out infinite; }
+@keyframes glitch-blink {
+  0%, 90%, 100% { opacity: 1; }
+  95%           { opacity: 0; }
+}
+
+.quiz-card__label {
+  margin-top: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px; letter-spacing: 2px;
+  color: #8b96a8; text-transform: uppercase;
+}
+
+/* Провал */
+.quiz__fail {
+  text-align: center;
+  padding: 40px 20px;
+  border: 1px solid #ff2a3d;
+  background: rgba(255, 42, 61, .05);
+}
+.quiz__fail-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px; letter-spacing: 3px;
+  color: #ff2a3d; font-weight: 700;
+  margin-bottom: 12px;
+}
+.quiz__fail-text {
+  font-size: 13px; color: #4a5364;
+  margin-bottom: 22px;
+}
+.quiz__restart {
+  display: inline-block;
+  padding: 10px 22px;
+  background: #ff2a3d; color: #000;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px; letter-spacing: 3px;
+  text-transform: uppercase; font-weight: 700;
+  text-decoration: none;
+}
+.quiz__restart:hover { background: #ff4a5d; }
+
+/* ==========================================================
+   QUIZ FULLSCREEN — тест на весь чат
+   ========================================================== */
+
+.conversation {
+  position: relative;
+}
+
+.quiz-fullscreen {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  overflow-y: auto;
+}
+.quiz-fullscreen.is-active {
+  display: flex !important;
+}
+.quiz-fullscreen__inner {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.quiz-fullscreen__progress { margin-bottom: 32px; }
+.quiz-fullscreen__bar {
+  height: 6px; background: #0a0d12;
+  border: 1px solid #1b1f22; overflow: hidden;
+}
+.quiz-fullscreen__fill {
+  height: 100%; background: #ff2a3d;
+  transition: width .4s ease;
+}
+.quiz-fullscreen__label {
+  margin-top: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px; letter-spacing: 2px;
+  color: #8b96a8; text-transform: uppercase;
+}
+.quiz-fullscreen__label b { color: #ff2a3d; }
+
+.quiz-fullscreen__question {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 16px; font-weight: 700;
+  color: #d8dee7; text-align: center;
+  margin-bottom: 30px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.quiz-fullscreen__options {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+}
+.quiz-fullscreen__card {
+  background: #0a0d12;
+  border: 1px solid #2b6cb0;
+  padding: 16px;
+  cursor: pointer;
+  transition: all .2s ease;
+  text-align: center;
+  font-family: inherit;
+  color: #d8dee7;
+}
+.quiz-fullscreen__card:hover {
+  border-color: #ff2a3d;
+  box-shadow: 0 0 30px rgba(255, 42, 61, .4);
+  transform: translateY(-2px);
+}
+.quiz-fullscreen__card-label {
+  margin-top: 10px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px; letter-spacing: 2px;
+  color: #8b96a8; text-transform: uppercase;
+}
+.quiz-fullscreen__card .svg-icon {
+  width: 100%;
+  height: 160px;
+  display: block;
+  filter: drop-shadow(0 0 10px rgba(43, 108, 176, .35));
+}
+
+.quiz-fullscreen__typing {
+  display: flex; gap: 8px; justify-content: center;
+  align-items: center; padding: 80px 0;
+}
+.quiz-fullscreen__typing span {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #ff2a3d; opacity: .3;
+  animation: typing-dot 1.4s infinite;
+}
+.quiz-fullscreen__typing span:nth-child(2) { animation-delay: .2s; }
+.quiz-fullscreen__typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: .3; transform: scale(.8); }
+  30%           { opacity: 1;  transform: scale(1); }
+}
+
+.quiz-fullscreen__fail {
+  text-align: center; padding: 60px 20px;
+  border: 1px solid #ff2a3d;
+  background: rgba(255, 42, 61, .05);
+}
+.quiz-fullscreen__fail-title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 16px; letter-spacing: 4px;
+  color: #ff2a3d; font-weight: 700;
+  margin-bottom: 14px;
+}
+.quiz-fullscreen__fail-text {
+  font-size: 14px; color: #4a5364; margin-bottom: 26px;
+}
+.quiz-fullscreen__restart {
+  display: inline-block; padding: 12px 26px;
+  background: #ff2a3d; color: #000;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px; letter-spacing: 3px;
+  text-transform: uppercase; font-weight: 700;
+  text-decoration: none;
+}
+.quiz-fullscreen__restart:hover { background: #ff4a5d; }
+
+/* ==========================================================
+   ФИКС: показать оверлей, когда is-active
+   ========================================================== */
+
+.quiz-fullscreen.is-active {
+  display: flex !important;
+}
+
+html, body{
+  height: 100%;
+  margin: 0;
+  overflow: hidden;   /* <-- ВАЖНО: body больше не скроллится */
+}
+
+.s-chat{
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.s-chat__header{
+  flex: 0 0 auto;      /* header не сжимается */
+}
+
+.s-chat__messages{
+  flex: 1 1 auto;      /* занимает всё оставшееся место */
+  overflow-y: auto;    /* <-- скролл только тут */
+}
+
+.s-chat__compose{
+  flex: 0 0 auto;      /* форма не сжимается, всегда внизу */
+}
+
+/* ============================================================
+   Мигание SYNAPSE-ASSISTANT в списке чатов после деактивации
+   ============================================================ */
+.chat-item.chat-item--alert{
+  animation: item-blink 1.1s ease-in-out infinite;
+  position: relative;
+}
+.chat-item.chat-item--alert::before{
+  content:"";
+  position:absolute; left:0; top:0; bottom:0;
+  width:3px;
+  background:#ff2a3d;
+  animation: item-bar 1.1s ease-in-out infinite;
+}
+.chat-item.chat-item--alert .chat-item__avatar{
+  box-shadow: 0 0 18px 2px rgba(255,42,61,.85);
+  animation: item-avatar 1.1s ease-in-out infinite;
+}
+.chat-item.chat-item--alert .chat-item__name{
+  color:#ff2a3d;
+  animation: item-name 1.1s ease-in-out infinite;
+}
+@keyframes item-blink{
+  0%, 100%{ background: transparent; }
+  50%     { background: rgba(255,42,61,.14); }
+}
+@keyframes item-bar{
+  0%, 100%{ opacity: .3; }
+  50%     { opacity: 1;  }
+}
+@keyframes item-avatar{
+  0%, 100%{ box-shadow: 0 0 18px 2px rgba(255,42,61,.4); }
+  50%     { box-shadow: 0 0 22px 6px rgba(255,42,61,1); }
+}
+@keyframes item-name{
+  0%, 100%{ color:#c9c9c9; }
+  50%     { color:#ff2a3d; }
+}

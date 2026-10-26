@@ -4,18 +4,40 @@
 {% block content %}
 <div style="background: #fff; padding: 50px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
   
-  <div style="font-family: monospace; color: #c9a227; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Интервью</div>
-  <h1 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #0d1b2a; margin-top: 0; margin-bottom: 10px;">{{ item.name }}</h1>
-  <div style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">{{ item.role }}</div>
+  <div style="font-family: monospace; color: #c9a227; font-weight: bold; margin-bottom: 20px; text-transform: uppercase;">Интервью</div>
   
-  <h2 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #0d1b2a; border-left: 4px solid #c9a227; padding-left: 15px; margin-bottom: 30px;">
+  <!-- БОЛЬШОЕ ФОТО НА ВСЮ ШИРИНУ -->
+  {% if item.image %}
+    <img src="{{ url_for('static', filename='img/' + item.image) }}" alt="{{ item.name }}" style="width: 100%; max-height: 450px; object-fit: cover; object-position: top; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; display: block;">
+  {% endif %}
+
+  <!-- Имя и должность -->
+  <h1 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #0d1b2a; margin: 0 0 10px 0; line-height: 1.2;">{{ item.name }}</h1>
+  
+  <div style="color: #666; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 40px;">
+    <span>{{ item.role }}</span>
+    {% if item.company %}
+      <span style="color: #ccc;">|</span>
+      {% if item.company_url != '#' %}
+        <a href="{{ item.company_url }}" target="_blank" style="color: #c9a227; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #c9a227; transition: opacity 0.2s;">
+          {{ item.company }} ↗
+        </a>
+      {% else %}
+        <span style="font-weight: 600; color: #0d1b2a;">{{ item.company }}</span>
+      {% endif %}
+    {% endif %}
+  </div>
+  
+  <!-- Заголовок интервью -->
+  <h2 style="font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #0d1b2a; border-left: 4px solid #c9a227; padding-left: 15px; margin-bottom: 30px; line-height: 1.4;">
     {{ item.title }}
   </h2>
 
-  <p style="font-size: 1.1rem; line-height: 1.7; color: #333; margin-bottom: 40px; font-style: italic;">
+  <p style="font-size: 1.1rem; line-height: 1.7; color: #333; margin-bottom: 40px; font-style: italic; padding-bottom: 30px; border-bottom: 1px solid #eee;">
     {{ item.intro }}
   </p>
 
+  <!-- Вопросы и ответы -->
   <div style="display: flex; flex-direction: column; gap: 25px;">
     {% for q, a in item.qa %}
       <div>

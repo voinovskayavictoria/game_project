@@ -26,11 +26,18 @@
         Теперь все знают: инженер жив.<br>
         Это меняет всё.
       </div>
+      {% if killer %}
+      <div class="plot-ending__text" style="margin-top:16px;color:#ff2a3d;">
+        По дороге ты убил егеря. Тело осталось в лабиринте.<br>
+        Благое дело, но теперь ты убийца.
+      </div>
+      {% endif %}
       <div class="pan-cam__unlocked" style="margin-top: 24px;">
-      <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
-      <div class="pan-cam__unlocked-frag">HT-REVEAL</div>
+        <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+        <div class="pan-cam__unlocked-frag">HT-REVEAL</div>
+      </div>
     </div>
-    </div>
+
   {% elif choice == "hide" %}
     <div class="plot-ending">
       <div class="plot-ending__head">[ СКРЫТО ]</div>
@@ -39,11 +46,39 @@
         Он всё ещё там.<br>
         Но ты знаешь.
       </div>
+      {% if killer %}
+      <div class="plot-ending__text" style="margin-top:16px;color:#ff2a3d;">
+        По дороге ты убил егеря. Тело осталось в лабиринте.<br>
+        Благое дело, но теперь ты убийца.
+      </div>
+      {% endif %}
       <div class="pan-cam__unlocked" style="margin-top: 24px;">
-      <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
-      <div class="pan-cam__unlocked-frag">HT-HIDE</div>
+        <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+        <div class="pan-cam__unlocked-frag">HT-HIDE</div>
+      </div>
     </div>
+
+  {% elif choice == "surrender" %}
+    <div class="plot-ending">
+      <div class="plot-ending__head">[ СДАЛСЯ ]</div>
+      <div class="plot-ending__text">
+        Егерь наступил на тебя. Ты поднял руки.<br>
+        Ты рассказал ему часть того, что знает следствие.<br>
+        Он отпустил тебя живым.<br>
+        Инженера нашли той же ночью.
+      </div>
+      {% if killer %}
+      <div class="plot-ending__text" style="margin-top:16px;color:#ff2a3d;">
+        До этого ты убил другого егеря. Тело нашли.<br>
+        Сдача спасла тебе жизнь, но не имя: ты убийца.
+      </div>
+      {% endif %}
+      <div class="pan-cam__unlocked" style="margin-top: 24px;">
+        <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+        <div class="pan-cam__unlocked-frag">HT-SURRENDER</div>
+      </div>
     </div>
+
   {% else %}
     <div class="plot-ending">
       <div class="plot-ending__head">[ ПРОВАЛ ]</div>

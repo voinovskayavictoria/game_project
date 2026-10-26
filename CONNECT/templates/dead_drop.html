@@ -282,7 +282,6 @@
     <a href="{{ url_for('catalog') }}">// catalog</a>
     <a href="{{ url_for('hunt') }}">// hunt</a>
     <a href="{{ url_for('panopticon') }}">// panopticon</a>
-    <a href="{{ url_for('sanitizer') }}">// sanitizer</a>
     <a href="{{ url_for('dead_drop') }}" class="is-active">// dead-drop</a>
     <a href="{{ url_for('logout') }}" class="dd__nav--warn">terminate</a>
   </nav>
@@ -295,24 +294,47 @@
 
 {% if unlocked %}
 
-  <div class="dd__ok">{{ d.unlocked_message }}</div>
-  <a class="dd__cta" href="{{ d.unlocked_link }}">→ открыть канал {{ d.unlocked_link }}</a>
+  {# Все фрагменты собраны #}
+  <div class="dd__progress">
+    <div class="dd__progress-bar">
+      <div class="dd__progress-fill" style="width: 100%;"></div>
+    </div>
+    <div class="dd__progress-label">5 / 5 фрагментов собрано</div>
+  </div>
+
+  <div class="dd__slots">
+    {% for f in d.fragments %}
+      <div class="dd-slot dd-slot--filled">
+        <div class="dd-slot__head">
+          <span class="dd-slot__id">{{ f.id }}</span>
+          <span class="dd-slot__status">FOUND</span>
+        </div>
+        <div class="dd-slot__value">{{ f.value }}</div>
+        <div class="dd-slot__hint">{{ f.hint }}</div>
+      </div>
+    {% endfor %}
+  </div>
 
   {% if plot_text %}
     <div class="plot-ending">
       <div class="plot-ending__head">[СЮЖЕТНАЯ КОНЦОВКА]</div>
       <div class="plot-ending__text">{{ plot_text }}</div>
     </div>
-    <div style="margin-top:24px;text-align:center;">
-      <a href="{{ url_for('report') }}" class="dd__btn" style="display:inline-block;width:auto;">
-        ОФОРМИТЬ ОТЧЁТ →
-      </a>
+  {% else %}
+    <div class="dd__ok">
+      ВСЕ ФРАГМЕНТЫ СОБРАНЫ.<br>
+      Сюжетная концовка не собрана — не хватает hijack_role и/или quiz_key.<br>
+      Выстави их в /dev.
     </div>
   {% endif %}
 
+  <div style="margin-top:24px;text-align:center;">
+    <a class="dd__cta" href="{{ url_for('inbox') }}">→ вернуться в inbox</a>
+  </div>
+
 {% else %}
 
-  {# ---------- ПРОГРЕСС ---------- #}
+  {# Не все фрагменты собраны #}
   <div class="dd__progress">
     <div class="dd__progress-bar">
       {% set total = d.fragments|length %}
@@ -325,7 +347,6 @@
     </div>
   </div>
 
-  {# ---------- СЛОТЫ ФРАГМЕНТОВ ---------- #}
   <div class="dd__slots">
     {% for f in d.fragments %}
       {% if f.status == 'FOUND' %}
@@ -354,14 +375,8 @@
   </div>
 
   <div class="dd__footnote">
-    {% set total = d.fragments|length %}
-    {% set found_count = d.fragments|selectattr('status','equalto','FOUND')|list|length %}
-    {% if found_count == total %}
-      <b style="color: #166534;">ВСЕ ФРАГМЕНТЫ СОБРАНЫ. КАНАЛ ОТКРЫТ.</b>
-    {% else %}
-      фрагменты находятся в других узлах сети.<br>
-      пока не собраны все — сборка не сработает.
-    {% endif %}
+    фрагменты находятся в других узлах сети.<br>
+    пока не собраны все — сборка не сработает.
   </div>
 
 {% endif %}

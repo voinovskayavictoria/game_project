@@ -19,7 +19,7 @@ def archive():
     years = sorted(ARCHIVE.keys(), reverse=True)
     return render_template("archive.html", years=years, archive=ARCHIVE)
 
-# --- Заглушка "Нет ключа" (сюда ведут все статьи) ---
+# --- Заглушка "Нет ключа" ---
 @app.route("/archive/locked")
 def locked():
     return render_template("locked.html")

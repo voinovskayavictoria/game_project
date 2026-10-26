@@ -11,10 +11,8 @@
   <header style="background: #fff; border-bottom: 2px solid #0d1b2a; padding: 20px 0;">
     <div class="container" style="max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
       
-      <!-- === ЛОГОТИП === -->
+      <!-- ЛОГОТИП -->
       <a href="{{ url_for('index') }}" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-        
-        <!-- Диафрагма (6 лучей) -->
         <svg viewBox="0 0 40 40" width="36" height="36" style="flex-shrink: 0;">
           <g transform="translate(20,20)">
             <path d="M0,-18 L15.6,-9 L15.6,9 L0,18 L-15.6,9 L-15.6,-9 Z" 
@@ -22,14 +20,12 @@
             <circle cx="0" cy="0" r="5" fill="#0d1b2a"/>
           </g>
         </svg>
-
-        <!-- Текст -->
         <span style="font-family: 'Playfair Display', serif; font-size: 2rem; color: #0d1b2a; font-weight: bold;">
           LUMEN FORUM
         </span>
       </a>
 
-      <!-- === НАВИГАЦИЯ === -->
+      <!-- НАВИГАЦИЯ -->
       <nav>
         <a href="{{ url_for('archive') }}" style="margin-left: 20px; color: #0d1b2a; text-decoration: none; font-weight: 600;">Архив</a>
         <a href="{{ url_for('interviews') }}" style="margin-left: 20px; color: #0d1b2a; text-decoration: none; font-weight: 600;">Интервью</a>

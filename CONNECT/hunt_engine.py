@@ -163,6 +163,8 @@ def new_game(seed=None):
         "inv": {"bottle": 2, "smoke": 1, "emp": 1},
         "pickups": pickups,
         "smoke": [],
+        "corpses": [],
+        "kills": 0,
         "turns": 0,
         "status": "playing",
         "sneak": False,
@@ -304,6 +306,32 @@ def finish_chase(s, win):
         s["events"] = [["ЦЕЛЬ ОСТАНОВЛЕНА", "g"]]
     return True
 
+def resolve_duel_win(s):
+    """Игрок победил егеря в перестрелке: тело остаётся, игра продолжается."""
+    if s["status"] != "caught":
+        return False
+    P = tuple(s["player"])
+
+    dead = next((g for g in s["guards"]
+                 if tuple(g["pos"]) == P and g.get("stun", 0) == 0), None)
+    if dead is None and s["guards"]:
+        dead = min(s["guards"],
+                   key=lambda g: abs(g["pos"][0] - P[0]) + abs(g["pos"][1] - P[1]))
+    if dead is not None:
+        s["guards"].remove(dead)
+        s.setdefault("corpses", []).append(list(dead["pos"]))
+    s["kills"] = s.get("kills", 0) + 1
+
+    # выстрелы слышны: остальные, кто гнался, ищут, но не мгновенно бросаются
+    for gd in s["guards"]:
+        if gd["mode"] == "chase":
+            gd.update({"mode": "search", "seen": list(P), "goal": None,
+                       "search": 7, "lost": 0, "alert": 2})
+
+    s["status"] = "playing"
+    s["events"] = [["егерь убит. тело осталось в лабиринте", "c"],
+                   ["выстрелы слышны далеко. будь осторожен", "w"]]
+    return True
 
 def _finish(s, ev, status):
     s["status"] = status
