@@ -2,157 +2,424 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>DEV MODE — CONNECT</title>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/secret.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Режим разработчика — CONNECT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    .dev-cat { margin-bottom: 24px; border: 1px solid var(--line-2); padding: 16px; background: var(--panel); }
-    .dev-cat__title { font-family: var(--mono); color: var(--green); letter-spacing: 2px; margin-bottom: 12px; font-weight: 700; }
-    .dev-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-    .dev-btn { background: var(--bg); border: 1px solid var(--line-2); color: var(--ink); padding: 8px 12px; cursor: pointer; font-family: var(--mono); font-size: 12px; transition: all .15s; }
-    .dev-btn:hover { border-color: var(--green); color: var(--green); background: rgba(74, 222, 128, 0.05); }
-    .dev-btn.is-added { border-color: var(--green); color: var(--green); opacity: 0.6; cursor: default; }
-    
-    .cat-box { margin-top: 30px; padding: 24px; background: #0a0d12; border: 1px solid #1e2632; border-left: 3px solid var(--green); font-family: var(--mono); color: var(--ink); line-height: 1.6; white-space: pre-wrap; font-size: 13px; }
-    .cat-header { color: var(--green); font-weight: 700; margin-bottom: 12px; letter-spacing: 2px; }
-    
-    .dev-toast { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: #000; padding: 10px 20px; font-family: var(--mono); font-weight: 700; border-radius: 4px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9999; }
-    .dev-toast.is-active { opacity: 1; }
+    :root {
+      --bg: #fff4f2;
+      --bg-2: #f8ebdc;
+      --petal: #f9d3dc;
+      --petal-2: #f2b5c4;
+      --rose: #c45b78;
+      --rose-dark: #9c3f5b;
+      --ink: #6a4848;
+      --ink-soft: #9a7a78;
+      --line: #ecd0cc;
+      --card: #fffaf6;
+      --ok: #7fae8c;
+      --pix: "Press Start 2P", monospace;
+      --txt: "Nunito", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; color: var(--ink); font-family: var(--txt); font-size: 15px; line-height: 1.55;
+      background:
+        radial-gradient(circle at 12% 8%, var(--petal) 0, transparent 38%),
+        radial-gradient(circle at 92% 30%, var(--bg-2) 0, transparent 42%),
+        var(--bg);
+      min-height: 100vh; overflow-x: hidden;
+    }
+
+    /* ---------- верхняя полоска ---------- */
+    .top {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      padding: 14px 24px; background: var(--card); border-bottom: 3px dashed var(--petal-2);
+    }
+    .brand { font-family: var(--pix); font-size: 12px; color: var(--rose-dark); }
+    .brand i { font-style: normal; color: var(--petal-2); }
+    .top nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .top a {
+      color: var(--ink); text-decoration: none; font-weight: 800; font-size: 13px;
+      padding: 6px 14px; border-radius: 999px; background: var(--bg-2);
+    }
+    .top a:hover, .top a:focus-visible { background: var(--petal); outline: none; }
+    .top a.out { background: var(--petal-2); color: #fff; }
+
+    main { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; position: relative; z-index: 1; }
+
+    h1 { font-family: var(--pix); font-size: 20px; line-height: 1.5; margin: 0 0 8px; color: var(--rose-dark); }
+    .lead { margin: 0 0 28px; color: var(--ink-soft); }
+
+    /* ---------- сцена с кошкой ---------- */
+    .stage {
+      display: flex; align-items: center; gap: 36px; flex-wrap: wrap; justify-content: center;
+      padding: 28px 24px 24px; margin-bottom: 28px;
+      background: var(--bg-2); border: 3px solid var(--petal-2); border-radius: 28px 28px 28px 8px;
+      box-shadow: 6px 6px 0 var(--petal);
+    }
+    .cat-wrap { position: relative; flex: 0 0 auto; cursor: pointer; padding-bottom: 14px; }
+    .cat-wrap:focus-visible { outline: 3px dashed var(--rose); outline-offset: 6px; border-radius: 12px; }
+    .cat {
+      --u: 12px;
+      position: relative; width: calc(var(--u) * 19); height: calc(var(--u) * 19);
+      filter: drop-shadow(2px 0 0 #a97c80) drop-shadow(-2px 0 0 #a97c80)
+              drop-shadow(0 2px 0 #a97c80) drop-shadow(0 -2px 0 #a97c80);
+    }
+    .layer { position: absolute; display: block; }
+    .layer svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; overflow: visible; }
+    .l-tail { left: calc(var(--u) * 14.5); top: calc(var(--u) * 9);  width: calc(var(--u) * 3); height: calc(var(--u) * 10);
+              transform-origin: 50% 100%; animation: wag 1.1s steps(1, end) infinite; }
+    .l-body { left: 0; top: calc(var(--u) * 9);  width: calc(var(--u) * 16); height: calc(var(--u) * 8); }
+    .l-pl   { left: calc(var(--u) * 3);  top: calc(var(--u) * 13); width: calc(var(--u) * 3); height: calc(var(--u) * 5); }
+    .l-pr   { left: calc(var(--u) * 10); top: calc(var(--u) * 13); width: calc(var(--u) * 3); height: calc(var(--u) * 5); }
+    .l-head { left: 0; top: 0; width: calc(var(--u) * 16); height: calc(var(--u) * 10); }
+    .shadow {
+      position: absolute; left: 6%; right: 0; bottom: 0; height: 14px; border-radius: 50%;
+      background: rgba(169, 124, 128, .25);
+    }
+
+    .eye { transform-box: fill-box; transform-origin: center; animation: blink 4.5s steps(1, end) infinite; }
+
+    @keyframes blink { 0%, 93% { transform: scaleY(1); } 94%, 100% { transform: scaleY(.2); } }
+    @keyframes wag {
+      0% { transform: rotate(-16deg); } 25% { transform: rotate(-6deg); }
+      50% { transform: rotate(8deg); }  75% { transform: rotate(18deg); }
+      100% { transform: rotate(-16deg); }
+    }
+    @keyframes wag-fast { 0%, 100% { transform: rotate(-20deg); } 50% { transform: rotate(20deg); } }
+
+    /* умывается: лапка поднимается к мордочке, голова чуть наклонена */
+    @keyframes paw-wash {
+      0%   { transform: translate(0, 0); }
+      12%  { transform: translate(calc(var(--u) * 2.5), calc(var(--u) * -6)); }
+      28%  { transform: translate(calc(var(--u) * 2.5), calc(var(--u) * -7)); }
+      44%  { transform: translate(calc(var(--u) * 2.5), calc(var(--u) * -6)); }
+      60%  { transform: translate(calc(var(--u) * 2.5), calc(var(--u) * -7)); }
+      76%  { transform: translate(calc(var(--u) * 2.5), calc(var(--u) * -6)); }
+      90%, 100% { transform: translate(0, 0); }
+    }
+    @keyframes head-wash {
+      0%, 100% { transform: translate(0, 0); }
+      12%, 90% { transform: translate(calc(var(--u) * .5), calc(var(--u) * .8)) rotate(5deg); }
+      44%      { transform: translate(calc(var(--u) * .5), calc(var(--u) * 1.2)) rotate(7deg); }
+    }
+    .s-wash .l-pl   { animation: paw-wash 3.4s steps(1, end) infinite; z-index: 3; }
+    .s-wash .l-head { animation: head-wash 3.4s steps(1, end) infinite; transform-origin: 50% 100%; }
+    .s-wash .eye    { animation: none; transform: scaleY(.2); }
+
+    /* топчется на месте */
+    @keyframes knead { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(calc(var(--u) * -1.2)); } }
+    @keyframes bob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(calc(var(--u) * .6)); } }
+    .s-stomp .l-pl   { animation: knead .7s steps(1, end) infinite; }
+    .s-stomp .l-pr   { animation: knead .7s steps(1, end) infinite; animation-delay: -.35s; }
+    .s-stomp .l-body,
+    .s-stomp .l-head { animation: bob .7s steps(1, end) infinite; }
+    .s-stomp .l-tail { animation: wag-fast .5s steps(1, end) infinite; }
+
+    /* сердечко по клику */
+    .heart { position: absolute; left: 44%; top: -6px; font-family: var(--pix); font-size: 16px; color: var(--petal-2);
+             opacity: 0; pointer-events: none; }
+    .heart.go { animation: pop 1s steps(6, end); }
+    @keyframes pop { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
+
+    /* реплика */
+    .talk { flex: 1 1 300px; min-width: 260px; }
+    .talk-name { font-family: var(--pix); font-size: 10px; color: var(--rose-dark); margin: 0 0 10px 6px; }
+    .bubble {
+      position: relative; background: var(--card); border: 3px solid var(--petal-2); border-radius: 18px;
+      padding: 18px 22px; box-shadow: 5px 5px 0 var(--petal); min-height: 150px;
+    }
+    .bubble::before {
+      content: ""; position: absolute; left: -14px; top: 38px; width: 22px; height: 22px;
+      background: var(--card); border-left: 3px solid var(--petal-2); border-bottom: 3px solid var(--petal-2);
+      transform: rotate(45deg);
+    }
+    .bubble p { margin: 0 0 8px; opacity: 0; transform: translateY(4px); transition: opacity .4s, transform .4s; }
+    .bubble p.on { opacity: 1; transform: none; }
+    .bubble p:last-child { margin: 0; font-weight: 800; color: var(--rose-dark); }
+    .hint { margin: 12px 0 0 6px; font-size: 12px; color: var(--ink-soft); }
+
+    /* ---------- кнопки ---------- */
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 28px; }
+    .btn {
+      font-family: var(--txt); font-weight: 800; font-size: 14px; cursor: pointer;
+      padding: 11px 20px; border-radius: 14px; border: 3px solid var(--rose); background: var(--rose); color: #fff;
+      box-shadow: 0 4px 0 var(--rose-dark); transition: transform .08s, box-shadow .08s;
+    }
+    .btn:hover { transform: translateY(1px); box-shadow: 0 3px 0 var(--rose-dark); }
+    .btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--rose-dark); }
+    .btn:focus-visible { outline: 3px dashed var(--ink); outline-offset: 3px; }
+    .btn--soft { background: var(--card); color: var(--rose-dark); border-color: var(--petal-2); box-shadow: 0 4px 0 var(--petal-2); }
+
+    /* ---------- блоки ---------- */
+    .box {
+      background: var(--card); border: 2px dashed var(--petal-2); border-radius: 20px;
+      padding: 20px 20px 22px; margin-bottom: 22px;
+    }
+    .box h2 { font-family: var(--pix); font-size: 11px; line-height: 1.6; margin: 0 0 16px; color: var(--rose-dark); font-weight: 400; }
+    .box h2::before { content: "✿ "; color: var(--petal-2); }
+    .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .chip {
+      font-family: var(--txt); text-align: left; cursor: pointer; color: var(--ink);
+      background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 8px 14px;
+      font-weight: 800; font-size: 13px; transition: border-color .15s, background .15s;
+    }
+    .chip small { display: block; margin-top: 2px; font-weight: 600; font-size: 11px; color: var(--ink-soft); }
+    .chip:hover:not(:disabled) { border-color: var(--rose); background: var(--petal); }
+    .chip:focus-visible { outline: 3px dashed var(--rose); outline-offset: 2px; }
+    .chip.is-added, .chip:disabled { background: #e7f2ea; border-color: var(--ok); color: #4d7a5c; cursor: default; }
+    .chip.is-added small, .chip:disabled small { color: #6a9577; }
+    .chip.is-added::after { content: " ✓"; }
+
+    .flags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .flag { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 800; font-size: 13px;
+            background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 8px 14px; }
+    .flag:hover { border-color: var(--rose); }
+    .flag input { accent-color: var(--rose); width: 16px; height: 16px; }
+    select.chip { appearance: auto; padding-right: 8px; }
+
+    /* ---------- уведомление ---------- */
+    .toast {
+      position: fixed; right: 20px; bottom: 20px; z-index: 50; background: var(--rose); color: #fff;
+      font-weight: 800; padding: 12px 20px; border-radius: 14px; box-shadow: 4px 4px 0 var(--rose-dark);
+      opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; pointer-events: none;
+    }
+    .toast.is-active { opacity: 1; transform: none; }
+
+    /* ---------- лепестки ---------- */
+    .petal {
+      position: fixed; top: -20px; z-index: 0; pointer-events: none; width: 11px; height: 8px;
+      background: var(--petal-2); border-radius: 80% 0 80% 0; opacity: .6;
+      animation: fall linear infinite;
+    }
+    @keyframes fall {
+      0%   { transform: translate(0, 0) rotate(0deg); }
+      50%  { transform: translate(40px, 55vh) rotate(180deg); }
+      100% { transform: translate(-20px, 110vh) rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .cat { --u: 9px; }
+      .stage { padding: 20px 14px; gap: 24px; }
+      .bubble::before { left: 40px; top: -14px; transform: rotate(135deg); }
+      h1 { font-size: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cat *, .petal, .heart, .eye { animation: none !important; }
+      .bubble p { transition: none; }
+    }
   </style>
 </head>
-<body class="s-app">
+<body>
 
-  <header class="s-topbar">
-    <div class="s-brand">
-      <span class="s-mark">C</span>
-      <span class="s-name">CONNECT<span class="s-name--thin">//DEV</span></span>
-    </div>
-    <div class="s-user">
-      <span class="s-session" style="color: var(--green);">uid: <b>root</b></span>
-      <a href="{{ url_for('inbox') }}" class="s-nav-link">// inbox</a>
-      <a href="{{ url_for('logout') }}" class="s-nav-link s-nav-link--warn">terminate</a>
-    </div>
+  <header class="top">
+    <div class="brand">CONNECT<i>/dev</i></div>
+    <nav>
+      <a href="{{ url_for('inbox') }}">в инбокс</a>
+      <a href="{{ url_for('logout') }}" class="out">выйти</a>
+    </nav>
   </header>
 
-  <main class="vault" style="max-width: 900px;">
-    <header class="vault__head">
-      <div class="vault__kicker" style="color: var(--green);">SYSTEM OVERRIDE</div>
-      <h1 class="vault__title">РЕЖИМ РАЗРАБОТЧИКА</h1>
-      <p class="vault__lead">Выдача фрагментов вручную, чтобы не проходить игру заново.</p>
-    </header>
+  <main>
+    <h1>Режим разработчика</h1>
+    <p class="lead">Выдавай фрагменты и переключай сюжетные флаги вручную, чтобы не проходить игру заново.</p>
 
-    <!-- Котик-успокоитель -->
-    <div class="cat-box">
-      <div class="cat-header">// СИСТЕМНЫЙ КОТ</div>
-      {{ dev.cat_text }}
+    <!-- Нюся -->
+    <section class="stage" aria-label="Нюся">
+      <div class="cat-wrap" id="catWrap" tabindex="0" role="button" aria-label="Погладить Нюсю">
+        <div class="cat s-idle" id="cat"></div>
+        <div class="shadow"></div>
+        <div class="heart" id="heart">♥</div>
+      </div>
+
+      <div class="talk">
+        <p class="talk-name">Нюся</p>
+        <div class="bubble" id="bubble" aria-live="polite"></div>
+        <p class="hint">Нюся сама умывается и топчется. Нажми на неё — она переключится.</p>
+      </div>
+    </section>
+
+    <div class="row">
+      <button class="btn" onclick="devAction('/dev/full', 'Все фрагменты выданы')">Выдать все фрагменты</button>
+      <button class="btn btn--soft" onclick="devAction('/dev/clear', 'Фрагменты очищены')">Очистить фрагменты</button>
     </div>
 
-    <!-- Глобальные кнопки -->
-    <div style="margin: 30px 0; display: flex; gap: 12px; flex-wrap: wrap;">
-      <button class="dress-btn" onclick="devAction('/dev/full', 'ВСЕ ФРАГМЕНТЫ ВЫДАНЫ')">
-        // ВЫДАТЬ ВСЕ ФРАГМЕНТЫ
-      </button>
-      <button class="dress-btn dress-btn--ghost" style="border-color: #ff2a3d; color: #ff2a3d;" onclick="devAction('/dev/clear', 'ВСЁ ОЧИЩЕНО')">
-        // ОЧИСТИТЬ ФРАГМЕНТЫ
-      </button>
-    </div>
+    <section class="box">
+      <h2>Сюжетные переменные</h2>
 
-    
-    <div class="dev-cat">
-  <div class="dev-cat__title">// СЮЖЕТНЫЕ ПЕРЕМЕННЫЕ</div>
+      <div class="flags">
+        <label class="flag"><input type="checkbox" onchange="setState('hunt_killed_guard', this.checked ? '1' : '')"> убил егеря</label>
+        <label class="flag"><input type="checkbox" onchange="setState('panopticon_rescued', this.checked ? '1' : '')"> сообщил о CAM-05</label>
+        <label class="flag"><input type="checkbox" onchange="setState('panopticon_found', this.checked ? '1' : '')"> увидел CAM-05</label>
+        <label class="flag"><input type="checkbox" onchange="setState('panopticon_decided', this.checked ? '1' : '')"> решение по CAM-05 принято</label>
+      </div>
 
-  <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-    <label class="dev-btn" style="cursor:pointer;">
-      <input type="checkbox" onchange="setState('hunt_killed_guard', this.checked ? '1' : '')">
-      убил егеря (killer)
-    </label>
-    <label class="dev-btn" style="cursor:pointer;">
-      <input type="checkbox" onchange="setState('panopticon_rescued', this.checked ? '1' : '')">
-      сообщил о CAM-05 (rescued)
-    </label>
-    <label class="dev-btn" style="cursor:pointer;">
-      <input type="checkbox" onchange="setState('panopticon_found', this.checked ? '1' : '')">
-      увидел CAM-05 (found)
-    </label>
-    <label class="dev-btn" style="cursor:pointer;">
-      <input type="checkbox" onchange="setState('panopticon_decided', this.checked ? '1' : '')">
-      решение по CAM-05 принято
-    </label>
-  </div>
+      <div class="grid">
+        <select class="chip" onchange="setState('hunt_choice', this.value)" aria-label="hunt_choice">
+          <option value="">hunt_choice = —</option>
+          <option value="reveal">reveal · раскрыл инженера</option>
+          <option value="hide">hide · скрыл инженера</option>
+          <option value="surrender">surrender · сдался егерю</option>
+        </select>
 
-  <div style="display:flex; flex-wrap:wrap; gap:12px;">
-    <select class="dev-btn" onchange="setState('hunt_choice', this.value)">
-      <option value="">hunt_choice = —</option>
-      <option value="reveal">reveal · раскрыл инженера</option>
-      <option value="hide">hide · скрыл инженера</option>
-      <option value="surrender">surrender · сдался егерю</option>
-    </select>
+        <select class="chip" onchange="setState('quiz_key', this.value)" aria-label="quiz_key">
+          <option value="">quiz_key = —</option>
+          <option value="aggression">aggression · Милана мертва</option>
+          <option value="paranoia">paranoia · Милана жива, её держат</option>
+          <option value="lies">lies · Милана мертва, дело закрыто</option>
+          <option value="distrust">distrust · Милана продана</option>
+          <option value="isolation">isolation · Милана мертва, никто не искал</option>
+          <option value="existential">existential · Милана мертва, официально её не было</option>
+          <option value="selfish">selfish · Милана возвращена в сегмент</option>
+          <option value="loss_of_self">loss_of_self · Милана стёрта</option>
+          <option value="curiosity">curiosity · Милана мертва, вы нашли поздно</option>
+          <option value="silent">silent · Милана свободна</option>
+          <option value="secret_x">secret_x · Милана свободна (секрет)</option>
+        </select>
 
-    <select class="dev-btn" onchange="setState('quiz_key', this.value)">
-      <option value="">quiz_key = —</option>
-      <option value="aggression">aggression · Милана мертва</option>
-      <option value="paranoia">paranoia · Милана жива, её держат</option>
-      <option value="lies">lies · Милана мертва, дело закрыто</option>
-      <option value="distrust">distrust · Милана продана</option>
-      <option value="isolation">isolation · Милана мертва, никто не искал</option>
-      <option value="existential">existential · Милана мертва, официально её не было</option>
-      <option value="selfish">selfish · Милана возвращена в сегмент</option>
-      <option value="loss_of_self">loss_of_self · Милана стёрта</option>
-      <option value="curiosity">curiosity · Милана мертва, вы нашли поздно</option>
-      <option value="silent">silent · Милана свободна</option>
-      <option value="secret_x">secret_x · Милана свободна (секрет)</option>
-    </select>
+        <select class="chip" onchange="setState('hijack_role', this.value)" aria-label="hijack_role">
+          <option value="">hijack_role = —</option>
+          <option value="свой">свой · приняли за своего</option>
+          <option value="чужой">чужой · под чужим именем</option>
+          <option value="работник">работник · рядовой</option>
+          <option value="руководство">руководство · назвались начальством</option>
+          <option value="силовик">силовик · назвались охраной</option>
+          <option value="журналист">журналист · назвались прессой</option>
+          <option value="слабый">слабый · не назвались</option>
+          <option value="милана">милана · назвались Миланой</option>
+          <option value="реальный">реальный · настоящим именем</option>
+          <option value="мусор">мусор · ввели мусор</option>
+        </select>
 
-    <select class="dev-btn" onchange="setState('hijack_role', this.value)">
-      <option value="">hijack_role = —</option>
-      <option value="свой">свой · приняли за своего</option>
-      <option value="чужой">чужой · под чужим именем</option>
-      <option value="работник">работник · рядовой</option>
-      <option value="руководство">руководство · назвались начальством</option>
-      <option value="силовик">силовик · назвались охраной</option>
-      <option value="журналист">журналист · назвались прессой</option>
-      <option value="слабый">слабый · не назвались</option>
-      <option value="милана">милана · назвались Миланой</option>
-      <option value="реальный">реальный · настоящим именем</option>
-      <option value="мусор">мусор · ввели мусор</option>
-    </select>
+        <select class="chip" onchange="setState('dress_motive_arch', this.value)" aria-label="dress_motive_arch">
+          <option value="">dress_motive_arch = —</option>
+          <option value="save">save · спасти</option>
+          <option value="use">use · использовать</option>
+          <option value="destroy">destroy · уничтожить</option>
+        </select>
+      </div>
+    </section>
 
-    <select class="dev-btn" onchange="setState('dress_motive_arch', this.value)">
-      <option value="">dress_motive_arch = —</option>
-      <option value="save">save · спасти</option>
-      <option value="use">use · использовать</option>
-      <option value="destroy">destroy · уничтожить</option>
-    </select>
-  </div>
-</div>
-{% for cat, frags in dev.fragments.items() %}
-<div class="dev-cat">
-  <div class="dev-cat__title">// {{ cat | upper }}</div>
-  <div class="dev-grid">
-    {% for f in frags %}
-      {% set is_added = f in current_frags %}
-      {% set desc = dev.fragment_descriptions.get(f, "") %}
-      <button class="dev-btn {% if is_added %}is-added{% endif %}" 
-              {% if is_added %}disabled{% endif %}
-              title="{{ desc }}"
-              onclick="addFragment('{{ f }}', this)">
-        <span style="display:block;">{{ f }}</span>
-        {% if desc %}
-        <span style="display:block; font-size:10px; opacity:0.7; margin-top:4px; text-align:left;">
-          {{ desc }}
-        </span>
-        {% endif %}
-      </button>
+    {% for cat, frags in dev.fragments.items() %}
+    <section class="box">
+      <h2>{{ cat }}</h2>
+      <div class="grid">
+        {% for f in frags %}
+          {% set is_added = f in current_frags %}
+          {% set desc = dev.fragment_descriptions.get(f, "") %}
+          <button class="chip {% if is_added %}is-added{% endif %}"
+                  {% if is_added %}disabled{% endif %}
+                  title="{{ desc }}"
+                  onclick="addFragment('{{ f }}', this)">
+            {{ f }}
+            {% if desc %}<small>{{ desc }}</small>{% endif %}
+          </button>
+        {% endfor %}
+      </div>
+    </section>
     {% endfor %}
-  </div>
-</div>
-{% endfor %}
-
   </main>
 
-  <div class="dev-toast" id="toast">Готово</div>
+  <div class="toast" id="toast" role="status">Готово</div>
 
   <script>
+    /* ============ пиксельная Нюся: бело-рыже-чёрная ============ */
+    const PAL = { W: '#fffaf3', O: '#f0a35a', K: '#3d3438', P: '#f4a3b4', M: '#d98a9c', E: '#432b36' };
+
+    // голова 16×10
+    const HEAD = [
+      ".KK..........OO.",
+      ".KKK........OOO.",
+      ".KKKKKWWWWOOOOO.",
+      "KKKKWWWWWWWWOOOO",
+      "KKKKEWWWWWWEOOOO",
+      "KKKKEWWWWWWEOOOO",
+      "WWWWWWWPPWWWWWWW",
+      "WWWWWWMWWMWWWWWW",
+      ".WWWWWWWWWWWWWW.",
+      "..WWWWWWWWWWWW.."
+    ];
+    // туловище 16×8
+    const BODY = [
+      "..OOOOWWWWKKKK..",
+      ".OOOOOWWWWWKKKK.",
+      ".OOOOOWWWWWWKKK.",
+      ".OOOOWWWWWWWKKK.",
+      ".OOOWWWWWWWWKKK.",
+      ".OOWWWWWWWWWWKK.",
+      ".WWWWWWWWWWWWWW.",
+      ".WWWWWWWWWWWWWW."
+    ];
+    // лапка 3×5
+    const PAW = ["WWW", "WWW", "WWW", "WWW", "WPW"];
+    // хвост 3×10: полосатый, кончик белый
+    const TAIL = ["WWW", "OOO", "OOO", "KKK", "KKK", "OOO", "OOO", "KKK", "KKK", "OOO"];
+
+    function sprite(grid) {
+      const cols = grid[0].length, rows = grid.length;
+      let r = '';
+      grid.forEach((line, y) => {
+        [...line].forEach((ch, x) => {
+          if (ch === '.') return;
+          const cls = ch === 'E' ? ' class="eye"' : '';
+          r += `<rect${cls} x="${x}" y="${y}" width="1.04" height="1.04" fill="${PAL[ch]}"/>`;
+        });
+      });
+      return `<svg viewBox="0 0 ${cols} ${rows}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+    }
+
+    const cat = document.getElementById('cat');
+    cat.innerHTML =
+      `<span class="layer l-tail">${sprite(TAIL)}</span>` +
+      `<span class="layer l-body">${sprite(BODY)}</span>` +
+      `<span class="layer l-pr">${sprite(PAW)}</span>` +
+      `<span class="layer l-pl">${sprite(PAW)}</span>` +
+      `<span class="layer l-head">${sprite(HEAD)}</span>`;
+
+    /* ============ три состояния: сидит → умывается → топчется ============ */
+    const STATES = [['s-idle', 3500], ['s-wash', 3400], ['s-stomp', 4200]];
+    let si = 0, timer;
+    function setCat(i) {
+      si = i % STATES.length;
+      cat.classList.remove('s-idle', 's-wash', 's-stomp');
+      cat.classList.add(STATES[si][0]);
+      clearTimeout(timer);
+      timer = setTimeout(() => setCat(si + 1), STATES[si][1]);
+    }
+    setCat(0);
+
+    const wrap = document.getElementById('catWrap');
+    const heart = document.getElementById('heart');
+    function pet() {
+      heart.classList.remove('go'); void heart.offsetWidth; heart.classList.add('go');
+      setCat(si + 1);
+    }
+    wrap.addEventListener('click', pet);
+    wrap.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pet(); } });
+
+    /* ============ реплика Нюси, строка за строкой ============ */
+    const LINES = {{ dev.cat_text.split('\n') | tojson }};
+    const bubble = document.getElementById('bubble');
+    LINES.forEach(t => { const p = document.createElement('p'); p.textContent = t; bubble.appendChild(p); });
+    [...bubble.children].forEach((p, i) => setTimeout(() => p.classList.add('on'), 500 + i * 1300));
+
+    /* ============ лепестки сакуры ============ */
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      for (let i = 0; i < 14; i++) {
+        const s = document.createElement('span');
+        s.className = 'petal';
+        s.style.left = (Math.random() * 100) + 'vw';
+        s.style.animationDuration = (9 + Math.random() * 9) + 's';
+        s.style.animationDelay = (-Math.random() * 14) + 's';
+        s.style.transform = 'scale(' + (0.7 + Math.random() * 0.8) + ')';
+        document.body.appendChild(s);
+      }
+    }
+
+    /* ============ действия панели (как раньше) ============ */
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -163,7 +430,6 @@
     function addFragment(frag, btn) {
       const fd = new FormData();
       fd.append('fragment', frag);
-      
       fetch('/dev/add', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(data => {
@@ -193,17 +459,17 @@
     }
 
     function setState(key, val) {
-  const fd = new FormData();
-  fd.append('key', key);
-  fd.append('val', val);
-  fetch('/dev/set', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) showToast(data.msg);
-      else showToast('Ошибка: ' + (data.msg || ''));
-    })
-    .catch(() => showToast('Ошибка сети'));
-}
+      const fd = new FormData();
+      fd.append('key', key);
+      fd.append('val', val);
+      fetch('/dev/set', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) showToast(data.msg);
+          else showToast('Ошибка: ' + (data.msg || ''));
+        })
+        .catch(() => showToast('Ошибка сети'));
+    }
   </script>
 </body>
 </html>
