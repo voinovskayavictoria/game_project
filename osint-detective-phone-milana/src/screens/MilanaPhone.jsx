@@ -11,6 +11,7 @@ import BatteryToast from '../components/BatteryToast';
 import NotesApp from './NotesApp';
 import MapsApp from './MapsApp';
 import CameraApp from './CameraApp';
+import BrokenPdfModal from '../components/BrokenPdfModal';
 
 const CODEWORD = 'orbit';
 
@@ -174,7 +175,6 @@ function PhoneApp({ onBack }) {
 // ================= ГЛАВНЫЙ КОМПОНЕНТ =================
 export default function MilanaPhone({ onBack, initialScreen = 'threads' }) {
   const lockType =
-    initialScreen === 'threads' ? 'codeword' :
     initialScreen === 'gallery' ? 'questions' :
     null;
 
@@ -193,6 +193,7 @@ export default function MilanaPhone({ onBack, initialScreen = 'threads' }) {
   const [batteryLevel, setBatteryLevel] = useState(0);
   const [showBatteryToast, setShowBatteryToast] = useState(false);
   const [germanThreat, setGermanThreat] = useState(false);
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -342,7 +343,7 @@ export default function MilanaPhone({ onBack, initialScreen = 'threads' }) {
         }} />
       )}
 
-      {germanThreat && (
+      {/* {germanThreat && (
         <div className="absolute top-12 left-3 right-3 z-[110]">
           <div className="bg-orange-600/95 backdrop-blur-md rounded-2xl px-4 py-3 flex items-start gap-3 shadow-2xl border border-orange-400">
             <div className="w-4 h-4 rounded-full bg-white flex-shrink-0 mt-0.5" />
@@ -360,7 +361,7 @@ export default function MilanaPhone({ onBack, initialScreen = 'threads' }) {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       <div className="flex-1 overflow-hidden relative">
 
@@ -408,7 +409,17 @@ export default function MilanaPhone({ onBack, initialScreen = 'threads' }) {
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                     m.who === 'me' ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-white'
                   }`}>
-                    {m.text}
+                    {m.text.includes('[Документ') ? (
+  <button 
+    onClick={() => setIsPdfOpen(true)}
+    className="flex items-center gap-2 text-yellow-300 underline hover:text-yellow-100 cursor-pointer text-left font-medium"
+  >
+    <span>📄</span>
+    {m.text.replace(/[\[\]]/g, '')}
+  </button>
+) : (
+  m.text
+)}
                     <div className={`text-[9px] mt-1 ${m.who === 'me' ? 'text-blue-100/70' : 'text-zinc-500'}`}>{m.time}</div>
                   </div>
                 </div>
@@ -500,6 +511,7 @@ export default function MilanaPhone({ onBack, initialScreen = 'threads' }) {
           </div>
         </div>
       )}
+      <BrokenPdfModal isOpen={isPdfOpen} onClose={() => setIsPdfOpen(false)} />
     </div>
   );
 }

@@ -14,17 +14,6 @@ const FILES = [
       'РЕЗЮМЕ\nМилана Макарова\nМенеджер по работе с персоналом (HR)\nPRIME SYSTEMS\nОпыт: 5 лет\nПочта: milana.makarova@primesystems.io\nГод рождения: 1995',
   },
   {
-    id: 'audio1',
-    name: 'Запись_совещания_22.05.mp3',
-    Icon: Music,
-    color: 'bg-purple-500',
-    size: '4.2 МБ',
-    date: '22.05.2025',
-    status: 'ok',
-    content:
-      '[ВОСПРОИЗВЕДЕНИЕ...]\n\n…— Я предупреждала, что так нельзя.\n— Ты понимаешь, что тебя просто используют?\n— Я всё задокументирую.\n\n[запись обрывается]',
-  },
-  {
     id: 'video1',
     name: 'Скрытая_запись_офис.mp4',
     Icon: Video,
@@ -34,17 +23,6 @@ const FILES = [
     status: 'corrupted',
   },
   {
-    id: 'screenshot1',
-    name: 'Screenshot_2025-05-20.png',
-    Icon: Image,
-    color: 'bg-blue-500',
-    size: '182 КБ',
-    date: '20.05.2025',
-    status: 'ok',
-    content:
-      '[СКРИНШОТ ПЕРЕПИСКИ]\n\n@m_lebedeva_press: "Милана, я знаю про OD-17. Помоги мне разобраться."\nМилана: "Я расскажу тебе ВСЁ. Но никому больше."',
-  },
-  {
     id: 'screenshot2',
     name: 'Screenshot_2025-05-21.png',
     Icon: Image,
@@ -52,17 +30,6 @@ const FILES = [
     size: '96 КБ',
     date: '21.05.2025',
     status: 'corrupted',
-  },
-  {
-    id: 'note1',
-    name: 'Заметки.txt',
-    Icon: FileCode,
-    color: 'bg-yellow-600',
-    size: '2 КБ',
-    date: '23.05.2025',
-    status: 'ok',
-    content:
-      '— Лев предупредил, что Герман что-то подозревает\n— Они хотят встретиться в кафе в 13:00 (на фото геотег сохранился)\n— Не забыть забрать флешку из шкафчика',
   },
 ];
 
