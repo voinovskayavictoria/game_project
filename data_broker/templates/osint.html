@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <title>Дело №17-04 // Обвинительное заключение</title>
+    <title>Дело №17-04 // Бюро расследований</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -15,9 +15,9 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* ДЕСКТОПНАЯ ВЕРСИЯ (По умолчанию) */
         body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
+        /* ЛЕВАЯ ПАНЕЛЬ (OSINT) */
         .sidebar { width: 320px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.02); z-index: 10; }
         .header { padding: 24px; border-bottom: 1px solid var(--border); }
         .header h1 { font-size: 1.1rem; font-weight: 700; }
@@ -57,6 +57,7 @@
         .fact-item .status { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
         .fact-item.found .status { color: var(--success); }
 
+        /* ПОЛИЦЕЙСКИЙ ОТЧЕТ */
         .report-view { display: none; width: 100%; background: var(--desk-bg); height: 100vh; overflow-y: auto; padding: 40px 20px 80px; }
         .report-view.active { display: block; }
         
@@ -111,17 +112,16 @@
         .special-point .point__input { border-bottom-color: #b91c1c !important; color: #b91c1c !important; }
         .special-point .point__input:focus { background: rgba(185,28,28,0.1) !important; }
 
-        /* АДАПТИВНОСТЬ ДЛЯ МОБИЛОК И ПЛАНШЕТОВ */
         @media (max-width: 900px) {
             body { flex-direction: column; height: auto; overflow-y: auto; }
             .sidebar { width: 100%; max-height: 35vh; border-right: none; border-bottom: 2px solid var(--border); }
             .main-content { padding: 20px; overflow-y: visible; }
             .report-view { height: auto; min-height: 100vh; padding: 20px 10px; }
             .paper { padding: 30px 20px; box-shadow: none; border: none; }
-            .paper::before { display: none; } /* Убираем штамп на телефоне, чтобы не перекрывал текст */
+            .paper::before { display: none; }
             .point__text { font-size: 14px; }
             .point__input, .signature-input { font-size: 20px; }
-            textarea { font-size: 16px; } /* Предотвращает зум экрана на iOS */
+            textarea { font-size: 16px; }
             .signature-block { flex-direction: column; align-items: flex-start; gap: 20px; }
             .signature-line-wrapper { width: 100%; }
         }
@@ -265,6 +265,12 @@
                 <div class="point__input-wrapper"><input class="point__input" id="r-q15" placeholder="жива / мертва..."></div>
             </div>
 
+            <div class="point">
+                <div class="point__num">16.</div>
+                <div class="point__text">Количество спасенных лиц (инженер из лабиринта, USER-02 или другие жертвы), выведенных из-под контроля системы:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q16" placeholder="0 / 1 / 2..."></div>
+            </div>
+
             <button class="submit-btn" onclick="submitReport()">УТВЕРДИТЬ И ПЕРЕДАТЬ В АРХИВ</button>
             
             <div class="score-box" id="score-box">
@@ -280,7 +286,7 @@
                 </div>
                 <div style="text-align: right; font-size: 14px; color: #6b5f4a;">
                     Дата: 28.10.2026<br>
-                    Отдел кибербезопасности
+                    Бюро независимых расследований
                 </div>
             </div>
         </div>
@@ -450,7 +456,8 @@
             'r-q12': ["1704"],
             'r-q13': ["1234"],
             'r-q14': ["милана", "макарова", "милана макарова"],
-            'r-q15': ["жива"]
+            'r-q15': ["жива"],
+            'r-q16': ["2", "два", "двое", "2 человека", "два человека", "инженер", "юзер", "user-02", "user02"]
         };
 
         let totalFacts = 0;
@@ -485,8 +492,8 @@
             let html = `
                 <div class="input-card">
                     <label class="input-label">Выкачать цифровой след</label>
-                    <p class="input-hint">Введите найденные факты через запятую или пробел.</p>
-                    <textarea id="trace-input" placeholder="Например: 1995, прайм, hr..."></textarea>
+                    <p class="input-hint">Введите факты: год рождения, место работы, должность, опишите личность одним словом и т.д.</p>
+                    <textarea id="trace-input" placeholder="Например: 1995, прайм, hr, нарцисс..."></textarea>
                     <button class="btn-analyze" onclick="analyzeTraces('${id}')">ПРОАНАЛИЗИРОВАТЬ ТЕКСТ</button>
                     <div class="results-grid" id="results-${id}">
             `;
@@ -579,6 +586,7 @@
                 
                 if (isCorrect) {
                     if (id === 'r-q15') reportScore += 3; // Бонус за Милану
+                    else if (id === 'r-q16') reportScore += 3; // Бонус за спасенных
                     else reportScore += 1;
                 }
             }
@@ -603,7 +611,7 @@
             }
 
             const totalScore = foundFacts + reportScore + nameBonus;
-            const maxScore = totalFacts + 17 + 4;
+            const maxScore = totalFacts + 20 + 4; // 17 обычных + 3 за Милану + 3 за спасенных (итого 20 по отчету) + 4 за имя
 
             const scoreBox = document.getElementById('score-box');
             const scoreTitle = document.getElementById('score-title');
@@ -615,14 +623,17 @@
             let milanaStatus = document.getElementById('r-q15').value.trim().toLowerCase();
             let milanaBonus = (milanaStatus.includes('жива')) ? "<br><b>МИЛАНА СПАСЕНА! (Бонус: +3 балла)</b>" : "<br><span style='color:red'>Вы не смогли установить, что Милана жива. Бонус не начислен.</span>";
 
-            if (reportScore >= 14) {
-                scoreText.innerHTML = "<b>ПРИГОВОР ВЫНЕСЕН.</b> Следствие собрало неопровержимые доказательства. Климов и Мельников предстанут перед судом." + milanaBonus + nameBonusText;
+            let rescuedStatus = document.getElementById('r-q16').value.trim().toLowerCase();
+            let rescuedBonus = (rescuedStatus.includes('2') || rescuedStatus.includes('инженер')) ? "<br><b>ЖЕРТВЫ СПАСЕНЫ! (Бонус: +3 балла)</b>" : "";
+
+            if (reportScore >= 17) {
+                scoreText.innerHTML = "<b>ПРИГОВОР ВЫНЕСЕН.</b> Следствие собрало неопровержимые доказательства. Климов и Мельников предстанут перед судом." + milanaBonus + rescuedBonus + nameBonusText;
                 scoreTitle.style.color = "#166534";
-            } else if (reportScore >= 7) {
-                scoreText.innerHTML = "<b>ДЕЛО ЧАСТИЧНО РАСКРЫТО.</b> Суд признал вину частично. Преступники понесут наказание, но не по всем пунктам." + milanaBonus + nameBonusText;
+            } else if (reportScore >= 8) {
+                scoreText.innerHTML = "<b>ДЕЛО ЧАСТИЧНО РАСКРЫТО.</b> Суд признал вину частично. Преступники понесут наказание, но не по всем пунктам." + milanaBonus + rescuedBonus + nameBonusText;
                 scoreTitle.style.color = "#b45309";
             } else {
-                scoreText.innerHTML = "<b>ДЕЛО РАЗВАЛИЛОСЬ В СУДЕ.</b> Из-за недостатка выводов в отчете адвокаты вытащили злодеев." + milanaBonus + nameBonusText;
+                scoreText.innerHTML = "<b>ДЕЛО РАЗВАЛИЛОСЬ В СУДЕ.</b> Из-за недостатка выводов в отчете адвокаты вытащили злодеев." + milanaBonus + rescuedBonus + nameBonusText;
                 scoreTitle.style.color = "#b91c1c";
             }
 
