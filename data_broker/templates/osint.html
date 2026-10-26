@@ -87,15 +87,22 @@
         .point__num { font-size: 15px; font-weight: 700; color: #111 !important; margin-bottom: 5px; display: inline-block; }
         .point__text { font-size: 15px; line-height: 1.6; color: #333 !important; margin-bottom: 10px; }
         
-        .point__input-wrapper { display: flex; align-items: flex-end; width: 100%; }
+        .point__input-wrapper { display: flex; align-items: flex-end; width: 100%; gap: 10px; }
         .point__input, .signature-input { 
             font-family: "Caveat", cursive; font-size: 24px; line-height: 1.2; 
             color: #1a2a5a !important; 
             background: transparent !important; border: 0; border-bottom: 2px solid #6b5f4a !important; 
-            outline: none; width: 100%; padding: 0 10px 2px; transition: background 0.2s; 
+            outline: none; width: 100%; padding: 0 10px 2px; transition: all 0.2s; 
         }
         .point__input::placeholder { color: #b8aa8a !important; font-style: italic; font-family: "Courier Prime", monospace; font-size: 12px; letter-spacing: 1px; }
         .point__input:focus, .signature-input:focus { background: rgba(255,240,180,.6) !important; border-bottom-color: #1a2a5a !important; }
+
+        /* Стили для правильных/неправильных ответов */
+        .point__input.input-ok { border-bottom-color: var(--success) !important; color: var(--success) !important; }
+        .point__input.input-bad { border-bottom-color: var(--danger) !important; color: var(--danger) !important; text-decoration: line-through; }
+        .res-icon { font-size: 24px; font-weight: bold; line-height: 1; margin-bottom: 2px; }
+        .res-icon.icon-ok { color: var(--success); }
+        .res-icon.icon-bad { color: var(--danger); }
 
         .signature-block { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1; }
         .signature-line-wrapper { display: flex; flex-direction: column; width: 250px; }
@@ -109,7 +116,9 @@
 
         .special-point { background: rgba(185,28,28,0.05); border: 1px dashed #b91c1c; padding: 20px; margin-top: 20px; }
         .special-point .point__num { color: #b91c1c !important; }
-        .special-point .point__input { border-bottom-color: #b91c1c !important; color: #b91c1c !important; }
+        .special-point .point__input { border-bottom-color: #b91c1c !important; }
+        .special-point .point__input.input-ok { border-bottom-color: var(--success) !important; }
+        .special-point .point__input.input-bad { border-bottom-color: var(--danger) !important; }
         .special-point .point__input:focus { background: rgba(185,28,28,0.1) !important; }
 
         @media (max-width: 900px) {
@@ -172,25 +181,37 @@
             <div class="point">
                 <div class="point__num">1.</div>
                 <div class="point__text">На основании анализа перехваченных данных, следствие квалифицирует теневую сеть CONNECT как платформу для:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q1" placeholder="введите вид преступления..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q1" placeholder="введите вид преступления...">
+                    <span class="res-icon" id="icon-r-q1"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">2.</div>
                 <div class="point__text">Легальным фасадом (прикрытием) для даркнет-площадки выступала организация:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q2" placeholder="название компании..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q2" placeholder="название компании...">
+                    <span class="res-icon" id="icon-r-q2"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">3.</div>
                 <div class="point__text">Изначальным разработчиком уязвимой архитектуры (проекта C-17) являлась корпорация:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q3" placeholder="название корпорации..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q3" placeholder="название корпорации...">
+                    <span class="res-icon" id="icon-r-q3"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">4.</div>
                 <div class="point__text">Термин «Платье» в каталоге преступников, согласно чатам, обозначает:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q4" placeholder="кого/что..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q4" placeholder="кого/что...">
+                    <span class="res-icon" id="icon-r-q4"></span>
+                </div>
             </div>
 
             <div class="section-title">II. Установленные лица и их роли</div>
@@ -198,31 +219,46 @@
             <div class="point">
                 <div class="point__num">5.</div>
                 <div class="point__text">Главным организатором и координатором сети (скрывавшимся под ником C.U.), является гражданин:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q5" placeholder="Фамилия Имя..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q5" placeholder="Фамилия Имя...">
+                    <span class="res-icon" id="icon-r-q5"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">6.</div>
                 <div class="point__text">Директором компании-фасада (ORBIT DATA), способствовавшим легализации CONNECT, является:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q6" placeholder="Фамилия Имя..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q6" placeholder="Фамилия Имя...">
+                    <span class="res-icon" id="icon-r-q6"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">7.</div>
-                <div class="point__text">Лицом, скрывавшимся под ником ADMIN-01 и управлявшим каталогом жертв, установлен:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q7" placeholder="псевдоним..."></div>
+                <div class="point__text">Кто являлся прямым подчиненным организатора C.U. и управлял базой данных жертв?</div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q7" placeholder="псевдоним...">
+                    <span class="res-icon" id="icon-r-q7"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">8.</div>
                 <div class="point__text">Гражданина Макарову втянул в преступную схему (предложил «быстрый заработок») сотрудник:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q8" placeholder="Фамилия Имя..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q8" placeholder="Фамилия Имя...">
+                    <span class="res-icon" id="icon-r-q8"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">9.</div>
                 <div class="point__text">Финансовая проблема, из-за которой гражданка Макарова согласилась на сомнительное предложение о «быстром заработке»:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q9" placeholder="введите проблему..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q9" placeholder="введите проблему...">
+                    <span class="res-icon" id="icon-r-q9"></span>
+                </div>
             </div>
 
             <div class="section-title">III. Хронология и улики</div>
@@ -230,31 +266,46 @@
             <div class="point">
                 <div class="point__num">10.</div>
                 <div class="point__text">Незаконная передача прав на архитектуру C-17 состоялась (точная дата):</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q10" placeholder="дд.мм.гггг"></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q10" placeholder="дд.мм.гггг">
+                    <span class="res-icon" id="icon-r-q10"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">11.</div>
                 <div class="point__text">Акт приема-передачи проекта C-17 от PRIME SYSTEMS подписал:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q11" placeholder="Фамилия Имя..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q11" placeholder="Фамилия Имя...">
+                    <span class="res-icon" id="icon-r-q11"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">12.</div>
                 <div class="point__text">Секретный код для входа в скрытый сегмент серверов (Anon-17), используемый преступниками:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q12" placeholder="код..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q12" placeholder="код...">
+                    <span class="res-icon" id="icon-r-q12"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">13.</div>
                 <div class="point__text">Публичный пароль от аккаунта Макаровой (makarova) в CONNECT:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q13" placeholder="пароль..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q13" placeholder="пароль...">
+                    <span class="res-icon" id="icon-r-q13"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">14.</div>
                 <div class="point__text">Лицо, передавшее журналистке Лебедевой доказательства существования сети:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q14" placeholder="Фамилия Имя..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q14" placeholder="Фамилия Имя...">
+                    <span class="res-icon" id="icon-r-q14"></span>
+                </div>
             </div>
 
             <div class="section-title">IV. Текущий статус дела</div>
@@ -262,13 +313,19 @@
             <div class="point special-point">
                 <div class="point__num">15. ОСОБО ВАЖНО</div>
                 <div class="point__text">Согласно последним оперативным данным, фактический статус гражданки Макаровой на момент закрытия дела:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q15" placeholder="жива / мертва..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q15" placeholder="жива / мертва...">
+                    <span class="res-icon" id="icon-r-q15"></span>
+                </div>
             </div>
 
             <div class="point">
                 <div class="point__num">16.</div>
                 <div class="point__text">Количество спасенных лиц (инженер из лабиринта, USER-02 или другие жертвы), выведенных из-под контроля системы:</div>
-                <div class="point__input-wrapper"><input class="point__input" id="r-q16" placeholder="0 / 1 / 2..."></div>
+                <div class="point__input-wrapper">
+                    <input class="point__input" id="r-q16" placeholder="0 / 1 / 2...">
+                    <span class="res-icon" id="icon-r-q16"></span>
+                </div>
             </div>
 
             <button class="submit-btn" onclick="submitReport()">УТВЕРДИТЬ И ПЕРЕДАТЬ В АРХИВ</button>
@@ -492,8 +549,8 @@
             let html = `
                 <div class="input-card">
                     <label class="input-label">Выкачать цифровой след</label>
-                    <p class="input-hint">Введите факты: год рождения, место работы, должность, опишите личность одним словом и т.д.</p>
-                    <textarea id="trace-input" placeholder="Например: 1995, прайм, hr, нарцисс..."></textarea>
+                    <p class="input-hint">Введите факты: год рождения, место работы, должность, опишите личность одним словом и т.д.!ОДНО СЛОВО, МАЛЕНЬКИЕ БУКВЫ!</p>
+                    <textarea id="trace-input" placeholder="Например: 1995, прайм..."></textarea>
                     <button class="btn-analyze" onclick="analyzeTraces('${id}')">ПРОАНАЛИЗИРОВАТЬ ТЕКСТ</button>
                     <div class="results-grid" id="results-${id}">
             `;
@@ -571,23 +628,48 @@
         function submitReport() {
             let reportScore = 0;
             
+            // Очищаем старые отметки перед новой проверкой
+            document.querySelectorAll('.point__input').forEach(el => {
+                el.classList.remove('input-ok', 'input-bad');
+            });
+            document.querySelectorAll('.res-icon').forEach(el => {
+                el.innerText = '';
+                el.classList.remove('icon-ok', 'icon-bad');
+            });
+
             for (const [id, answers] of Object.entries(reportAnswers)) {
                 const input = document.getElementById(id);
-                let val = input.value.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
-                if (val === '') continue;
+                const icon = document.getElementById(`icon-${id}`);
+                if (!input) continue;
 
+                let val = input.value.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+                
                 let isCorrect = false;
-                answers.forEach(ans => {
-                    let ansClean = ans.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
-                    if (val === ansClean || val.includes(ansClean) || ansClean.includes(val)) {
-                        isCorrect = true;
-                    }
-                });
+                if (val !== '') {
+                    answers.forEach(ans => {
+                        let ansClean = ans.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+                        if (val === ansClean || val.includes(ansClean) || ansClean.includes(val)) {
+                            isCorrect = true;
+                        }
+                    });
+                }
                 
                 if (isCorrect) {
+                    input.classList.add('input-ok');
+                    if (icon) {
+                        icon.classList.add('icon-ok');
+                        icon.innerText = '✓';
+                    }
+
                     if (id === 'r-q15') reportScore += 3; // Бонус за Милану
                     else if (id === 'r-q16') reportScore += 3; // Бонус за спасенных
                     else reportScore += 1;
+                } else {
+                    input.classList.add('input-bad');
+                    if (icon) {
+                        icon.classList.add('icon-bad');
+                        icon.innerText = '✗';
+                    }
                 }
             }
 
