@@ -625,7 +625,7 @@
             }
         }
 
-        function submitReport() {
+                function submitReport() {
             let reportScore = 0;
             
             // Очищаем старые отметки перед новой проверкой
@@ -693,11 +693,9 @@
                 }
             }
 
-            // СЧИТАЕМ ОБЩИЙ СЧЕТ (Улики + Отчет + Имя)
+            // СЧИТАЕМ ОБЩИЙ СЧЕТ
             const totalScore = foundFacts + reportScore + nameBonus;
             const maxScore = totalFacts + 20 + 4; // Максимум 91 балл
-            
-            // Считаем процент от идеального прохождения
             const percent = (totalScore / maxScore) * 100;
 
             const scoreBox = document.getElementById('score-box');
@@ -708,21 +706,48 @@
             scoreTitle.innerText = `ИТОГОВЫЙ СЧЕТ: ${totalScore} / ${maxScore} (${Math.round(percent)}%)`;
             
             let milanaStatus = document.getElementById('r-q15').value.trim().toLowerCase();
-            let milanaBonus = (milanaStatus.includes('жива')) ? "<br><b>МИЛАНА СПАСЕНА! (Бонус: +3 балла)</b>" : "";
+            let milanaBonus = (milanaStatus.includes('жива')) ? "<br><b>МИЛАНА СПАСЕНА! (+3 балла)</b>" : "";
             let rescuedStatus = document.getElementById('r-q16').value.trim().toLowerCase();
-            let rescuedBonus = (rescuedStatus.includes('2') || rescuedStatus.includes('инженер')) ? "<br><b>ЖЕРТВЫ СПАСЕНЫ! (Бонус: +3 балла)</b>" : "";
+            let rescuedBonus = (rescuedStatus.includes('2') || rescuedStatus.includes('инженер')) ? "<br><b>ЖЕРТВЫ СПАСЕНЫ! (+3 балла)</b>" : "";
 
-            // Выдаем вердикт в зависимости от ОБЩЕГО процента
-            if (percent >= 70) {
-                scoreTitle.style.color = "#166534";
-                scoreText.innerHTML = "<b>ПРИГОВОР ВЫНЕСЕН.</b> Следствие собрало неопровержимые доказательства. Вы нашли практически все цифровые следы и составили безупречный отчет. Климов и Мельников предстанут перед судом." + milanaBonus + rescuedBonus + nameBonusText;
-            } else if (percent >= 40) {
-                scoreTitle.style.color = "#b45309";
-                scoreText.innerHTML = "<b>ДЕЛО ЧАСТИЧНО РАСКРЫТО.</b> Вы нашли достаточно улик, но в отчете или сборе данных есть пробелы. Преступники понесут наказание, но адвокаты сумеют смягчить приговор." + milanaBonus + rescuedBonus + nameBonusText;
+            let finalText = "";
+            let finalColor = "";
+
+            // ДЕСЯТЬ УРОВНЕЙ КОНЦОВОК
+            if (totalScore >= 90) {
+                finalColor = "#166534"; // Темно-зеленый
+                finalText = "<b>ЛЕГЕНДА БЮРО.</b> Вы вычислили абсолютно всё. Каждый цифровой след был найден, а отчет составлен безупречно. Климов, Мельников и вся их сеть отправляются за решетку на максимальный срок. Милана и спасенные вами люди свободны.";
+            } else if (totalScore >= 80) {
+                finalColor = "#15803d"; // Зеленый
+                finalText = "<b>БЕЗУПРЕЧНО.</b> Суд аплодирует вашей работе. Вы нашли почти все улики и составили идеальный отчет. Адвокатам злодеев нечего вам противопоставить. Все преступники изолированы.";
+            } else if (totalScore >= 70) {
+                finalColor = "#16a34a"; // Светло-зеленый
+                finalText = "<b>ТРИУМФ.</b> Вы вычислили главных злодеев и спасли жертв. В вашем отчете есть пара мелких неточностей, но это не помешало суду вынести обвинительный приговор.";
+            } else if (totalScore >= 60) {
+                finalColor = "#ca8a04"; // Желтый
+                finalText = "<b>ДЕЛО РАСКРЫТО.</b> Хорошая работа. Вы собрали достаточно доказательств, чтобы посадить Климова и Мельникова. Правда, пара фигурантов успела сбежать, пока вы собирали данные.";
+            } else if (totalScore >= 50) {
+                finalColor = "#d97706"; // Оранжевый
+                finalText = "<b>ЧАСТИЧНЫЙ УСПЕХ.</b> Преступники понесут наказание, но не по всем пунктам. Из-за пробелов в отчете адвокаты смогли смягчить приговор, а система CONNECT продолжила работу в тени.";
+            } else if (totalScore >= 40) {
+                finalColor = "#b45309"; // Темно-оранжевый
+                finalText = "<b>НА ГРАНИ ПРОВАЛА.</b> Дело развалилось в суде. Вам удалось спасти Милану, но главные злодеи вышли на свободу из-за недостатка улик. Вы сделали всё, что могли, но этого оказалось мало.";
+            } else if (totalScore >= 30) {
+                finalColor = "#dc2626"; // Красный
+                finalText = "<b>СЛАБОЕ РАССЛЕДОВАНИЕ.</b> Вы нашли лишь обрывки информации. Суд признал вину только мелких исполнителей (вроде ADMIN-01), а настоящие кукловоды даже не узнали о вашем существовании.";
+            } else if (totalScore >= 20) {
+                finalColor = "#991b1b"; // Темно-красный
+                finalText = "<b>ПРОВАЛ.</b> Ваш отчет подняли на смех. Вы не нашли ни нужных паролей, ни имен. Климов и его команда заметают следы, а дело №17-04 уходит в архив нераскрытым.";
+            } else if (totalScore >= 10) {
+                finalColor = "#7f1d1d"; // Очень темный красный
+                finalText = "<b>ФИАСКО.</b> Вы провалили задание. Не собрано почти ничего, злодеи остались на свободе, а потерпевшая числится мертвой. Бюро разочаровано в ваших навыках.";
             } else {
-                scoreTitle.style.color = "#b91c1c";
-                scoreText.innerHTML = "<b>ДЕЛО РАЗВАЛИЛОСЬ В СУДЕ.</b> Вы упустили слишком много цифровых следов и не смогли доказать вину. Адвокаты вытащили злодеев, а дело ушло в архив." + milanaBonus + rescuedBonus + nameBonusText;
+                finalColor = "#000000"; // Черный
+                finalText = "<b>ДЕЛО В МУСОРКЕ.</b> Вы даже не пытались. Пустой отчет, ноль улик. Злодеи продолжат свой бизнес, а вы больше никогда не получите лицензию следователя.";
             }
+
+            scoreTitle.style.color = finalColor;
+            scoreText.innerHTML = finalText + milanaBonus + rescuedBonus + nameBonusText;
 
             scoreBox.scrollIntoView({ behavior: 'smooth' });
         }
