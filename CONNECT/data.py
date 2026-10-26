@@ -1765,7 +1765,7 @@ REPORT = {
 
 # максимум = сумма весов обычных пунктов + 2 (освобождённые: до двух человек)
 REPORT["max_score"] = sum(f.get("weight", 1) for f in REPORT["fields"]
-                          if f["id"] != "rescued_count") + 2cd ..
+                          if f["id"] != "rescued_count") + 2
 
 # ------------------------------------------------------------------
 # DEV MODE — режим разработчика
