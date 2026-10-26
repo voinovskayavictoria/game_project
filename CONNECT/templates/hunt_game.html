@@ -358,6 +358,7 @@
           <div><i class="l-k"></i> егерь-следопыт — идёт по твоим следам</div>
           <div><i class="l-t"></i> цель — прячется, а заметив тебя, бежит</div>
           <div><i class="l-i"></i> светящийся ящик — предмет, наступи на него</div>
+          <div><i style="background:#8a1420"></i> тело егеря</div>
         </div>
       </div>
 
@@ -424,7 +425,7 @@ window.HG = (function () {
   let G = {{ game|tojson }};
   const SEED = G.seed;
 
-  let PLAYER, GUARDS, TARGET_POS, TARGET_MODE, STATUS, TURNS, EVENTS, SNEAK, ALARM_IN, INV, PICKUPS, SMOKE, FACING;
+  let PLAYER, GUARDS, TARGET_POS, TARGET_MODE, STATUS, TURNS, EVENTS, SNEAK, ALARM_IN, INV, PICKUPS, SMOKE, FACING, CORPSES;
   let px0 = 0, py0 = 0;
 
   const canvas = document.getElementById("game-canvas");
@@ -719,6 +720,8 @@ window.HG = (function () {
     PLAYER = g.player; GUARDS = g.guards; TARGET_POS = g.target.pos; TARGET_MODE = g.target.mode;
     STATUS = g.status; TURNS = g.turns; EVENTS = g.events || []; SNEAK = g.sneak; ALARM_IN = g.alarm_in;
     INV = g.inv; PICKUPS = g.pickups; SMOKE = g.smoke; FACING = g.facing;
+        CORPSES = g.corpses || [];
+    if (STATUS !== "caught") window.HG.duelOn = false;   // вернулись из перестрелки в лабиринт
 
     const advanced = !first && g.turns !== old.turns;
     tweenOk = advanced && g.turns === old.turns + 1;
@@ -817,6 +820,9 @@ window.HG = (function () {
     PICKUPS.forEach(p => {
       if (exp[p[1] * SIZE + p[0]]) { mctx.fillStyle = PK_COL[p[2]]; mctx.fillRect(p[0] * MM + 2, p[1] * MM + 2, 2, 2); }
     });
+    CORPSES.forEach(c => {
+      if (exp[c[1] * SIZE + c[0]]) { mctx.fillStyle = "#8a1420"; mctx.fillRect(c[0] * MM + 1, c[1] * MM + 1, 4, 4); }
+    });
     mctx.strokeStyle = "rgba(63,215,255,.45)"; mctx.lineWidth = 1;
     mctx.strokeRect(camXc * MM + .5, camYc * MM + .5, VIEW * MM - 1, VIEW * MM - 1);
     GUARDS.forEach(g => {
@@ -894,6 +900,16 @@ window.HG = (function () {
       const o = Math.floor((now / 120 + c[0] * 7 + c[1] * 5) % 8);
       ctx.fillRect(c[0] * CS + o * U * 2, c[1] * CS + ((o * 5) % 12) * U, U * 4, U * 3);
     });
+    CORPSES.forEach(c => {
+      if (!exp[c[1] * SIZE + c[0]]) return;
+      const cx = c[0] * CS + CS / 2, cy = c[1] * CS + CS / 2;
+      ctx.fillStyle = "rgba(138,20,32,.55)";
+      ctx.fillRect(Math.round(cx - U * 5), Math.round(cy - U * 3), Math.round(U * 10), Math.round(U * 7));
+      ctx.save();
+      ctx.translate(cx, cy + U * 2); ctx.rotate(Math.PI / 2); ctx.globalAlpha = .8;
+      ctx.drawImage(SPR_GUARD, -CS / 2, -CS / 2, CS, CS);
+      ctx.restore();
+    });  
 
     if (isPlaying && INV.bottle > 0 && (THROW[0] !== px0 || THROW[1] !== py0)) {
       const cx = THROW[0] * CS + CS / 2, cy = THROW[1] * CS + CS / 2, rr = CS * (.28 + .06 * pulse);
@@ -1463,9 +1479,13 @@ window.HG = (function () {
     $("dGiveUp").addEventListener("click", submitSurrender);
   }
   function showWin() {
-    showOv("hg-ov--win", "<h2>ЕГЕРЬ МЁРТВ</h2><p>Тишина. Руки дрожат.</p><p>Обратного пути уже нет.</p>" +
-      "<button class='dress-btn' id='dNext'>// ПРОДОЛЖИТЬ</button>");
-    const go = () => { if (went) return; went = true; document.getElementById("fDuelWin").submit(); };
+    showOv("hg-ov--win", "<h2>ЕГЕРЬ МЁРТВ</h2><p>Тишина. Руки дрожат.</p><p>Тело остаётся здесь. Ищи цель дальше.</p>" +
+      "<button class='dress-btn' id='dNext'>// В ЛАБИРИНТ</button>");
+    const go = () => {
+      if (went) return; went = true;
+      active = false;
+      window.HG.post({ action: "duel_win" });
+    };
     $("dNext").addEventListener("click", go);
     setTimeout(go, 2600);
   }

@@ -8,12 +8,12 @@ from data import (
     LOGIN_PUBLIC, LOGIN_SECRET,
     PUBLIC_CHATS, SECRET_CHATS, CONTROL,
     DRESSES, DRESSES_NOTE, DRESSES_FOOTER, DRESSES_RENTAL,
-    HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
+    HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY, PLOT_KILLER_MODS,
     PANOPTICON, DEAD_DROP,
     CHAT_HIJACK, PLOT_ENDINGS, PLOT_ENDINGS_SECRET,
     BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
     REQUEST_UNLOCK,
-    QUIZ_FINALS, FLAG_PRIORITY,
+    QUIZ_FINALS, FLAG_PRIORITY, 
     OD17_ACCESS, PLOT_MOTIVE_MODS, HUNT_LABYRINTH,
     PLOT_EXTRA_MODS,
     FATE_BY_KEY, PLOT_HUNT_MODS,
@@ -527,7 +527,10 @@ def _evaluate_hijack(chain, values):
         return {"status": "kill", "key": "name_chon",
                 "msg": cfg["kill_reactions"]["name_chon"]}
 
-    real_name = next((rn for rn in cfg["real_names"] if rn in low), None)
+    # настоящее имя имеет смысл, только если ни одна роль не подошла
+    real_name = None
+    if role == "unknown":
+        real_name = next((rn for rn in cfg["real_names"] if rn in low), None)
 
     role_arch = "мусор"
     for arch in ("свой", "милана", "силовик", "руководство",
@@ -535,6 +538,9 @@ def _evaluate_hijack(chain, values):
         if role in cfg["role_groups"].get(arch, []):
             role_arch = arch
             break
+
+    if real_name and role_arch == "мусор":
+        role_arch = "реальный"
 
     entry_id = rows[2][0]
     tone = intents[rows[3][0]].get("tone", "business")
@@ -566,7 +572,7 @@ def _evaluate_hijack(chain, values):
 
     ROLE_CODE = {"свой": "A", "чужой": "B", "работник": "C", "руководство": "D",
                  "силовик": "E", "журналист": "F", "слабый": "G",
-                 "милана": "H", "мусор": "X"}
+                 "милана": "H", "реальный": "R", "мусор": "X"}
 
     return {
         "status": "ok",
@@ -780,6 +786,7 @@ def logout():
         "panopticon_rescued": session.get("panopticon_rescued"),
         "hunt_choice":        session.get("hunt_choice"),
         "hunt_finished":      session.get("hunt_finished"),
+        "hunt_killed_guard": session.get("hunt_killed_guard"),
         "dress_motive_arch":  session.get("dress_motive_arch"),
         "dress_motivation":   session.get("dress_motivation"),
     }
@@ -1433,6 +1440,7 @@ def hunt_game(hid):
             session[HUNT_STATE_KEY] = state
             session.pop("hunt_choice", None)
             session.pop("hunt_finished", None)
+            session.pop("hunt_killed_guard", None)
             session.modified = True
             return redirect(url_for("hunt_game", hid=hid))
 
@@ -1456,16 +1464,18 @@ def hunt_game(hid):
             return _hunt_reply(state, hid)
 
         # егерь наступил: сдаться или победить в перестрелке
-        if action in ("surrender", "duel_win") and state["status"] == "caught":
-            choice = "surrender" if action == "surrender" else "kill"
-            session["hunt_choice"] = choice
+        # поймали: сдаться или победить егеря в перестрелке
+        if action == "duel_win" and state["status"] == "caught":
+            eng.resolve_duel_win(state)
+            session["hunt_killed_guard"] = True      # флаг «убийца» остаётся до конца сессии
+            return _hunt_reply(state, hid)
+
+        if action == "surrender" and state["status"] == "caught":
+            session["hunt_choice"] = "surrender"
             session["hunt_finished"] = True
-
-            frag = "HT-SURRENDER" if choice == "surrender" else "HT-KILL"
             frags = set(session.get("found_fragments", []))
-            frags.add(frag)
+            frags -= {"HT-REVEAL", "HT-HIDE", "HT-SURRENDER"}
             session["found_fragments"] = list(frags)
-
             session.modified = True
             return redirect(url_for("hunt_game_result"))
 
@@ -1511,6 +1521,7 @@ def hunt_game_result():
         "hunt_game_result.html",
         game={},
         choice=session.get("hunt_choice"),
+        killer=bool(session.get("hunt_killed_guard")),
     )
 
 
@@ -1600,6 +1611,26 @@ def panopticon_cam(cam_id):
         chats=SECRET_CHATS,
     )
 
+def _plot_mods(motive_arch, fate):
+    mods = []
+
+    motive = PLOT_MOTIVE_MODS.get(motive_arch, "")
+    if motive:
+        mods.append(motive)
+
+    hunt = session.get("hunt_choice")
+    hunt_mod = PLOT_HUNT_MODS.get(hunt, {}).get(fate, "")
+    if hunt_mod:
+        mods.append(hunt_mod)
+
+    if session.get("hunt_killed_guard"):
+        mods.append(PLOT_KILLER_MODS.get(hunt or "none", PLOT_KILLER_MODS["none"]))
+
+    pan_mod = PLOT_EXTRA_MODS.get(_panopticon_key(), "")
+    if pan_mod:
+        mods.append(pan_mod)
+
+    return mods
 
 @app.route("/panopticon/cam/<cam_id>/rescue", methods=["POST"])
 def panopticon_rescue(cam_id):
@@ -1893,7 +1924,7 @@ def debug_plot_all():
         return redirect(url_for("inbox"))
 
     roles = ["свой", "чужой", "работник", "руководство", "силовик",
-             "журналист", "слабый", "милана", "мусор"]
+             "журналист", "слабый", "милана", "реальный", "мусор"]
     quiz_keys = ["aggression", "paranoia", "lies", "distrust", "isolation",
                  "existential", "selfish", "loss_of_self", "curiosity",
                  "silent", "secret_x"]
