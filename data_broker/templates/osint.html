@@ -3,372 +3,449 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аналитический центр // Дело №17-04</title>
+    <meta name="color-scheme" content="light">
+    <title>Дело №17-04 // Обвинительное заключение</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
         :root {
-            --bg-body: #f8fafc;
-            --bg-panel: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
+            --bg-body: #f8fafc; --bg-panel: #ffffff; --text-main: #1e293b;
+            --text-muted: #64748b; --border: #e2e8f0; --accent: #3b82f6;
+            --success: #10b981; --danger: #ef4444;
+            --desk-bg: #1c1917; --paper-bg: #fcfaf5;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* ЛЕВАЯ ПАНЕЛЬ (СПИСОК) */
-        .sidebar {
-            width: 300px;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.02);
-            z-index: 10;
-        }
-
-        .header {
-            padding: 24px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header h1 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+        /* ЛЕВАЯ ПАНЕЛЬ (OSINT) */
+        .sidebar { width: 320px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.02); z-index: 10; }
+        .header { padding: 24px; border-bottom: 1px solid var(--border); }
+        .header h1 { font-size: 1.1rem; font-weight: 700; }
         .header p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
-
-        .score-board {
-            padding: 16px 24px;
-            background: #f1f5f9;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            color: var(--text-main);
-        }
+        .score-board { padding: 16px 24px; background: #f1f5f9; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; display: flex; justify-content: space-between; }
         .score-board span { color: var(--accent); }
 
         .nav-tabs { display: flex; border-bottom: 1px solid var(--border); }
-        .nav-tab {
-            flex: 1; padding: 16px; text-align: center;
-            font-size: 0.9rem; font-weight: 500; cursor: pointer; color: var(--text-muted);
-            border-bottom: 2px solid transparent; transition: all 0.2s;
-        }
+        .nav-tab { flex: 1; padding: 16px; text-align: center; font-size: 0.9rem; font-weight: 500; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
         .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: #f8fafc; }
-        .nav-tab:hover:not(.active) { background: #f8fafc; color: var(--text-main); }
 
         .char-list { flex: 1; overflow-y: auto; padding: 12px; }
-        
-        .char-btn {
-            width: 100%; text-align: left; background: var(--bg-panel); border: 1px solid var(--border);
-            padding: 14px 16px; margin-bottom: 8px; border-radius: 8px; color: var(--text-main);
-            cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .char-btn { width: 100%; text-align: left; background: var(--bg-panel); border: 1px solid var(--border); padding: 12px 16px; margin-bottom: 8px; border-radius: 8px; color: var(--text-main); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
         .char-btn:hover { border-color: #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .char-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
         .check-icon { color: var(--success); font-size: 1rem; display: none; font-weight: bold; }
         .char-btn.solved .check-icon { display: block; }
 
-        /* ЦЕНТРАЛЬНАЯ ПАНЕЛЬ */
-        .main-content {
-            flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px;
-        }
-
-        .profile-view { display: none; flex-direction: column; gap: 24px; max-width: 800px; margin: 0 auto; width: 100%; }
+        /* ОСНОВНОЙ КОНТЕНТ */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; }
+        .profile-view { display: none; flex-direction: column; gap: 24px; max-width: 1000px; margin: 0 auto; width: 100%; }
         .profile-view.active { display: flex; }
-
         .profile-header { border-bottom: 1px solid var(--border); padding-bottom: 20px; }
-        .profile-header h2 { font-size: 1.8rem; font-weight: 700; color: var(--text-main); }
+        .profile-header h2 { font-size: 1.8rem; font-weight: 700; }
         .profile-header .role { color: var(--text-muted); font-size: 1rem; margin-top: 5px; }
 
-        .question-card {
-            background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px;
-            padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+        .input-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .input-label { font-size: 1rem; font-weight: 600; margin-bottom: 12px; display: block; }
+        .input-hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+        textarea { width: 100%; height: 100px; background: #fff; border: 1px solid var(--border); padding: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; border-radius: 6px; outline: none; resize: none; margin-bottom: 16px; transition: border 0.2s; }
+        textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .btn-analyze { background: var(--accent); color: #fff; border: none; padding: 12px 24px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; width: 100%; }
+        .btn-analyze:hover { background: #2563eb; }
 
-        .question-label { font-size: 1rem; font-weight: 600; color: var(--text-main); margin-bottom: 16px; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 20px; }
+        .fact-item { background: #f1f5f9; border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px; color: var(--text-muted); transition: all 0.3s; }
+        .fact-item.found { background: #ecfdf5; border-color: var(--success); color: #065f46; }
+        .fact-item .status { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .fact-item.found .status { color: var(--success); }
+
+        /* ПОЛИЦЕЙСКИЙ ОТЧЕТ */
+        .report-view { display: none; width: 100%; background: var(--desk-bg); height: 100vh; overflow-y: auto; padding: 40px 20px 80px; }
+        .report-view.active { display: block; }
         
-        .input-group { display: flex; gap: 12px; }
-        .input-group input[type="text"] {
-            flex: 1; background: #fff; border: 1px solid var(--border); color: var(--text-main);
-            padding: 12px 16px; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; border-radius: 6px; transition: border 0.2s;
+        .paper { 
+            max-width: 850px; width: 100%; 
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 60px 70px 80px; 
+            background-color: #fcfaf5 !important; 
+            color: #1a1a1a !important; 
+            background-image: linear-gradient(rgba(0,0,0,.04) 1px, transparent 1px); 
+            background-size: 100% 32px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,.6), inset 0 0 80px rgba(120,90,40,.05); 
+            position: relative; border: 1px solid #d8cfb8; 
+            font-family: "Courier Prime", "Courier New", monospace; 
         }
-        .input-group input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         
-        .options-group { display: flex; gap: 12px; flex-wrap: wrap; }
-        .option-btn {
-            background: #f8fafc; border: 1px solid var(--border); color: var(--text-main);
-            padding: 10px 18px; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 500;
-            transition: all 0.2s;
-        }
-        .option-btn:hover { background: #e2e8f0; }
+        .paper::before { content: ""; position: absolute; top: 40px; right: 50px; width: 140px; height: 140px; border: 4px double #b91c1c; border-radius: 50%; transform: rotate(-15deg); opacity: 0.25; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" font-family="Arial" font-size="16" font-weight="bold" fill="%23b91c1c" text-anchor="middle">ОСОБО</text><text x="50" y="70" font-family="Arial" font-size="16" font-weight="bold" fill="%23b91c1c" text-anchor="middle">ВАЖНО</text></svg>') center/contain no-repeat; pointer-events: none; z-index: 0; }
         
-        .btn-check {
-            background: var(--accent); color: #fff; border: none; padding: 12px 24px;
-            font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; border-radius: 6px;
-            transition: all 0.2s;
-        }
-        .btn-check:hover { background: var(--accent-hover); }
-        .btn-check:disabled { background: var(--success); cursor: default; }
+        .paper__head { text-align: center; margin-bottom: 50px; border-bottom: 2px solid #b8aa8a; padding-bottom: 20px; position: relative; z-index: 1; }
+        .paper__title { font-size: 24px; letter-spacing: 5px; font-weight: 700; margin: 0 0 10px; text-transform: uppercase; color: #111 !important; }
+        .paper__sub { font-size: 14px; letter-spacing: 2px; color: #6b5f4a !important; text-transform: uppercase; margin: 0; }
 
-        .msg-success { color: var(--success); font-size: 0.9rem; margin-top: 12px; display: none; font-weight: 600;}
-        .msg-error { color: var(--danger); font-size: 0.9rem; margin-top: 12px; display: none; }
+        .section-title { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #b91c1c !important; margin: 30px 0 15px; border-bottom: 1px dashed #b8aa8a; padding-bottom: 5px; position: relative; z-index: 1; }
 
-        /* ОТЧЕТ */
-        .report-view { display: none; flex-direction: column; gap: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
-        .report-view.active { display: flex; }
-
-        .report-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
+        .point { margin-bottom: 25px; position: relative; z-index: 1; }
+        .point__num { font-size: 15px; font-weight: 700; color: #111 !important; margin-bottom: 5px; display: inline-block; }
+        .point__text { font-size: 15px; line-height: 1.6; color: #333 !important; margin-bottom: 10px; }
         
-        .report-item { background: var(--bg-panel); border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
-        .report-item label { display: block; font-size: 0.95rem; font-weight: 500; color: var(--text-main); margin-bottom: 12px; }
-        .report-item input, .report-item select {
-            width: 100%; background: #fff; border: 1px solid var(--border); color: var(--text-main);
-            padding: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; border-radius: 6px;
+        /* Поле ввода */
+        .point__input-wrapper { display: flex; align-items: flex-end; width: 100%; }
+        .point__input, .signature-input { 
+            font-family: "Caveat", cursive; font-size: 24px; line-height: 1.2; 
+            color: #1a2a5a !important; 
+            background: transparent !important; border: 0; border-bottom: 2px solid #6b5f4a !important; 
+            outline: none; width: 100%; padding: 0 10px 2px; transition: background 0.2s; 
         }
-        .report-item input:focus, .report-item select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .point__input::placeholder { color: #b8aa8a !important; font-style: italic; font-family: "Courier Prime", monospace; font-size: 12px; letter-spacing: 1px; }
+        .point__input:focus, .signature-input:focus { background: rgba(255,240,180,.6) !important; border-bottom-color: #1a2a5a !important; }
 
-        .submit-btn {
-            margin-top: 20px; padding: 16px; background: #e2e8f0; color: #94a3b8;
-            border: none; font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 600;
-            cursor: not-allowed; border-radius: 8px; transition: all 0.3s;
-        }
-        .submit-btn.active { background: var(--success); color: #fff; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-        .submit-btn.active:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(16,185,129,0.4); }
+        .signature-block { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1; }
+        .signature-line-wrapper { display: flex; flex-direction: column; width: 250px; }
+        .signature-label { font-size: 12px; color: #6b5f4a !important; margin-top: 5px; text-align: center; }
 
-        /* ФИНАЛЬНЫЙ ЭКРАН */
-        .final-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
-        .final-screen.active { display: flex; }
-        .final-screen h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 20px; }
-        .final-screen p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; max-width: 600px; margin-bottom: 20px; }
-        .final-score { font-size: 1.8rem; font-weight: 700; margin: 20px 0; color: var(--accent); }
+        .submit-btn { font-family: "Courier Prime", monospace; font-size: 16px; letter-spacing: 3px; text-transform: uppercase; background: #1a1a1a; color: #fcfaf5 !important; border: 0; padding: 18px 30px; cursor: pointer; font-weight: 700; margin-top: 40px; width: 100%; transition: background 0.2s; box-shadow: 4px 4px 0 rgba(0,0,0,0.2); position: relative; z-index: 1; }
+        .submit-btn:hover { background: #b91c1c; }
+        
+        .score-box { margin-top: 40px; padding: 25px; background: rgba(185,28,28,.05); border: 1px solid #b91c1c; border-left: 6px solid #b91c1c; font-size: 15px; line-height: 1.6; display: none; position: relative; z-index: 1; }
+        .score-box b { color: #b91c1c !important; font-size: 18px; text-transform: uppercase; display: block; margin-bottom: 10px; }
+
+        /* СПЕЦ-БЛОК ДЛЯ МИЛАНЫ */
+        .special-point { background: rgba(185,28,28,0.05); border: 1px dashed #b91c1c; padding: 20px; margin-top: 20px; }
+        .special-point .point__num { color: #b91c1c !important; }
+        .special-point .point__input { border-bottom-color: #b91c1c !important; color: #b91c1c !important; }
+        .special-point .point__input:focus { background: rgba(185,28,28,0.1) !important; }
+
+        @media (max-width: 700px) { .paper { padding: 40px 20px; } .paper::before { display: none; } .signature-block { flex-direction: column; gap: 20px; align-items: flex-start; } }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="header">
-            <h1>Аналитический центр</h1>
-            <p>Дело №17-04 // Цифровые следы</p>
+            <h1>DATA BROKER</h1>
+            <p>Сбор цифровых следов</p>
         </div>
-        
         <div class="score-board">
-            <span>Собрано улик:</span>
-            <span id="evidence-counter">0 / 56</span>
+            <span>Найдено улик:</span>
+            <span id="evidence-counter">0</span>
         </div>
-
         <div class="nav-tabs">
-            <div class="nav-tab active" onclick="switchView('profiles')">Профили</div>
-            <div class="nav-tab" onclick="switchView('report')">Отчет</div>
+            <div class="nav-tab active" onclick="switchView('profiles')">База данных</div>
+            <div class="nav-tab" onclick="switchView('report')">Отчет в архив</div>
         </div>
-
         <div class="char-list" id="char-list"></div>
     </div>
 
-    <div class="main-content">
-        
+    <div class="main-content" id="main-content">
         <div class="profile-view active" id="view-profiles">
             <div class="profile-header">
-                <h2 id="prof-name">Выберите профиль</h2>
-                <div class="role" id="prof-role">Для сбора цифрового следа выберите цель слева</div>
+                <h2 id="prof-name">Выберите цель</h2>
+                <div class="role" id="prof-role">Кликните на личность слева</div>
             </div>
-            <div id="prof-content" style="display: flex; flex-direction: column; gap: 16px;">
+            <div id="prof-content">
                 <div style="color: var(--text-muted); text-align: center; padding: 50px;">
                     [ СИСТЕМА ОЖИДАЕТ ВЫБОРА ЦЕЛИ ]
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="report-view" id="view-report">
-            <h2 class="report-title">Итоговый отчет о расследовании</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
-                * Для формирования отчета необходимо собрать все 56 цифровых следов.
-            </p>
+    <!-- ПОЛИЦЕЙСКИЙ ОТЧЕТ -->
+    <div class="report-view" id="view-report">
+        <div class="paper">
+            <header class="paper__head">
+                <h1 class="paper__title">ОБВИНИТЕЛЬНОЕ ЗАКЛЮЧЕНИЕ</h1>
+                <p class="paper__sub">Дело №17-04 // Совершенно секретно</p>
+            </header>
 
-            <!-- 15 ВОПРОСОВ ОТЧЕТА -->
-            <div class="report-item">
-                <label>1. Статус Макаровой М.А. (жива / мертва)</label>
-                <select id="r-q1">
-                    <option value="">-- Выберите --</option>
-                    <option value="жива">Жива</option>
-                    <option value="мертва">Мертва</option>
-                </select>
+            <div class="section-title">I. Общие сведения о преступлении</div>
+
+            <div class="point">
+                <div class="point__num">1.</div>
+                <div class="point__text">На основании анализа перехваченных данных, следствие квалифицирует теневую сеть CONNECT как платформу для:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q1" placeholder="введите вид преступления..."></div>
             </div>
-            <div class="report-item"><label>2. Кто стоит за системой (главный координатор)?</label><input type="text" id="r-q2" placeholder="Имя..."></div>
-            <div class="report-item"><label>3. Псевдоним координатора в системе?</label><input type="text" id="r-q3" placeholder="Псевдоним..."></div>
-            <div class="report-item"><label>4. Дата передачи проекта C-17 (дд.мм.гггг)</label><input type="text" id="r-q4" placeholder="Дата..."></div>
-            <div class="report-item"><label>5. Компания-работодатель Макаровой?</label><input type="text" id="r-q5" placeholder="Компания..."></div>
-            <div class="report-item"><label>6. Сущность «платья» в каталоге?</label><input type="text" id="r-q6" placeholder="Ответ..."></div>
-            <div class="report-item"><label>7. Какая компания стала легальным фасадом для CONNECT?</label><input type="text" id="r-q7" placeholder="Компания..."></div>
-            <div class="report-item"><label>8. Кто официально подписал передачу C-17?</label><input type="text" id="r-q8" placeholder="Фамилия..."></div>
-            <div class="report-item"><label>9. Кто предложил Милане «быстрые деньги»?</label><input type="text" id="r-q9" placeholder="Имя..."></div>
-            <div class="report-item"><label>10. Кто управлял каталогом «платьев»?</label><input type="text" id="r-q10" placeholder="Псевдоним..."></div>
-            <div class="report-item"><label>11. Кто вел независимое расследование?</label><input type="text" id="r-q11" placeholder="Фамилия..."></div>
-            <div class="report-item"><label>12. Кто является ложным следом (жесткий юрист)?</label><input type="text" id="r-q12" placeholder="Имя..."></div>
-            <div class="report-item"><label>13. В каком году распалась Vector Labs?</label><input type="text" id="r-q13" placeholder="Год..."></div>
-            <div class="report-item"><label>14. Кто перехватил трафик от Миланы в PRIME?</label><input type="text" id="r-q14" placeholder="Фамилия..."></div>
-            <div class="report-item"><label>15. Кем на самом деле работал Лев в ORBIT?</label><input type="text" id="r-q15" placeholder="Должность..."></div>
+
+            <div class="point">
+                <div class="point__num">2.</div>
+                <div class="point__text">Легальным фасадом (прикрытием) для даркнет-площадки выступала организация:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q2" placeholder="название компании..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">3.</div>
+                <div class="point__text">Изначальным разработчиком уязвимой архитектуры (проекта C-17) являлась корпорация:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q3" placeholder="название корпорации..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">4.</div>
+                <div class="point__text">Термин «Платье» в каталоге преступников, согласно чатам, обозначает:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q4" placeholder="кого/что..."></div>
+            </div>
+
+            <div class="section-title">II. Установленные лица и их роли</div>
+
+            <div class="point">
+                <div class="point__num">5.</div>
+                <div class="point__text">Главным организатором и координатором сети (скрывавшимся под ником C.U.), является гражданин:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q5" placeholder="Фамилия Имя..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">6.</div>
+                <div class="point__text">Директором компании-фасада (ORBIT DATA), способствовавшим легализации CONNECT, является:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q6" placeholder="Фамилия Имя..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">7.</div>
+                <div class="point__text">Лицом, скрывавшимся под ником ADMIN-01 и управлявшим каталогом жертв, установлен:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q7" placeholder="псевдоним..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">8.</div>
+                <div class="point__text">Гражданина Макарову втянул в преступную схему (предложил «быстрый заработок») сотрудник:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q8" placeholder="Фамилия Имя..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">9.</div>
+                <div class="point__text">Финансовая проблема, из-за которой гражданка Макарова согласилась на сомнительное предложение о «быстром заработке»:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q9" placeholder="введите проблему..."></div>
+            </div>
+
+            <div class="section-title">III. Хронология и улики</div>
+
+            <div class="point">
+                <div class="point__num">10.</div>
+                <div class="point__text">Незаконная передача прав на архитектуру C-17 состоялась (точная дата):</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q10" placeholder="дд.мм.гггг"></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">11.</div>
+                <div class="point__text">Акт приема-передачи проекта C-17 от PRIME SYSTEMS подписал:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q11" placeholder="Фамилия Имя..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">12.</div>
+                <div class="point__text">Секретный код для входа в скрытый сегмент серверов (Anon-17), используемый преступниками:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q12" placeholder="код..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">13.</div>
+                <div class="point__text">Публичный пароль от аккаунта Макаровой (makarova) в CONNECT:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q13" placeholder="пароль..."></div>
+            </div>
+
+            <div class="point">
+                <div class="point__num">14.</div>
+                <div class="point__text">Лицо, передавшее журналистке Лебедевой доказательства существования сети:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q14" placeholder="Фамилия Имя..."></div>
+            </div>
+
+            <div class="section-title">IV. Текущий статус дела</div>
+
+            <div class="point special-point">
+                <div class="point__num">15. ОСОБО ВАЖНО</div>
+                <div class="point__text">Согласно последним оперативным данным, фактический статус гражданки Макаровой на момент закрытия дела:</div>
+                <div class="point__input-wrapper"><input class="point__input" id="r-q15" placeholder="жива / мертва..."></div>
+            </div>
+
+            <button class="submit-btn" onclick="submitReport()">УТВЕРДИТЬ И ПЕРЕДАТЬ В АРХИВ</button>
             
-            <button class="submit-btn" id="btn-submit" onclick="submitReport()">СДАТЬ ОТЧЕТ</button>
-        </div>
+            <div class="score-box" id="score-box">
+                <b id="score-title">РЕЗУЛЬТАТ</b>
+                <p id="score-text"></p>
+                <p style="margin-top:10px; font-size:11px; color:#6b5f4a;">Вы можете вернуться в базу данных, чтобы дополнить отчет.</p>
+            </div>
 
-        <div class="final-screen" id="view-final">
-            <h1 id="final-title">ДЕЛО РАСКРЫТО</h1>
-            <p id="final-text"></p>
-            <div class="final-score" id="final-score"></div>
-            <button onclick="location.reload()" style="padding: 12px 24px; background: var(--accent); color: #fff; border: none; font-family:'Inter'; font-weight:600; cursor:pointer; border-radius:6px;">Пройти заново</button>
+            <div class="signature-block">
+                <div class="signature-line-wrapper">
+                    <input class="signature-input" id="investigator-name" placeholder="Впишите свое ФИО">
+                    <div class="signature-label">Подпись следователя</div>
+                </div>
+                <div style="text-align: right; font-size: 14px; color: #6b5f4a;">
+                    Дата: 28.10.2026<br>
+                    Отдел кибербезопасности
+                </div>
+            </div>
         </div>
-
     </div>
 
     <script>
-        // Данные персонажей БЕЗ подсказок и текстов улик
+        // --- СПИСКИ ФАМИЛИЙ ДЛЯ БОНУСОВ ---
+        const generalNames = [
+            "войновская", "гринченко", "довидович", "драчёв", "драчев", "дубенец", "дыба",
+            "екимова", "зубрик", "калинкова", "конопацкий", "король", "кречко",
+            "малышко", "матеюк", "минчук", "михалёв", "михалев", "мячина", "романовский",
+            "саванец", "самулевич", "соловей", "тураев", "харитонович", "цыбин",
+            "чаплюк", "шамко", "шульга", "шумель", "яковлев"
+        ];
+        const specialNames = ["шульга", "калинкова", "войновская"];
+
+        // --- БАЗА ДАННЫХ OSINT ---
         const characters = {
             "milana": {
                 name: "Милана Макарова",
-                role: "Жертва / HR-директор",
-                questions: [
-                    { id: 'q_mil_1', type: 'text', label: 'В какой компании работала Милана?', answers: ["prime systems", "prime", "прайм системс"], solved: false },
-                    { id: 'q_mil_2', type: 'options', label: 'Кто написал ей про "быстрые деньги"?', options: ["Лев Беляков", "Алексей Мельников", "Сергей Климов"], correct: "Лев Беляков", solved: false },
-                    { id: 'q_mil_3', type: 'text', label: 'Какая должность была у Миланы?', answers: ["hr-директор", "hr директор", "директор по персоналу"], solved: false },
-                    { id: 'q_mil_4', type: 'text', label: 'Под каким номером она в каталоге?', answers: ["7", "7-я", "седьмое", "07"], solved: false },
-                    { id: 'q_mil_5', type: 'text', label: 'В какую фирму она обратилась за помощью?', answers: ["haeil", "haeil & partners", "хаэль"], solved: false },
-                    { id: 'q_mil_6', type: 'text', label: 'В какой компании работал ее парень?', answers: ["orbit data", "orbit", "орбит дата"], solved: false },
-                    { id: 'q_mil_7', type: 'text', label: 'Кто деактивировал ее аккаунт в CONNECT?', answers: ["admin-01", "admin01", "админ-01", "c.u.", "cu"], solved: false }
+                role: "Потерпевшая",
+                facts: [
+                    { label: "Год рождения: 1995", keys: ["1995", "95"], found: false },
+                    { label: "Место работы: PRIME SYSTEMS", keys: ["prime", "прайм"], found: false },
+                    { label: "Должность: HR-директор", keys: ["hr", "эйчар", "кадр"], found: false },
+                    { label: "Парень: Лев Беляков", keys: ["лев", "беляков"], found: false },
+                    { label: "Коллега-параноик: Герман", keys: ["герман", "журавлев"], found: false },
+                    { label: "Проблема: Долги", keys: ["долг", "деньги", "кредит"], found: false },
+                    { label: "Опыт работы: 5 лет", keys: ["5 лет", "5"], found: false },
+                    { label: "Пароль от CONNECT: 1704", keys: ["1704"], found: false },
+                    { label: "Telegram", keys: ["telegram", "тг", "milanka_makarova"], found: false },
+                    { label: "Пароль от публичного CONNECT: 1234", keys: ["1234", "makarova"], found: false },
+                    { label: "Портрет: Наивная / Уязвимая", keys: ["наивная", "уязвимая", "добрая", "испуганная", "отчаянная"], found: false }
                 ]
             },
             "klimov": {
                 name: "Сергей Климов",
-                role: "Подозреваемый (C.U.)",
-                questions: [
-                    { id: 'q_kli_1', type: 'text', label: 'Какой псевдоним использует Климов?', answers: ["c.u.", "cu", "c.u", "си ю"], solved: false },
-                    { id: 'q_kli_2', type: 'text', label: 'Соучредителем какой компании он был?', answers: ["vector labs", "вектор лабс", "vector"], solved: false },
-                    { id: 'q_kli_3', type: 'text', label: 'Какая его роль в Vector Labs?', answers: ["соучредитель", "основатель", "co-founder"], solved: false },
-                    { id: 'q_kli_4', type: 'text', label: 'Какая цитата про безопасность на LUMEN?', answers: ["все системы можно взломать", "закон сильнейшего"], solved: false },
-                    { id: 'q_kli_5', type: 'text', label: 'С кем он основал Vector Labs?', answers: ["мельников", "алексей мельников", "алексей"], solved: false },
-                    { id: 'q_kli_6', type: 'text', label: 'В каком году распалась Vector Labs?', answers: ["2019", "2019 году"], solved: false },
-                    { id: 'q_kli_7', type: 'text', label: 'С какой компанией он сотрудничает сейчас?', answers: ["orbit data", "orbit", "орбит дата"], solved: false }
+                role: "Главный подозреваемый (C.U.)",
+                facts: [
+                    { label: "Компания: Vector Labs", keys: ["vector", "вектор"], found: false },
+                    { label: "Роль: Соучредитель", keys: ["соучредитель", "основатель"], found: false },
+                    { label: "Партнер: Алексей Мельников", keys: ["мельников", "алексей"], found: false },
+                    { label: "Год распада Vector Labs: 2019", keys: ["2019"], found: false },
+                    { label: "Статус: Независимый консультант", keys: ["консультант"], found: false },
+                    { label: "Связан с OD-17", keys: ["od-17", "od17", "даркнет"], found: false },
+                    { label: "Нанимал PRIME на аутсорс", keys: ["аутсорс", "нанимал"], found: false },
+                    { label: "Портрет: Нарцисс / Психопат", keys: ["нарцисс", "психопат", "манипулятор", "жестокий", "высокомерный", "холодный"], found: false }
                 ]
             },
             "melnikov": {
                 name: "Алексей Мельников",
-                role: "Подозреваемый / Директор ORBIT",
-                questions: [
-                    { id: 'q_mel_1', type: 'text', label: 'Как называется компания Мельникова?', answers: ["orbit data", "orbit", "орбит дата"], solved: false },
-                    { id: 'q_mel_2', type: 'text', label: 'Какая должность у Мельникова?', answers: ["директор", "director"], solved: false },
-                    { id: 'q_mel_3', type: 'text', label: 'Какой проект ORBIT выкупил у PRIME?', answers: ["connect", "коннект"], solved: false },
-                    { id: 'q_mel_4', type: 'text', label: 'Какая цитата про данные на LUMEN?', answers: ["данные это новая нефть", "новая нефть"], solved: false },
-                    { id: 'q_mel_5', type: 'text', label: 'Кто его партнер по Vector Labs?', answers: ["климов", "сергей климов", "сергей"], solved: false },
-                    { id: 'q_mel_6', type: 'text', label: 'Кого он нанял в ORBIT?', answers: ["лев беляков", "лев", "беляков"], solved: false },
-                    { id: 'q_mel_7', type: 'text', label: 'В каком году он основал ORBIT?', answers: ["2019", "2019 году"], solved: false }
+                role: "Соучастник",
+                facts: [
+                    { label: "Компания: ORBIT DATA", keys: ["orbit", "орбит"], found: false },
+                    { label: "Прошлая компания: Vector Labs", keys: ["vector", "вектор"], found: false },
+                    { label: "Роль: Соучредитель VL", keys: ["соучредитель", "основатель"], found: false },
+                    { label: "Должность: Директор", keys: ["директор"], found: false },
+                    { label: "Основал ORBIT в 2019", keys: ["2019", "основал"], found: false },
+                    { label: "Купленный проект: CONNECT", keys: ["connect", "коннект"], found: false },
+                    { label: "Нанял Льва Белякова", keys: ["лев", "беляков"], found: false },
+                    { label: "Цитата: «Данные - новая нефть»", keys: ["нефть", "данные"], found: false },
+                    { label: "Портрет: Прагматик / Циничный", keys: ["прагматик", "циничный", "жадный", "расчетливый"], found: false }
                 ]
             },
             "sokolov": {
                 name: "Павел Соколов",
                 role: "Свидетель / CEO PRIME",
-                questions: [
-                    { id: 'q_sok_1', type: 'text', label: 'Какая должность у Соколова?', answers: ["ceo", "генеральный директор"], solved: false },
-                    { id: 'q_sok_2', type: 'text', label: 'Какой проект передали ORBIT?', answers: ["c-17", "c17", "с-17"], solved: false },
-                    { id: 'q_sok_3', type: 'text', label: 'Дата передачи проекта (дд.мм.гггг)?', answers: ["17.04.2019", "17.04.19"], solved: false },
-                    { id: 'q_sok_4', type: 'text', label: 'Кто его жена (финдир PRIME)?', answers: ["марина соколова", "марина", "соколова"], solved: false },
-                    { id: 'q_sok_5', type: 'text', label: 'Какая цитата про уроки на LUMEN?', answers: ["никогда не привязывайтесь", "система важнее"], solved: false },
-                    { id: 'q_sok_6', type: 'text', label: 'В какой компании он работает?', answers: ["prime systems", "prime", "прайм системс"], solved: false },
-                    { id: 'q_sok_7', type: 'text', label: 'Кому он передал C-17?', answers: ["orbit data", "orbit", "орбит дата"], solved: false }
+                facts: [
+                    { label: "Компания: PRIME SYSTEMS", keys: ["prime", "прайм"], found: false },
+                    { label: "Должность: CEO", keys: ["ceo", "генеральный"], found: false },
+                    { label: "Проект: C-17", keys: ["c-17", "c17", "с-17"], found: false },
+                    { label: "Дата передачи: 17.04.2019", keys: ["17.04", "17 апреля"], found: false },
+                    { label: "Жена: Марина Соколова", keys: ["марина", "жена"], found: false },
+                    { label: "Передал права на C-17", keys: ["orbit", "права"], found: false },
+                    { label: "Портрет: Уставший / Авторитарный", keys: ["уставший", "авторитарный", "строгий"], found: false }
                 ]
             },
             "lev": {
                 name: "Лев Беляков",
-                role: "Свидетель / DevOps ORBIT",
-                questions: [
-                    { id: 'q_lev_1', type: 'text', label: 'Кем работает Лев в ORBIT?', answers: ["devops", "девопс", "devops-инженер"], solved: false },
-                    { id: 'q_lev_2', type: 'text', label: 'Кем он представился в чате?', answers: ["работник техподдержки", "техподдержка", "тех поддержка"], solved: false },
-                    { id: 'q_lev_3', type: 'text', label: 'Год рождения Льва?', answers: ["1991", "91"], solved: false },
-                    { id: 'q_lev_4', type: 'text', label: 'Год рождения Миланы?', answers: ["1995", "95"], solved: false },
-                    { id: 'q_lev_5', type: 'text', label: 'Что он предложил Милане?', answers: ["быстрые деньги", "деньги"], solved: false },
-                    { id: 'q_lev_6', type: 'text', label: 'Кто подозревает его в похищении?', answers: ["семья миланы", "семья", "родители"], solved: false },
-                    { id: 'q_lev_7', type: 'text', label: 'В какой компании он работает?', answers: ["orbit data", "orbit", "орбит дата"], solved: false }
-                ]
-            },
-            "chon": {
-                name: "Чон У Джин",
-                role: "Свидетель / Директор HAEIL",
-                questions: [
-                    { id: 'q_cho_1', type: 'text', label: 'В какой фирме он работает?', answers: ["haeil", "haeil & partners", "хаэль"], solved: false },
-                    { id: 'q_cho_2', type: 'text', label: 'Какая должность у Чон У Джина?', answers: ["директор", "director"], solved: false },
-                    { id: 'q_cho_3', type: 'text', label: 'Что он делает при попытке написать?', answers: ["деактивирует аккаунт", "деактивация", "блокирует"], solved: false },
-                    { id: 'q_cho_4', type: 'text', label: 'Кто на самом деле C.U.?', answers: ["климов", "сергей климов"], solved: false },
-                    { id: 'q_cho_5', type: 'text', label: 'Какой запрос пришел от PRIME?', answers: ["закрыть дело макаровой", "закрыть дело"], solved: false },
-                    { id: 'q_cho_6', type: 'text', label: 'Кому он передал дело Миланы?', answers: ["андрей власов", "власов", "андрей"], solved: false },
-                    { id: 'q_cho_7', type: 'text', label: 'Какой код связан с его именем?', answers: ["1704", "17.04"], solved: false }
-                ]
-            },
-            "admin01": {
-                name: "ADMIN-01",
-                role: "Сообщник / Системный администратор",
-                questions: [
-                    { id: 'q_adm_1', type: 'text', label: 'В какой системе он работает?', answers: ["connect", "коннект"], solved: false },
-                    { id: 'q_adm_2', type: 'text', label: 'Кому он подчиняется?', answers: ["c.u.", "cu", "c.u", "си ю"], solved: false },
-                    { id: 'q_adm_3', type: 'text', label: 'Чем он управляет?', answers: ["каталогом платьев", "каталог", "платья"], solved: false },
-                    { id: 'q_adm_4', type: 'text', label: 'Кого он деактивировал?', answers: ["милану", "милана", "макарову"], solved: false },
-                    { id: 'q_adm_5', type: 'text', label: 'Что он говорит C.U.?', answers: ["я всё вижу", "я все вижу"], solved: false },
-                    { id: 'q_adm_6', type: 'text', label: 'Какое правило в чате ADMINS?', answers: ["только позиции без имен", "без имен", "только позиции"], solved: false },
-                    { id: 'q_adm_7', type: 'text', label: 'Какой протокол шифрования?', answers: ["des", "дес"], solved: false }
+                role: "Свидетель / DevOps",
+                facts: [
+                    { label: "Компания: ORBIT DATA", keys: ["orbit", "орбит"], found: false },
+                    { label: "Должность: DevOps", keys: ["devops", "девопс"], found: false },
+                    { label: "Год рождения: 1991", keys: ["1991", "91"], found: false },
+                    { label: "В ORBIT с 2020", keys: ["2020"], found: false },
+                    { label: "Встречается с Миланой", keys: ["милана", "встречается"], found: false },
+                    { label: "Его подозревает семья", keys: ["семья", "подозревает"], found: false },
+                    { label: "Предложил 'быстрые деньги'", keys: ["быстрые", "деньги", "работа"], found: false },
+                    { label: "Портрет: Тревожный / Влюбленный", keys: ["тревожный", "влюбленный", "испуганный", "виноватый"], found: false }
                 ]
             },
             "german": {
                 name: "Герман Журавлев",
-                role: "Свидетель / DevSecOps PRIME",
-                questions: [
-                    { id: 'q_ger_1', type: 'text', label: 'В какой компании он работает?', answers: ["prime systems", "prime", "прайм системс"], solved: false },
-                    { id: 'q_ger_2', type: 'text', label: 'Какая должность у Германа?', answers: ["devsecops", "девсекопс", "безопасность"], solved: false },
-                    { id: 'q_ger_3', type: 'text', label: 'Что он перехватил?', answers: ["трафик от миланы", "трафик", "трафик миланы"], solved: false },
-                    { id: 'q_ger_4', type: 'text', label: 'Что сказало руководство?', answers: ["молчать", "молчи", "ничего"], solved: false },
-                    { id: 'q_ger_5', type: 'text', label: 'Какая цитата про логи на LUMEN?', answers: ["я читаю ваши логи", "читаю логи"], solved: false },
-                    { id: 'q_ger_6', type: 'text', label: 'Как он относится к слежке?', answers: ["следят всегда", "всегда", "следят"], solved: false },
-                    { id: 'q_ger_7', type: 'text', label: 'Кого он подозревал?', answers: ["милану", "милана", "макарову"], solved: false }
+                role: "Свидетель / DevSecOps",
+                facts: [
+                    { label: "Компания: PRIME SYSTEMS", keys: ["prime", "прайм"], found: false },
+                    { label: "Должность: DevSecOps", keys: ["devsecops", "девсекопс"], found: false },
+                    { label: "Перехватил трафик", keys: ["трафик", "перехватил"], found: false },
+                    { label: "Знал о бэкдорах", keys: ["бэкдор", "предупредил"], found: false },
+                    { label: "Портрет: Параноик", keys: ["параноик", "наблюдательный", "бдительный"], found: false }
+                ]
+            },
+            "admin01": {
+                name: "ADMIN-01",
+                role: "Администратор",
+                facts: [
+                    { label: "Система: CONNECT", keys: ["connect", "коннект"], found: false },
+                    { label: "Подчиняется C.U.", keys: ["c.u", "cu"], found: false },
+                    { label: "Портрет: Безэмоциональный", keys: ["робот", "послушный", "жестокий", "безэмоциональный"], found: false }
+                ]
+            },
+            "cu": {
+                name: "C.U.",
+                role: "Координатор",
+                facts: [
+                    { label: "Настоящее имя: Сергей Климов", keys: ["климов", "сергей"], found: false },
+                    { label: "Создатель CONNECT", keys: ["connect", "создатель"], found: false },
+                    { label: "Связан с OD-17", keys: ["od-17", "od17"], found: false },
+                    { label: "Код: 1704", keys: ["1704"], found: false }
+                ]
+            },
+            "haeil": {
+                name: "HAEIL & PARTNERS",
+                role: "Юрфирма",
+                facts: [
+                    { label: "Директор: Чон У Джин", keys: ["чон", "джин"], found: false },
+                    { label: "Юрист: Андрей Власов", keys: ["власов", "андрей"], found: false },
+                    { label: "Партнер: Ольга Миронова", keys: ["ольга", "миронова"], found: false },
+                    { label: "Обслуживает PRIME и ORBIT", keys: ["prime", "orbit"], found: false }
+                ]
+            },
+            "prime": {
+                name: "PRIME SYSTEMS",
+                role: "IT-корпорация",
+                facts: [
+                    { label: "Создатель C-17", keys: ["c-17", "c17", "создатель"], found: false },
+                    { label: "CEO: Павел Соколов", keys: ["соколов", "павел"], found: false },
+                    { label: "CTO: Анна Воронова", keys: ["воронова", "анна"], found: false },
+                    { label: "Передала C-17 в 2019", keys: ["2019", "передала"], found: false }
+                ]
+            },
+            "orbit": {
+                name: "ORBIT DATA",
+                role: "Аналитика",
+                facts: [
+                    { label: "Основана в 2019", keys: ["2019", "основана"], found: false },
+                    { label: "Выкупила CONNECT", keys: ["connect", "выкупила"], found: false },
+                    { label: "Директор: Мельников", keys: ["мельников", "алексей"], found: false },
+                    { label: "Внедрила OD-17", keys: ["od-17", "даркнет"], found: false }
                 ]
             }
         };
 
-        const reportData = [
-            { id: 'r-q1', type: 'text', answers: ["жива"] },
-            { id: 'r-q2', type: 'text', answers: ["климов", "сергей климов"] },
-            { id: 'r-q3', type: 'text', answers: ["c.u.", "cu", "c.u", "си ю"] },
-            { id: 'r-q4', type: 'text', answers: ["17.04.2019", "17.04.19"] },
-            { id: 'r-q5', type: 'text', answers: ["prime systems", "prime", "прайм системс"] },
-            { id: 'r-q6', type: 'text', answers: ["человек", "люди", "женщина", "женщины"] },
-            { id: 'r-q7', type: 'text', answers: ["orbit data", "orbit", "орбит дата"] },
-            { id: 'r-q8', type: 'text', answers: ["соколов", "павел соколов"] },
-            { id: 'r-q9', type: 'text', answers: ["лев беляков", "лев", "беляков"] },
-            { id: 'r-q10', type: 'text', answers: ["admin-01", "admin01", "админ-01"] },
-            { id: 'r-q11', type: 'text', answers: ["лебедева", "мария лебедева"] },
-            { id: 'r-q12', type: 'text', answers: ["чон у джин", "чон", "у джин", "джин"] },
-            { id: 'r-q13', type: 'text', answers: ["2019", "2019 году"] },
-            { id: 'r-q14', type: 'text', answers: ["герман", "герман журавлев", "журавлев"] },
-            { id: 'r-q15', type: 'text', answers: ["devops", "девопс", "devops-инженер"] }
-        ];
+        // --- ПРАВИЛЬНЫЕ ОТВЕТЫ ---
+        const reportAnswers = {
+            'r-q1': ["торговля людьми", "трафикинг", "оборот людей", "незаконный оборот", "похищение"],
+            'r-q2': ["orbit data", "orbit", "орбит дата"],
+            'r-q3': ["prime systems", "prime", "прайм системс"],
+            'r-q4': ["человек", "люди", "женщина", "девушка", "жертва"],
+            'r-q5': ["сергей климов", "климов"],
+            'r-q6': ["алексей мельников", "мельников"],
+            'r-q7': ["admin-01", "admin01", "админ-01"],
+            'r-q8': ["лев беляков", "лев", "беляков"],
+            'r-q9': ["долги", "долг", "кредит", "кредиты", "деньги"],
+            'r-q10': ["17.04.2019", "17.04.19"],
+            'r-q11': ["соколов", "павел соколов"],
+            'r-q12': ["1704"],
+            'r-q13': ["1234"],
+            'r-q14': ["милана", "макарова", "милана макарова"],
+            'r-q15': ["жива"]
+        };
 
-        let totalQuestions = 0;
-        for (const char of Object.values(characters)) {
-            totalQuestions += char.questions.length;
-        }
-        
-        let solvedQuestions = 0;
+        let totalFacts = 0;
+        for (const char of Object.values(characters)) totalFacts += char.facts.length;
+        let foundFacts = 0;
         let currentCharId = null;
 
         function initList() {
@@ -382,7 +459,7 @@
                 btn.innerHTML = `<span>${data.name}</span> <span class="check-icon" id="check-${id}">✓</span>`;
                 list.appendChild(btn);
             }
-            document.getElementById('evidence-counter').innerText = `0 / ${totalQuestions}`;
+            document.getElementById('evidence-counter').innerText = `0 / ${totalFacts}`;
         }
 
         function loadChar(id) {
@@ -395,189 +472,156 @@
             document.getElementById('prof-name').innerText = data.name;
             document.getElementById('prof-role').innerText = data.role;
 
-            let html = '';
+            let html = `
+                <div class="input-card">
+                    <label class="input-label">Выкачать цифровой след</label>
+                    <p class="input-hint">Введите найденные факты через запятую или пробел.</p>
+                    <textarea id="trace-input" placeholder="Например: 1995, прайм, hr..."></textarea>
+                    <button class="btn-analyze" onclick="analyzeTraces('${id}')">ПРОАНАЛИЗИРОВАТЬ ТЕКСТ</button>
+                    <div class="results-grid" id="results-${id}">
+            `;
 
-            data.questions.forEach((q, index) => {
-                html += `<div class="question-card" id="qblock-${q.id}">`;
-                html += `<div class="question-label">${index + 1}. ${q.label}</div>`;
-                
-                if (q.type === 'text') {
-                    html += `
-                        <div class="input-group">
-                            <input type="text" id="input-${q.id}" placeholder="Введите ответ..." ${q.solved ? 'disabled value="Верно"' : ''} onkeypress="if(event.key==='Enter') checkAnswer('${q.id}')">
-                            <button class="btn-check" id="btn-check-${q.id}" onclick="checkAnswer('${q.id}')" ${q.solved ? 'disabled' : ''}>${q.solved ? 'ПРИНЯТО' : 'ПРОВЕРИТЬ'}</button>
-                        </div>
-                    `;
-                } else if (q.type === 'options') {
-                    html += `<div class="options-group" id="options-${q.id}">`;
-                    q.options.forEach(opt => {
-                        html += `<button class="option-btn" onclick="selectOption('${q.id}', '${opt}', this)" ${q.solved ? 'disabled' : ''}>${opt}</button>`;
-                    });
-                    html += `</div>`;
-                }
-
-                html += `<div class="msg-success" id="succ-${q.id}">Улика добавлена в дело.</div>`;
-                html += `<div class="msg-error" id="err-${q.id}">Неверный ответ.</div>`;
-                html += `</div>`;
+            data.facts.forEach((fact, index) => {
+                const statusClass = fact.found ? 'found' : '';
+                const statusText = fact.found ? 'НАЙДЕНО' : 'ПУСТО';
+                html += `
+                    <div class="fact-item ${statusClass}" id="fact-${id}-${index}">
+                        <span class="label">${fact.found ? fact.label : 'Неизвестный факт...'}</span>
+                        <span class="status">${statusText}</span>
+                    </div>
+                `;
             });
 
+            html += `</div></div>`;
             document.getElementById('prof-content').innerHTML = html;
-            updateCharStatus(id);
         }
 
-        function checkAnswer(qId) {
-            let foundQ = null;
-            let foundCharId = null;
-            for (const [id, char] of Object.entries(characters)) {
-                const q = char.questions.find(item => item.id === qId);
-                if (q) { foundQ = q; foundCharId = id; break; }
-            }
-            if (!foundQ || foundQ.solved) return;
+        function analyzeTraces(charId) {
+            const input = document.getElementById('trace-input').value.toLowerCase();
+            const data = characters[charId];
+            let newlyFound = 0;
 
-            const input = document.getElementById(`input-${qId}`);
-            let val = input.value.trim().toLowerCase();
-            let valClean = val.replace(/\./g, '').replace(/\s+/g, ' ');
-
-            let isCorrect = false;
-            foundQ.answers.forEach(ans => {
-                let ansClean = ans.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
-                if (val === ans || valClean === ansClean || val.includes(ansClean)) {
-                    isCorrect = true;
+            data.facts.forEach((fact, index) => {
+                if (!fact.found) {
+                    const isMatch = fact.keys.some(key => input.includes(key));
+                    if (isMatch) {
+                        fact.found = true;
+                        foundFacts++;
+                        newlyFound++;
+                        
+                        const el = document.getElementById(`fact-${charId}-${index}`);
+                        el.classList.add('found');
+                        el.querySelector('.label').innerText = fact.label;
+                        el.querySelector('.status').innerText = 'НАЙДЕНО';
+                    }
                 }
             });
 
-            if (isCorrect) {
-                foundQ.solved = true;
-                solvedQuestions++;
-                document.getElementById(`input-${qId}`).disabled = true;
-                document.getElementById(`input-${qId}`).value = 'Верно';
-                const btn = document.getElementById(`btn-check-${qId}`);
-                btn.disabled = true;
-                btn.innerText = 'ПРИНЯТО';
-                btn.style.background = 'var(--success)';
-                document.getElementById(`succ-${qId}`).style.display = 'block';
-                document.getElementById(`err-${qId}`).style.display = 'none';
-                
-                updateCharStatus(foundCharId);
-                checkAllSolved();
+            document.getElementById('evidence-counter').innerText = `${foundFacts} / ${totalFacts}`;
+            updateCharStatus(charId);
+
+            if (newlyFound > 0) {
+                document.getElementById('trace-input').value = '';
+                document.getElementById('trace-input').placeholder = `Найдено новых: ${newlyFound}.`;
             } else {
-                document.getElementById(`err-${qId}`).style.display = 'block';
-                setTimeout(() => { document.getElementById(`err-${qId}`).style.display = 'none'; }, 2000);
-            }
-        }
-
-        function selectOption(qId, opt, btnEl) {
-            let foundQ = null;
-            let foundCharId = null;
-            for (const [id, char] of Object.entries(characters)) {
-                const q = char.questions.find(item => item.id === qId);
-                if (q) { foundQ = q; foundCharId = id; break; }
-            }
-            if (!foundQ || foundQ.solved) return;
-
-            if (opt === foundQ.correct) {
-                foundQ.solved = true;
-                solvedQuestions++;
-                btnEl.style.background = 'var(--success)';
-                btnEl.style.color = '#fff';
-                btnEl.style.borderColor = 'var(--success)';
-                
-                const group = document.getElementById(`options-${qId}`);
-                group.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
-                
-                document.getElementById(`succ-${qId}`).style.display = 'block';
-                document.getElementById(`err-${qId}`).style.display = 'none';
-
-                updateCharStatus(foundCharId);
-                checkAllSolved();
-            } else {
-                btnEl.style.borderColor = 'var(--danger)';
-                document.getElementById(`err-${qId}`).style.display = 'block';
-                setTimeout(() => { 
-                    btnEl.style.borderColor = 'var(--border)';
-                    document.getElementById(`err-${qId}`).style.display = 'none'; 
-                }, 1000);
+                document.getElementById('trace-input').placeholder = "Совпадений нет.";
             }
         }
 
         function updateCharStatus(charId) {
             const char = characters[charId];
-            const allSolved = char.questions.every(q => q.solved);
+            const allSolved = char.facts.every(f => f.found);
             const checkIcon = document.getElementById(`check-${charId}`);
-            if (allSolved) {
-                checkIcon.style.display = 'block';
-            } else {
-                checkIcon.style.display = 'none';
-            }
-        }
-
-        function checkAllSolved() {
-            document.getElementById('evidence-counter').innerText = `${solvedQuestions} / ${totalQuestions}`;
-            if (solvedQuestions === totalQuestions) {
-                const btn = document.getElementById('btn-submit');
-                btn.classList.add('active');
-                btn.disabled = false;
-            }
+            checkIcon.style.display = allSolved ? 'block' : 'none';
         }
 
         function switchView(view) {
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.profile-view, .report-view, .final-screen').forEach(v => v.classList.remove('active'));
-
+            
             if (view === 'profiles') {
                 document.querySelector('.nav-tab:nth-child(1)').classList.add('active');
-                document.getElementById('view-profiles').classList.add('active');
-            } else if (view === 'report') {
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('main-content').style.display = 'flex';
+                document.getElementById('view-report').classList.remove('active');
+            } else {
                 document.querySelector('.nav-tab:nth-child(2)').classList.add('active');
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('main-content').style.display = 'none';
                 document.getElementById('view-report').classList.add('active');
             }
         }
 
         function submitReport() {
             let reportScore = 0;
-            const maxReportScore = 15;
-
-            reportData.forEach(item => {
-                const input = document.getElementById(item.id);
-                if (!input) return;
+            
+            // Считаем баллы за правильные ответы в отчете
+            for (const [id, answers] of Object.entries(reportAnswers)) {
+                const input = document.getElementById(id);
                 let val = input.value.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
-                
+                if (val === '') continue;
+
                 let isCorrect = false;
-                item.answers.forEach(ans => {
+                answers.forEach(ans => {
                     let ansClean = ans.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
-                    if (val === ans || val.includes(ansClean) || ansClean.includes(val)) {
+                    if (val === ansClean || val.includes(ansClean) || ansClean.includes(val)) {
                         isCorrect = true;
                     }
                 });
-                if (isCorrect) reportScore++;
-            });
-
-            const totalScore = solvedQuestions + reportScore;
-            const maxScore = totalQuestions + maxReportScore;
-
-            document.querySelector('.profile-view').classList.remove('active');
-            document.querySelector('.report-view').classList.remove('active');
-            document.getElementById('view-final').classList.add('active');
-
-            const title = document.getElementById('final-title');
-            const text = document.getElementById('final-text');
-            const score = document.getElementById('final-score');
-
-            score.innerText = `Итоговый счет: ${totalScore} / ${maxScore} (Улики: ${solvedQuestions}/${totalQuestions}, Отчет: ${reportScore}/${maxReportScore})`;
-
-            if (totalScore >= (maxScore * 0.8)) {
-                title.innerText = "ДЕЛО РАСКРЫТО";
-                title.style.color = "var(--success)";
-                text.innerHTML = "Вы успешно собрали все цифровые следы и составили верный отчет. <br><br>Климов (C.U.) и Мельников предстанут перед судом. Милана Макарова спасена. Вы настоящий профессионал.";
-            } else if (totalScore >= (maxScore * 0.5)) {
-                title.innerText = "ДЕЛО ЧАСТИЧНО РАСКРЫТО";
-                title.style.color = "var(--warning)";
-                text.innerHTML = "Вы собрали достаточно улик, но в отчете есть ошибки. <br><br>Климову удалось скрыть часть следов, но система CONNECT разрушена. Милана жива, но не вышла на связь.";
-            } else {
-                title.innerText = "ДЕЛО ПРОВАЛЕНО";
-                title.style.color = "var(--danger)";
-                text.innerHTML = "Вы не смогли собрать достаточно доказательств. <br><br>Суд признал обвинения несостоятельными. Климов и Мельников остались на свободе. Милана числится мертвой.";
+                
+                if (isCorrect) {
+                    if (id === 'r-q15') reportScore += 3; // Бонус за Милану
+                    else reportScore += 1;
+                }
             }
+
+            // Считаем бонус за имя следователя
+            const invName = document.getElementById('investigator-name').value.trim().toLowerCase().replace(/ё/g, 'е');
+            let nameBonus = 0;
+            let nameBonusText = "";
+
+            if (invName !== "") {
+                // Проверка на спец-имена (Войновская, Шульга, Калинкова)
+                const isSpecial = specialNames.some(name => invName.includes(name));
+                // Проверка на остальных из списка
+                const isGeneral = generalNames.some(name => invName.includes(name));
+
+                if (isSpecial) {
+                    nameBonus = 4;
+                    nameBonusText = "<br><b style='color:#166534;'>АГЕНТ ОСОБОГО НАЗНАЧЕНИЯ! (Бонус за ФИО: +4 балла)</b>";
+                } else if (isGeneral) {
+                    nameBonus = 2;
+                    nameBonusText = "<br><b style='color:#b45309;'>СЛЕДОВАТЕЛЬ АККРЕДИТОВАН (Бонус за ФИО: +2 балла)</b>";
+                } else {
+                    nameBonusText = "<br><span style='color:#b91c1c;'>Неизвестный следователь. Бонус за ФИО не начислен.</span>";
+                }
+            }
+
+            // Итоговый подсчет
+            const totalScore = foundFacts + reportScore + nameBonus;
+            const maxScore = totalFacts + 17 + 4; // макс факты + макс отчет + макс бонус имени
+
+            const scoreBox = document.getElementById('score-box');
+            const scoreTitle = document.getElementById('score-title');
+            const scoreText = document.getElementById('score-text');
+            
+            scoreBox.style.display = 'block';
+            scoreTitle.innerText = `ИТОГОВЫЙ СЧЕТ: ${totalScore} / ${maxScore}`;
+            
+            let milanaStatus = document.getElementById('r-q15').value.trim().toLowerCase();
+            let milanaBonus = (milanaStatus.includes('жива')) ? "<br><b>МИЛАНА СПАСЕНА! (Бонус: +3 балла)</b>" : "<br><span style='color:red'>Вы не смогли установить, что Милана жива. Бонус не начислен.</span>";
+
+            if (reportScore >= 14) {
+                scoreText.innerHTML = "<b>ПРИГОВОР ВЫНЕСЕН.</b> Следствие собрало неопровержимые доказательства. Климов и Мельников предстанут перед судом." + milanaBonus + nameBonusText;
+                scoreTitle.style.color = "#166534";
+            } else if (reportScore >= 7) {
+                scoreText.innerHTML = "<b>ДЕЛО ЧАСТИЧНО РАСКРЫТО.</b> Суд признал вину частично. Преступники понесут наказание, но не по всем пунктам." + milanaBonus + nameBonusText;
+                scoreTitle.style.color = "#b45309";
+            } else {
+                scoreText.innerHTML = "<b>ДЕЛО РАЗВАЛИЛОСЬ В СУДЕ.</b> Из-за недостатка выводов в отчете адвокаты вытащили злодеев." + milanaBonus + nameBonusText;
+                scoreTitle.style.color = "#b91c1c";
+            }
+
+            scoreBox.scrollIntoView({ behavior: 'smooth' });
         }
 
         initList();
