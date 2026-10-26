@@ -1,0 +1,1242 @@
+# -*- coding: utf-8 -*-
+from flask import (
+    Flask, render_template, request, session,
+    redirect, url_for, abort, jsonify,
+)
+from data import (
+    SITE, PASSWORD_PUBLIC, PASSWORD_SECRET,
+    LOGIN_PUBLIC, LOGIN_SECRET,
+    PUBLIC_CHATS, SECRET_CHATS, CONTROL,
+    DRESSES, DRESSES_NOTE, DRESSES_FOOTER, DRESSES_RENTAL,
+    HUNT_SEASON, HUNTS, HUNT_SLOTS, HUNT_RULES_PENALTY,
+    PANOPTICON, SANITIZER, DEAD_DROP,
+    CHAT_HIJACK, BOT, QUIZ_ROUNDS, QUIZ_CONFIG,
+    REQUEST_UNLOCK,
+)
+import os
+import json
+import random
+import datetime
+import re
+
+
+app = Flask(__name__)
+
+app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key")
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+ALLOWED_SKUS = {d["sku"] for d in DRESSES}
+
+
+# ------------------------------------------------------------------
+# PER-SESSION CHAT STATE
+# ------------------------------------------------------------------
+def _chat_state():
+    st = session.get("chat_state")
+    if not isinstance(st, dict):
+        st = {}
+        session["chat_state"] = st
+    return st
+
+
+def _chat_messages(chat_id):
+    st = session.get("chat_state")
+    if not isinstance(st, dict):
+        return []
+    return st.get(chat_id, [])
+
+
+def _save_chat_state(state_dict):
+    session["chat_state"] = state_dict
+    session.modified = True
+
+
+def _clear_chat_state():
+    session.pop("chat_state", None)
+    session.modified = True
+
+
+# ------------------------------------------------------------------
+# ТРИГГЕРЫ
+# ------------------------------------------------------------------
+TRIGGER_PATTERNS = [
+    r"admin", r"root", r"sudo", r"password", r"passwd",
+    r"key", r"token", r"secret",
+    r"c-?17", r"od-?17", r"connect",
+    r"чон", r"хан", r"1704",
+    r"<script", r"onerror", r"javascript:",
+    r"\.\./", r"wp-admin", r"phpmyadmin",
+]
+
+SUSPICIOUS_PATHS = [
+    "/admin", "/wp-admin", "/wp-login", "/phpmyadmin",
+    "/login.php", "/.env", "/config", "/backup",
+    "/db", "/sql", "/shell", "/cmd", "/control.php",
+]
+
+FORBIDDEN_CHAT_IDS = {
+    "admin", "root", "system", "system01", "sysadmin",
+    "dm-han", "dm-c", "u99", "u00", "u01",
+    "secret", "private", "hidden", "debug",
+}
+
+
+def is_suspicious_text(text: str) -> bool:
+    if not text:
+        return False
+    if len(text) > 2000:
+        return True
+    t = text.lower()
+    for p in TRIGGER_PATTERNS:
+        if re.search(p, t):
+            return True
+    return False
+
+
+def shutdown(reason="breach"):
+    session["shutdown"] = True
+    session["shutdown_reason"] = reason
+    _clear_chat_state()
+    return redirect(url_for("shutdown_page", reason=reason))
+
+
+@app.before_request
+def enforce_shutdown():
+    if not session.get("shutdown"):
+        return
+    if request.endpoint in (
+        None, "static", "shutdown_page", "logout",
+        "login", "root", "reset_magic",
+    ):
+        return
+    return redirect(url_for("shutdown_page",
+                            reason=session.get("shutdown_reason", "breach")))
+
+
+@app.context_processor
+def inject_site():
+    return {"site": SITE}
+
+
+def is_authed():
+    return session.get("authed", False)
+
+
+def is_secret():
+    return session.get("secret", False)
+
+
+def _now_time():
+    return datetime.datetime.now().strftime("%H:%M")
+
+
+def _find_chat(chat_id, chats):
+    return next((c for c in chats if c["id"] == chat_id), None)
+
+
+def _mark_read(chat_id):
+    read = set(session.get("read_chats", []))
+    read.add(chat_id)
+    session["read_chats"] = list(read)
+    session.modified = True
+
+
+def _with_read_state(chats):
+    read = set(session.get("read_chats", []))
+    out = []
+    for c in chats:
+        c2 = dict(c)
+        if c2["id"] in read:
+            c2["unread"] = 0
+        out.append(c2)
+    return out
+
+
+def _bot_reply(text: str) -> str:
+    low = text.lower()
+    cfg = BOT
+
+    has_engineer = any(w in low for w in cfg["keywords_engineer"])
+    has_audit    = any(w in low for w in cfg["keywords_audit"])
+    has_status   = any(w in low for w in cfg["keywords_status"])
+
+    if has_engineer and has_audit and has_status:
+        return "__BROKEN__"
+
+    if has_engineer and has_audit:
+        return cfg["partial_engineer"]
+
+    if has_engineer:
+        return cfg["partial_audit"]
+
+    return cfg["deny"]
+
+
+def _bot_quiz(item):
+    import getpass
+    import time as _time
+
+    chat_id = item["id"]
+    _mark_read(chat_id)
+
+    if "quiz_step" not in session:
+        session["quiz_step"] = 0
+        session["quiz_errors"] = 0
+        session["bot_cracked"] = False
+
+    # ---- МЕТА-ДАННЫЕ ----
+    try:
+        sys_user = getpass.getuser()
+    except Exception:
+        sys_user = "anon"
+
+    now = datetime.datetime.now().strftime("%H:%M")
+
+    login_ts = session.get("login_ts")
+    if not login_ts:
+        login_ts = _time.time()
+        session["login_ts"] = login_ts
+    elapsed = int(_time.time() - login_ts)
+
+    read_list = session.get("read_chats", [])
+    last_chat = read_list[-1] if read_list else "нет"
+
+    step   = session["quiz_step"]
+    errors = session["quiz_errors"]
+
+    def fill(text: str) -> str:
+        return (text
+                .replace("{user}", sys_user)
+                .replace("{time}", now)
+                .replace("{elapsed}", str(elapsed))
+                .replace("{chat}", last_chat))
+
+    # ---- POST (AJAX) ----
+    if request.method == "POST":
+        if session.get("bot_cracked"):
+            return {"status": "cracked", "fragment": QUIZ_CONFIG["fragment"]}
+
+        choice  = request.form.get("choice", "")
+        r_now   = QUIZ_ROUNDS[step]
+        correct = r_now["correct"]
+
+        voice_key = "voice_yes" if choice == "a" else "voice_no"
+        voice_text = r_now.get(voice_key, "")
+
+        if choice == correct:
+            session["quiz_step"] = step + 1
+        else:
+            session["quiz_errors"] = errors + 1
+            if session["quiz_errors"] >= QUIZ_CONFIG["max_errors"]:
+                session["quiz_step"] = 0
+                session["quiz_errors"] = 0
+                session["quiz_failed"] = True
+
+        session.modified = True
+
+        new_step   = session["quiz_step"]
+        new_errors = session["quiz_errors"]
+        failed     = session.get("quiz_failed", False)
+
+        answered_ok = (choice == correct)
+
+        if new_step >= QUIZ_CONFIG["total_rounds"]:
+            session["bot_cracked"] = True
+            session.pop("quiz_failed", None)
+            return {
+                "status": "victory",
+                "fragment": QUIZ_CONFIG["fragment"],
+                "lines": QUIZ_CONFIG["victory_lines"],
+                "voice": voice_text,
+            }
+
+        if failed:
+            session.pop("quiz_failed", None)
+            return {"status": "failed", "voice": voice_text}
+
+        nxt = QUIZ_ROUNDS[new_step]
+        return {
+            "status": "next",
+            "step": new_step + 1,
+            "total": QUIZ_CONFIG["total_rounds"],
+            "errors": new_errors,
+            "max_errors": QUIZ_CONFIG["max_errors"],
+            "percent": round(new_step / QUIZ_CONFIG["total_rounds"] * 100),
+            "question": fill(nxt["question"]),
+            "voice": voice_text,
+            "answered_ok": answered_ok,
+            "options": [
+                {"id": o["id"], "label": o["label"]}
+                for o in nxt["options"]
+            ],
+        }
+
+    # ---- GET ----
+    if session.get("bot_cracked"):
+        return render_template(
+            "chat.html",
+            chat=item, chats=_with_read_state(PUBLIC_CHATS),
+            extra=[], director_online=False, deactivated=True,
+            deactivated_seen=bool(session.get("deactivated_seen")),
+            animate=False,
+            bot_cracked=True,
+            bot_lines=QUIZ_CONFIG["victory_lines"],
+        )
+
+    quiz_failed = session.pop("quiz_failed", False)
+
+    return render_template(
+        "chat.html",
+        chat=item, chats=_with_read_state(PUBLIC_CHATS),
+        extra=[], director_online=False, deactivated=True,
+        deactivated_seen=bool(session.get("deactivated_seen")),
+        animate=False,
+        bot_cracked=False,
+        quiz_failed=quiz_failed,
+        quiz={
+            "step": step,
+            "errors": errors,
+            "total": QUIZ_CONFIG["total_rounds"],
+            "max_errors": QUIZ_CONFIG["max_errors"],
+            "round": {
+                "id": QUIZ_ROUNDS[step]["id"],
+                "question": fill(QUIZ_ROUNDS[step]["question"]),
+                "options": QUIZ_ROUNDS[step]["options"],
+            },
+        },
+    )
+
+
+# ------------------------------------------------------------------
+# HIJACK
+# ------------------------------------------------------------------
+def _evaluate_hijack(chain, values):
+    cfg = CHAT_HIJACK
+    intents = cfg["intents"]
+    given_id = (values.get("name_self") or "").strip().upper()
+    valid = cfg["valid_id"].upper()
+
+    for c in chain:
+        info = intents.get(c)
+        if info and info.get("kill"):
+            return {"status": "kill", "key": c,
+                    "msg": cfg["kill_reactions"].get(c, cfg["kill_reactions"]["wrong_id"])}
+
+    if "threat" in chain and "name_self" not in chain:
+        return {"status": "bad", "key": "threat_no_name",
+                "msg": cfg["reactions"]["threat_no_name"]}
+
+    if len(chain) > 5:
+        return {"status": "bad", "key": "too_many",
+                "msg": cfg["reactions"]["too_many"]}
+
+    use_threat = "threat" in chain
+
+    if use_threat:
+        required = ["name_self", "what_need"]
+    else:
+        required = cfg["required_chain"]
+
+    for r in required:
+        if r not in chain:
+            return {"status": "bad", "key": "missing",
+                    "msg": cfg["reactions"]["missing"]}
+    positions = {c: i for i, c in enumerate(chain)}
+    order_values = [positions.get(r, 99) for r in required]
+    if order_values != sorted(order_values):
+        return {"status": "bad", "key": "wrong_order",
+                "msg": cfg["reactions"]["wrong_order"]}
+
+    parts = []
+    for c in chain:
+        info = intents.get(c)
+        if not info:
+            continue
+        if info.get("input"):
+            parts.append(f"Я {values.get('name_self', '???')}.")
+        else:
+            parts.append(info["phrase"])
+    phrase = " ".join(parts)
+
+    if given_id == "ADMIN-01":
+        return {"status": "ok", "key": "correct_admin_bluff",
+                "msg": "ты кого наебать пытаешься?\nADMIN-01 — это я.\nно ладно. код 04-M. посмотрим, что ты сможешь.",
+                "phrase": phrase, "given_id": given_id}
+
+    if use_threat and given_id == valid:
+        return {"status": "ok", "key": "correct_threat",
+                "msg": cfg["reactions"]["correct_threat"],
+                "phrase": phrase, "given_id": given_id}
+
+    if "name_self" not in chain:
+        return {"status": "ok", "key": "correct_no_name",
+                "msg": cfg["reactions"]["correct_no_name"],
+                "phrase": phrase, "given_id": None}
+
+    if given_id == valid:
+        return {"status": "ok", "key": "correct",
+                "msg": cfg["reactions"]["correct"],
+                "phrase": phrase, "given_id": given_id}
+
+    return {"status": "ok", "key": "correct_other_id",
+            "msg": cfg["reactions"]["correct_other_id"],
+            "phrase": phrase, "given_id": given_id}
+
+
+# ------------------------------------------------------------------
+# OPAQUE URL
+# ------------------------------------------------------------------
+RESERVED = {
+    "login", "logout", "inbox", "chat", "catalog", "hunt",
+    "panopticon", "sanitizer", "dead_drop", "control",
+    "shutdown", "reset", "transition", "static", "favicon.ico",
+}
+
+
+def _remember(kind, arg=None):
+    session["page_kind"] = kind
+    if arg is None:
+        session.pop("page_arg", None)
+    else:
+        session["page_arg"] = arg
+
+
+@app.route("/<slug>", methods=["GET", "POST"])
+def opaque(slug):
+    if slug in RESERVED:
+        abort(404)
+    if not is_secret():
+        return redirect(url_for("login"))
+
+    kind = session.get("page_kind")
+    arg = session.get("page_arg")
+
+    if not kind:
+        return redirect(url_for("inbox"))
+
+    if kind == "inbox":
+        return inbox()
+    if kind == "chat":
+        return chat(arg)
+    if kind == "catalog":
+        return catalog()
+    if kind == "hunt":
+        return hunt()
+    if kind == "hunt_item":
+        return hunt_item(arg)
+    if kind == "panopticon":
+        return panopticon()
+    if kind == "panopticon_events":
+        return panopticon_events()
+    if kind == "sanitizer":
+        return sanitizer()
+    if kind == "dead_drop":
+        return dead_drop()
+
+    return redirect(url_for("inbox"))
+
+
+# ------------------------------------------------------------------
+# RESET
+# ------------------------------------------------------------------
+@app.route("/reset")
+def reset_magic():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/reset-hijack")
+def reset_hijack():
+    for k in ("hijack_done", "hijack_killed", "hijack_state", "frag_04_found"):
+        session.pop(k, None)
+    session.modified = True
+    return redirect(url_for("chat_hijack", chat_id=CHAT_HIJACK["chat_id"]))
+
+
+# ------------------------------------------------------------------
+# Логин
+# ------------------------------------------------------------------
+@app.route("/", methods=["GET"])
+def root():
+    if session.get("shutdown"):
+        session.clear()
+    if not is_authed():
+        return redirect(url_for("login"))
+    return redirect(url_for("inbox"))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "GET" and session.get("shutdown"):
+        session.clear()
+
+    if request.method == "POST":
+        user = request.form.get("login", "").strip().lower()
+        pwd  = request.form.get("password", "").strip()
+
+        if len(user) > 100 or len(pwd) > 100:
+            return shutdown(reason="breach")
+
+        if is_suspicious_text(pwd) and pwd not in (PASSWORD_SECRET, PASSWORD_PUBLIC):
+            return shutdown(reason="keyword")
+
+        if user == LOGIN_SECRET and pwd == PASSWORD_SECRET:
+            session["authed"] = True
+            session["secret"] = True
+            session["fails"] = 0
+            return redirect(url_for("transition"))
+
+        if user == LOGIN_PUBLIC and pwd == PASSWORD_PUBLIC:
+            session["authed"] = True
+            session["secret"] = False
+            session["fails"] = 0
+            return redirect(url_for("inbox"))
+
+        session["fails"] = session.get("fails", 0) + 1
+        if session["fails"] >= 3:
+            return shutdown(reason="bruteforce")
+
+        return render_template("login.html", error=True)
+
+    return render_template("login.html", error=False)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/transition")
+def transition():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+    return render_template("transition.html")
+
+
+# ------------------------------------------------------------------
+# Inbox
+# ------------------------------------------------------------------
+@app.route("/inbox")
+def inbox():
+    if not is_authed():
+        return redirect(url_for("login"))
+    _remember("inbox")
+
+    deactivated      = bool(session.get("account_deactivated"))
+    deactivated_seen = bool(session.get("deactivated_seen"))
+
+    if is_secret():
+        return render_template(
+            "inbox_secret.html",
+            chats=_with_read_state(SECRET_CHATS),
+            deactivated=deactivated,
+            deactivated_seen=deactivated_seen,
+        )
+    return render_template(
+        "inbox.html",
+        chats=_with_read_state(PUBLIC_CHATS),
+        deactivated=deactivated,
+        deactivated_seen=deactivated_seen,
+    )
+
+
+# ------------------------------------------------------------------
+# Каталог
+# ------------------------------------------------------------------
+@app.route("/catalog")
+def catalog():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+    _remember("catalog")
+    return render_template(
+        "catalog.html",
+        dresses=DRESSES,
+        note=DRESSES_NOTE,
+        footer=DRESSES_FOOTER,
+        chats=SECRET_CHATS,
+    )
+
+
+# ------------------------------------------------------------------
+# ЧАТ
+# ------------------------------------------------------------------
+@app.route("/chat/<chat_id>", methods=["GET", "POST"])
+def chat(chat_id):
+    if not is_authed():
+        return redirect(url_for("login"))
+
+    _remember("chat", chat_id)
+
+    if chat_id in FORBIDDEN_CHAT_IDS:
+        return shutdown(reason="breach")
+
+    # ---------- СЕКРЕТНЫЙ РАЗДЕЛ ----------
+    if is_secret():
+        item = _find_chat(chat_id, SECRET_CHATS)
+        if not item:
+            return shutdown(reason="breach")
+
+        if request.method == "POST":
+            if not item.get("writable", True):
+                return redirect(url_for("chat", chat_id=chat_id))
+            text = request.form.get("text", "").strip()
+            if text:
+                now = _now_time()
+                st = _chat_state()
+                st.setdefault(chat_id, []).append(
+                    {"from": "me", "text": text, "time": now}
+                )
+                _save_chat_state(st)
+            return redirect(url_for("chat", chat_id=chat_id))
+
+        _mark_read(chat_id)
+        extra = _chat_messages(chat_id)
+
+        hijack_offer = (
+            chat_id == CHAT_HIJACK["chat_id"]
+            and not session.get("hijack_done")
+            and not session.get("hijack_killed")
+        )
+
+        return render_template(
+            "chat_secret.html",
+            chat=item, chats=_with_read_state(SECRET_CHATS),
+            extra=extra, animate=False,
+            hijack_offer=hijack_offer,
+        )
+
+    # ---------- ПУБЛИЧНЫЙ РАЗДЕЛ ----------
+    item = _find_chat(chat_id, PUBLIC_CHATS)
+    if not item:
+        return shutdown(reason="breach")
+
+    # Бот уходит в quiz ТОЛЬКО после деактивации аккаунта
+    if item.get("bot") and session.get("account_deactivated"):
+        return _bot_quiz(item)
+
+    is_director = bool(item.get("director"))
+    account_deactivated = bool(session.get("account_deactivated"))
+
+    chat_state = _chat_state()
+    state = chat_state.setdefault(chat_id, [])
+
+    if request.method == "POST":
+        if account_deactivated:
+            return redirect(url_for("chat", chat_id=chat_id))
+        if not item.get("writable"):
+            return redirect(url_for("chat", chat_id=chat_id))
+
+        text = request.form.get("text", "").strip()
+        if text:
+            now = _now_time()
+            state.append({"from": "me", "text": text, "time": now})
+
+            # Ответ SYNAPSE-ASSISTANT до деактивации
+            if item.get("bot"):
+                reply = _bot_reply(text)
+                if reply == "__BROKEN__":
+                    reply = BOT["deny"]
+                state.append({"from": "them", "text": reply, "time": now})
+
+            # Угрозы от директора → ACCOUNT DEACTIVATED
+            elif is_director and not session.get("account_deactivated"):
+                threats = [
+                    "КТО ЭТО БЛЯТЬ ТУТ",
+                    "Кто сидит за аккаунтом Миланы Макаровой?",
+                    "Макарова задержана час назад.",
+                    "Аккаунт будет деактивирован.",
+                ]
+                for t in threats:
+                    state.append({
+                        "from": "them", "text": t, "time": now, "pending": True
+                    })
+
+                state.append({
+                    "from": "system", "text": "ACCOUNT DEACTIVATED",
+                    "time": "", "pending": True
+                })
+
+                session["account_deactivated"] = True
+                session["deactivated_seen"] = True
+                session["anim_pending_" + chat_id] = True
+
+        _save_chat_state(chat_state)
+        return redirect(url_for("chat", chat_id=chat_id))
+
+    _mark_read(chat_id)
+    animate = bool(session.pop("anim_pending_" + chat_id, False))
+    session.modified = True
+    director_online = is_director  # директор всегда онлайн
+    deactivated_seen = bool(session.get("deactivated_seen"))
+
+    return render_template(
+        "chat.html",
+        chat=item, chats=_with_read_state(PUBLIC_CHATS),
+        extra=state,
+        director_online=director_online,
+        deactivated=account_deactivated,
+        deactivated_seen=deactivated_seen,
+        animate=animate,
+        bot_cracked=bool(session.get("bot_cracked") and item.get("bot")),
+        bot_lines=BOT["abyss_lines"] if item.get("bot") else [],
+    )
+
+
+# ------------------------------------------------------------------
+# CHAT HIJACK
+# ------------------------------------------------------------------
+@app.route("/chat/<chat_id>/hijack", methods=["GET", "POST"])
+def chat_hijack(chat_id):
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    if chat_id != CHAT_HIJACK["chat_id"]:
+        return shutdown(reason="breach")
+
+    if session.get("hijack_killed"):
+        return render_template(
+            "chat_hijack_dead.html",
+            cfg=CHAT_HIJACK,
+            chat=_find_chat(chat_id, SECRET_CHATS),
+        )
+
+    state = session.get("hijack_state", {})
+    state.setdefault("chain", [])
+    state.setdefault("values", {})
+    state.setdefault("impostor_lines", list(CHAT_HIJACK["intro_system"]))
+    state.setdefault("user_messages", [])
+
+    if request.method == "POST":
+        action = request.form.get("action", "")
+
+        if action == "hijack_submit":
+            try:
+                chain = json.loads(request.form.get("chain", "[]"))
+            except Exception:
+                chain = []
+
+            values = {}
+            for k in request.form:
+                if k.startswith("value_"):
+                    values[k[len("value_"):]] = request.form[k].strip()
+
+            verdict = _evaluate_hijack(chain, values)
+
+            if verdict.get("phrase"):
+                state["user_messages"].append({
+                    "from": "me", "text": verdict["phrase"],
+                })
+
+            if verdict["status"] == "ok":
+                session["hijack_done"] = True
+                session["frag_04_found"] = True
+                for line in verdict["msg"].split("\n"):
+                    state["user_messages"].append({
+                        "from": "them",
+                        "author": CHAT_HIJACK["impostor"],
+                        "text": line,
+                    })
+                state["verdict"] = verdict
+                session["hijack_state"] = state
+                session.modified = True
+                return redirect(url_for("chat_hijack", chat_id=chat_id))
+
+            if verdict["status"] == "kill":
+                session["hijack_killed"] = True
+                for line in verdict["msg"].split("\n"):
+                    state["user_messages"].append({
+                        "from": "them",
+                        "author": CHAT_HIJACK["impostor"],
+                        "text": line,
+                        "kill": True,
+                    })
+                state["verdict"] = verdict
+                session["hijack_state"] = state
+                session.modified = True
+                return redirect(url_for("chat_hijack", chat_id=chat_id))
+
+            for line in verdict["msg"].split("\n"):
+                state["user_messages"].append({
+                    "from": "them",
+                    "author": CHAT_HIJACK["impostor"],
+                    "text": line,
+                })
+            state["verdict"] = verdict
+            state["chain"] = []
+            state["values"] = {}
+            session["hijack_state"] = state
+            session.modified = True
+            return redirect(url_for("chat_hijack", chat_id=chat_id))
+
+        if action == "reset_chain":
+            state["chain"] = []
+            state["values"] = {}
+            session["hijack_state"] = state
+            session.modified = True
+            return redirect(url_for("chat_hijack", chat_id=chat_id))
+
+    session["hijack_state"] = state
+    session.modified = True
+
+    return render_template(
+        "chat_hijack.html",
+        cfg=CHAT_HIJACK,
+        chat=_find_chat(chat_id, SECRET_CHATS),
+        state=state,
+    )
+
+
+# ------------------------------------------------------------------
+# Платья
+# ------------------------------------------------------------------
+def _is_request_dress(item):
+    return "запрос" in (item.get("price") or "").lower()
+
+
+@app.route("/catalog/<sku>")
+def dress(sku):
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    if sku not in ALLOWED_SKUS:
+        return shutdown(reason="breach")
+
+    item = next((d for d in DRESSES if d["sku"] == sku), None)
+    if not item:
+        return shutdown(reason="breach")
+
+    _remember("catalog")
+    return render_template(
+        "dress.html",
+        dress=item,
+        rental=DRESSES_RENTAL,
+        chats=SECRET_CHATS,
+        request_unlock=REQUEST_UNLOCK,
+        is_request=_is_request_dress(item),
+        unlocked=bool(session.get("frag_04_found")),
+    )
+
+
+@app.route("/catalog/<sku>/request", methods=["POST"])
+def dress_request(sku):
+    if not is_secret():
+        return jsonify({"ok": False, "msg": "ACCESS DENIED"}), 403
+
+    if sku not in ALLOWED_SKUS:
+        return jsonify({"ok": False, "msg": "NOT FOUND"}), 404
+
+    item = next((d for d in DRESSES if d["sku"] == sku), None)
+    if not item:
+        return jsonify({"ok": False, "msg": "NOT FOUND"}), 404
+
+    if not _is_request_dress(item):
+        return jsonify({"ok": False, "msg": "NOT AVAILABLE"}), 403
+
+    cfg = REQUEST_UNLOCK
+
+    def norm(s):
+        return (s or "").strip().lower().replace(" ", "").replace("-", "")
+
+    for key, correct in cfg["answers"].items():
+        given = request.form.get(key, "")
+        if norm(given) != norm(correct):
+            return jsonify({"ok": False, "msg": cfg["fail_text"]})
+
+    session["frag_04_found"] = True
+    session.modified = True
+
+    return jsonify({
+        "ok": True,
+        "fragment": cfg["fragment"],
+        "msg": cfg["success_text"],
+    })
+
+
+@app.route("/catalog/<sku>/order", methods=["GET", "POST"])
+def order(sku):
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    if sku not in ALLOWED_SKUS:
+        return shutdown(reason="breach")
+
+    item = next((d for d in DRESSES if d["sku"] == sku), None)
+    if not item:
+        return shutdown(reason="breach")
+
+    _remember("catalog")
+
+    if request.method == "POST":
+        form = {
+            "address": request.form.get("address", "").strip(),
+            "date":    request.form.get("date", "").strip(),
+            "slot":    request.form.get("slot", "").strip(),
+            "hours":   request.form.get("hours", "").strip(),
+            "notes":   request.form.get("notes", "").strip(),
+            "payment": request.form.get("payment", "on_delivery").strip(),
+        }
+
+        for v in form.values():
+            if is_suspicious_text(v):
+                return shutdown(reason="keyword")
+
+        order_id = f"ORD-{random.randint(1700, 1799)}"
+
+        DISCOUNT = 0.20
+        subtotal = 0.0
+        discount = 0.0
+        total_val = 0.0
+
+        try:
+            num = float(item.get("price", "").split()[0])
+            hours = float(form["hours"] or 0)
+            subtotal  = num * hours
+            discount  = subtotal * DISCOUNT
+            total_val = subtotal - discount
+        except Exception:
+            pass
+
+        def fmt(x):
+            s = f"{x:.2f}"
+            return s.rstrip('0').rstrip('.') if '.' in s else s
+
+        subtotal_str = fmt(subtotal) + " USDT"
+        discount_str = "−" + fmt(discount) + " USDT"
+        total        = fmt(total_val) + " USDT"
+
+        now = _now_time()
+
+        pay_label = ("Оплата при получении"
+                     if form.get("payment") == "on_delivery"
+                     else "Оплата сейчас")
+
+        st = _chat_state()
+        st.setdefault("orders", []).append({
+            "from": "them",
+            "author": "ORDERS",
+            "time": now,
+            "hot": True,
+            "text": (
+                f"Заказ оформлен.\n"
+                f"Номер: {order_id}\n"
+                f"Позиция: {item['title']} ({sku})\n"
+                f"Точка: {form['address']}\n"
+                f"Дата: {form['date']} · {form['slot']}\n"
+                f"Срок: {form['hours']} ч.\n"
+                f"Подытог: {subtotal_str}\n"
+                f"Скидка сотрудника −20%: {discount_str}\n"
+                f"Сумма: {total}\n"
+                f"Оплата: {pay_label}"
+            ),
+        })
+        _save_chat_state(st)
+
+        session["last_order_id"] = order_id
+        session.modified = True
+
+        return render_template(
+            "order_success.html",
+            dress=item,
+            order=form,
+            order_id=order_id,
+            rental=DRESSES_RENTAL,
+            subtotal=subtotal_str,
+            discount=discount_str,
+            total=total,
+        )
+
+    return render_template(
+        "order.html",
+        dress=item,
+        rental=DRESSES_RENTAL,
+        chats=SECRET_CHATS,
+    )
+
+
+@app.route("/shutdown")
+def shutdown_page():
+    reason = request.args.get("reason") or session.get("shutdown_reason") or "breach"
+    session["shutdown"] = True
+    session["shutdown_reason"] = reason
+    return render_template("shutdown.html", reason=reason)
+
+
+@app.route("/control")
+def control():
+    if not is_secret():
+        return shutdown(reason="breach")
+    _remember("inbox")
+    return render_template("control.html", control=CONTROL, chats=SECRET_CHATS)
+
+
+@app.errorhandler(404)
+def not_found(_e):
+    path = (request.path or "").lower()
+    for p in SUSPICIOUS_PATHS:
+        if path.startswith(p):
+            return shutdown(reason="breach")
+    return render_template("404.html"), 404
+
+
+# ------------------------------------------------------------------
+# THE HUNT
+# ------------------------------------------------------------------
+@app.route("/hunt")
+def hunt():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+    _remember("hunt")
+    return render_template(
+        "hunt.html",
+        season=HUNT_SEASON,
+        hunts=HUNTS,
+        chats=SECRET_CHATS,
+    )
+
+
+@app.route("/hunt/<hid>", methods=["GET", "POST"])
+def hunt_item(hid):
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    if not re.fullmatch(r"HT-17(0[1-9]|[1-4][0-9]|50)", hid):
+        return shutdown(reason="breach")
+
+    item = HUNTS.get(hid)
+    if not item:
+        return shutdown(reason="breach")
+
+    _remember("hunt_item", hid)
+
+    if request.method == "POST":
+        callsign = request.form.get("callsign", "").strip()
+        slot_id  = request.form.get("slot", "").strip()
+
+        if is_suspicious_text(callsign):
+            return shutdown(reason="keyword")
+
+        banned = ["чон", "хан", "джин", "1704", "admin", "root",
+                  "полиция", "фбр", "интерпол", "журналист",
+                  "лебедева", "утечка", "слив"]
+        low = callsign.lower()
+        for w in banned:
+            if w in low:
+                return shutdown(reason="breach")
+
+        if item["status"] != "OPEN":
+            return render_template(
+                "hunt_reject.html",
+                hunt=item,
+                hunt_id=hid,
+                reason="ВЫЕЗД НЕ ПРИНИМАЕТ НОВЫЕ ПОЗИЦИИ",
+            )
+
+        return render_template(
+            "hunt_trace.html",
+            hunt=item,
+            hunt_id=hid,
+            callsign=callsign or "anon",
+            slot=slot_id or "S-03",
+        )
+
+    return render_template(
+        "hunt_item.html",
+        hunt=item,
+        hunt_id=hid,
+        slots=HUNT_SLOTS,
+        penalty=HUNT_RULES_PENALTY,
+        chats=SECRET_CHATS,
+    )
+
+
+# ------------------------------------------------------------------
+# PANOPTICON
+# ------------------------------------------------------------------
+@app.route("/panopticon")
+def panopticon():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+    _remember("panopticon")
+    return render_template(
+        "panopticon.html",
+        p=PANOPTICON,
+        chats=SECRET_CHATS,
+    )
+
+
+@app.route("/panopticon/events")
+def panopticon_events():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+    _remember("panopticon_events")
+    return render_template(
+        "panopticon_events.html",
+        p=PANOPTICON,
+        chats=SECRET_CHATS,
+    )
+
+
+# ------------------------------------------------------------------
+# SANITIZER
+# ------------------------------------------------------------------
+@app.route("/sanitizer", methods=["GET", "POST"])
+def sanitizer():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    _remember("sanitizer")
+
+    if "san_log" not in session:
+        session["san_log"] = list(SANITIZER["banner"])
+        session["san_cwd"] = "/"
+        session["san_wrong"] = 0
+        session["san_locked"] = False
+
+    if session.get("san_locked"):
+        return render_template("sanitizer.html",
+                               s=SANITIZER, output=session["san_log"],
+                               locked=True, chats=SECRET_CHATS)
+
+    if request.method == "POST":
+        cmd = request.form.get("cmd", "").strip()
+        out = []
+
+        if is_suspicious_text(cmd):
+            return shutdown(reason="keyword")
+
+        parts = cmd.split()
+        name = parts[0] if parts else ""
+        arg = parts[1] if len(parts) > 1 else ""
+
+        cwd = session.get("san_cwd", "/")
+
+        def path_join(arg):
+            if not arg:
+                return cwd
+            if arg.startswith("/"):
+                return arg
+            if arg in (".", "./"):
+                return cwd
+            if arg == "..":
+                return cwd.rstrip("/").rsplit("/", 1)[0] + "/" or "/"
+            return (cwd.rstrip("/") + "/" + arg).replace("//", "/")
+
+        out.append(f"{SANITIZER['prompt']} {cmd}")
+
+        if name == "help":
+            out.append(SANITIZER["help_text"])
+        elif name == "pwd":
+            out.append(cwd)
+        elif name == "whoami":
+            out.append("anon")
+        elif name == "cd":
+            target = path_join(arg)
+            if target in SANITIZER["fs"] or (target.rstrip("/") + "/") in SANITIZER["fs"]:
+                session["san_cwd"] = target if target.endswith("/") else target + "/"
+                if session["san_cwd"] == "//":
+                    session["san_cwd"] = "/"
+            else:
+                out.append(f"cd: {target}: No such file or directory")
+        elif name == "ls":
+            target = path_join(arg) if arg else cwd
+            key = target if target in SANITIZER["fs"] else target.rstrip("/") + "/"
+            if key in SANITIZER["fs"]:
+                owner, perms, content = SANITIZER["fs"][key]
+                out.append(f"{perms}  {owner}  {content}")
+            else:
+                out.append(f"ls: {target}: No such file or directory")
+        elif name == "cat":
+            target = path_join(arg)
+            if target == "/var/log/auth.log":
+                out.append(SANITIZER["auth_log"])
+            elif target in SANITIZER["fs"]:
+                owner, perms, content = SANITIZER["fs"][target]
+                if "r" in perms[1:4] or owner == "anon":
+                    out.append(content or "[пусто]")
+                else:
+                    out.append(f"cat: {target}: Permission denied")
+            else:
+                out.append(f"cat: {target}: No such file or directory")
+        elif name == "sudo" and arg == "-l":
+            out.append("User anon may run the following commands:")
+            out.append("  (root) NOPASSWD: /usr/bin/shred")
+            out.append("  (root) NOPASSWD: /sbin/mkfs.ext4")
+        elif name == "shred":
+            target = path_join(arg)
+            out.append(f"shred: {target}: operation not permitted")
+            out.append("hint: you are not ROOT.")
+        elif name == "exit":
+            session["san_log"] = list(SANITIZER["banner"])
+            out.append("session closed.")
+        elif name == "":
+            pass
+        else:
+            session["san_wrong"] = session.get("san_wrong", 0) + 1
+            out.append(f"{name}: command not found")
+            if session["san_wrong"] >= 3:
+                session["san_locked"] = True
+                out.append("TOO MANY FAILED COMMANDS. LOCKING IP ...")
+                session["san_log"] = session["san_log"] + out
+                return render_template("sanitizer.html",
+                                       s=SANITIZER, output=session["san_log"],
+                                       locked=True, chats=SECRET_CHATS)
+
+        session["san_log"] = session["san_log"] + out
+        session.modified = True
+
+    return render_template("sanitizer.html",
+                           s=SANITIZER, output=session["san_log"],
+                           locked=False, chats=SECRET_CHATS)
+
+
+# ------------------------------------------------------------------
+# DEAD DROP
+# ------------------------------------------------------------------
+@app.route("/dead-drop", methods=["GET", "POST"])
+def dead_drop():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    _remember("dead_drop")
+
+    unlocked = session.get("dd_unlocked", False)
+    error = None
+
+    if request.method == "POST":
+        sbox = (request.form.get("sbox") or "").strip().lower()
+        hsh  = (request.form.get("hash") or "").strip()
+
+        if is_suspicious_text(sbox) or is_suspicious_text(hsh):
+            return shutdown(reason="keyword")
+
+        if sbox == DEAD_DROP["sbox_answer"] and hsh == DEAD_DROP["hash_answer"]:
+            session["dd_unlocked"] = True
+            unlocked = True
+        else:
+            error = "KEY REJECTED. INVALID S-BOX OR HASH."
+            session["dd_wrong"] = session.get("dd_wrong", 0) + 1
+            if session["dd_wrong"] >= 3:
+                return shutdown(reason="bruteforce")
+
+    return render_template(
+        "dead_drop.html",
+        d=DEAD_DROP,
+        unlocked=unlocked,
+        error=error,
+        chats=SECRET_CHATS,
+    )
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5009))
+    is_electron = os.environ.get("ELECTRON") == "1"
+
+    app.run(
+        host="127.0.0.1" if is_electron else "0.0.0.0",
+        port=port,
+        debug=not is_electron,
+        use_reloader=not is_electron,
+    )
