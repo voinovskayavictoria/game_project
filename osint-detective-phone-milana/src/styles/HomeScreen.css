@@ -1,0 +1,168 @@
+.home-screen {
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Статус-бар */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 22px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.time {
+  font-weight: bold;
+}
+
+.status-icons {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* Поисковая строка */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1c1c1e;
+  border-radius: 22px;
+  margin: 18px 20px 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #9a9aa0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  flex-shrink: 0;
+}
+
+.search-icon {
+  font-size: 16px;
+}
+
+.search-text {
+  flex: 1;
+}
+
+/* Сетка приложений */
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 6px 18px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.app-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.app-icon:active {
+  opacity: 0.7;
+}
+
+.app-bubble {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: transform 0.2s;
+}
+
+.app-icon:active .app-bubble {
+  transform: scale(0.95);
+}
+
+.app-name {
+  font-size: 10.5px;
+  color: #ffffff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Индикатор страниц */
+.page-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 0 0;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5a5a60;
+  transition: background 0.3s;
+}
+
+.dot.active {
+  background: #ffffff;
+}
+
+/* Док-бар */
+.dock {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #1c1c1e;
+  border-radius: 26px;
+  padding: 12px 10px;
+  margin: 14px 14px 0;
+  gap: 10px;
+  flex-shrink: 0;
+  height: 72px;
+}
+
+.dock-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  font-size: 20px;
+  border: none;
+  cursor: pointer;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.dock-button:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+/* Прокрутка */
+.apps-grid::-webkit-scrollbar {
+  width: 0;
+}
+
+.home-screen::-webkit-scrollbar {
+  width: 0;
+}
