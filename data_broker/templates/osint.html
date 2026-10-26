@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитический центр // Дело №17-04</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ЛЕВАЯ ПАНЕЛЬ (СПИСОК) */
+        .sidebar {
+            width: 300px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        .header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+        .header p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .score-board {
+            padding: 16px 24px;
+            background: #f1f5f9;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-main);
+        }
+        .score-board span { color: var(--accent); }
+
+        .nav-tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .nav-tab {
+            flex: 1; padding: 16px; text-align: center;
+            font-size: 0.9rem; font-weight: 500; cursor: pointer; color: var(--text-muted);
+            border-bottom: 2px solid transparent; transition: all 0.2s;
+        }
+        .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: #f8fafc; }
+        .nav-tab:hover:not(.active) { background: #f8fafc; color: var(--text-main); }
+
+        .char-list { flex: 1; overflow-y: auto; padding: 12px; }
+        
+        .char-btn {
+            width: 100%; text-align: left; background: var(--bg-panel); border: 1px solid var(--border);
+            padding: 14px 16px; margin-bottom: 8px; border-radius: 8px; color: var(--text-main);
+            cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .char-btn:hover { border-color: #cbd5e1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .char-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+        .check-icon { color: var(--success); font-size: 1rem; display: none; font-weight: bold; }
+        .char-btn.solved .check-icon { display: block; }
+
+        /* ЦЕНТРАЛЬНАЯ ПАНЕЛЬ */
+        .main-content {
+            flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px;
+        }
+
+        .profile-view { display: none; flex-direction: column; gap: 24px; max-width: 800px; margin: 0 auto; width: 100%; }
+        .profile-view.active { display: flex; }
+
+        .profile-header { border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .profile-header h2 { font-size: 1.8rem; font-weight: 700; color: var(--text-main); }
+        .profile-header .role { color: var(--text-muted); font-size: 1rem; margin-top: 5px; }
+
+        .question-card {
+            background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px;
+            padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .question-label { font-size: 1rem; font-weight: 600; color: var(--text-main); margin-bottom: 16px; }
+        
+        .input-group { display: flex; gap: 12px; }
+        .input-group input[type="text"] {
+            flex: 1; background: #fff; border: 1px solid var(--border); color: var(--text-main);
+            padding: 12px 16px; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; border-radius: 6px; transition: border 0.2s;
+        }
+        .input-group input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        
+        .options-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .option-btn {
+            background: #f8fafc; border: 1px solid var(--border); color: var(--text-main);
+            padding: 10px 18px; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .option-btn:hover { background: #e2e8f0; }
+        
+        .btn-check {
+            background: var(--accent); color: #fff; border: none; padding: 12px 24px;
+            font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .btn-check:hover { background: var(--accent-hover); }
+        .btn-check:disabled { background: var(--success); cursor: default; }
+
+        .msg-success { color: var(--success); font-size: 0.9rem; margin-top: 12px; display: none; font-weight: 600;}
+        .msg-error { color: var(--danger); font-size: 0.9rem; margin-top: 12px; display: none; }
+
+        /* ОТЧЕТ */
+        .report-view { display: none; flex-direction: column; gap: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
+        .report-view.active { display: flex; }
+
+        .report-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
+        
+        .report-item { background: var(--bg-panel); border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .report-item label { display: block; font-size: 0.95rem; font-weight: 500; color: var(--text-main); margin-bottom: 12px; }
+        .report-item input, .report-item select {
+            width: 100%; background: #fff; border: 1px solid var(--border); color: var(--text-main);
+            padding: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; border-radius: 6px;
+        }
+        .report-item input:focus, .report-item select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+        .submit-btn {
+            margin-top: 20px; padding: 16px; background: #e2e8f0; color: #94a3b8;
+            border: none; font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 600;
+            cursor: not-allowed; border-radius: 8px; transition: all 0.3s;
+        }
+        .submit-btn.active { background: var(--success); color: #fff; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .submit-btn.active:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(16,185,129,0.4); }
+
+        /* ФИНАЛЬНЫЙ ЭКРАН */
+        .final-screen { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+        .final-screen.active { display: flex; }
+        .final-screen h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 20px; }
+        .final-screen p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; max-width: 600px; margin-bottom: 20px; }
+        .final-score { font-size: 1.8rem; font-weight: 700; margin: 20px 0; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="header">
+            <h1>Аналитический центр</h1>
+            <p>Дело №17-04 // Цифровые следы</p>
+        </div>
+        
+        <div class="score-board">
+            <span>Собрано улик:</span>
+            <span id="evidence-counter">0 / 56</span>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchView('profiles')">Профили</div>
+            <div class="nav-tab" onclick="switchView('report')">Отчет</div>
+        </div>
+
+        <div class="char-list" id="char-list"></div>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="profile-view active" id="view-profiles">
+            <div class="profile-header">
+                <h2 id="prof-name">Выберите профиль</h2>
+                <div class="role" id="prof-role">Для сбора цифрового следа выберите цель слева</div>
+            </div>
+            <div id="prof-content" style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="color: var(--text-muted); text-align: center; padding: 50px;">
+                    [ СИСТЕМА ОЖИДАЕТ ВЫБОРА ЦЕЛИ ]
+                </div>
+            </div>
+        </div>
+
+        <div class="report-view" id="view-report">
+            <h2 class="report-title">Итоговый отчет о расследовании</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                * Для формирования отчета необходимо собрать все 56 цифровых следов.
+            </p>
+
+            <!-- 15 ВОПРОСОВ ОТЧЕТА -->
+            <div class="report-item">
+                <label>1. Статус Макаровой М.А. (жива / мертва)</label>
+                <select id="r-q1">
+                    <option value="">-- Выберите --</option>
+                    <option value="жива">Жива</option>
+                    <option value="мертва">Мертва</option>
+                </select>
+            </div>
+            <div class="report-item"><label>2. Кто стоит за системой (главный координатор)?</label><input type="text" id="r-q2" placeholder="Имя..."></div>
+            <div class="report-item"><label>3. Псевдоним координатора в системе?</label><input type="text" id="r-q3" placeholder="Псевдоним..."></div>
+            <div class="report-item"><label>4. Дата передачи проекта C-17 (дд.мм.гггг)</label><input type="text" id="r-q4" placeholder="Дата..."></div>
+            <div class="report-item"><label>5. Компания-работодатель Макаровой?</label><input type="text" id="r-q5" placeholder="Компания..."></div>
+            <div class="report-item"><label>6. Сущность «платья» в каталоге?</label><input type="text" id="r-q6" placeholder="Ответ..."></div>
+            <div class="report-item"><label>7. Какая компания стала легальным фасадом для CONNECT?</label><input type="text" id="r-q7" placeholder="Компания..."></div>
+            <div class="report-item"><label>8. Кто официально подписал передачу C-17?</label><input type="text" id="r-q8" placeholder="Фамилия..."></div>
+            <div class="report-item"><label>9. Кто предложил Милане «быстрые деньги»?</label><input type="text" id="r-q9" placeholder="Имя..."></div>
+            <div class="report-item"><label>10. Кто управлял каталогом «платьев»?</label><input type="text" id="r-q10" placeholder="Псевдоним..."></div>
+            <div class="report-item"><label>11. Кто вел независимое расследование?</label><input type="text" id="r-q11" placeholder="Фамилия..."></div>
+            <div class="report-item"><label>12. Кто является ложным следом (жесткий юрист)?</label><input type="text" id="r-q12" placeholder="Имя..."></div>
+            <div class="report-item"><label>13. В каком году распалась Vector Labs?</label><input type="text" id="r-q13" placeholder="Год..."></div>
+            <div class="report-item"><label>14. Кто перехватил трафик от Миланы в PRIME?</label><input type="text" id="r-q14" placeholder="Фамилия..."></div>
+            <div class="report-item"><label>15. Кем на самом деле работал Лев в ORBIT?</label><input type="text" id="r-q15" placeholder="Должность..."></div>
+            
+            <button class="submit-btn" id="btn-submit" onclick="submitReport()">СДАТЬ ОТЧЕТ</button>
+        </div>
+
+        <div class="final-screen" id="view-final">
+            <h1 id="final-title">ДЕЛО РАСКРЫТО</h1>
+            <p id="final-text"></p>
+            <div class="final-score" id="final-score"></div>
+            <button onclick="location.reload()" style="padding: 12px 24px; background: var(--accent); color: #fff; border: none; font-family:'Inter'; font-weight:600; cursor:pointer; border-radius:6px;">Пройти заново</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Данные персонажей БЕЗ подсказок и текстов улик
+        const characters = {
+            "milana": {
+                name: "Милана Макарова",
+                role: "Жертва / HR-директор",
+                questions: [
+                    { id: 'q_mil_1', type: 'text', label: 'В какой компании работала Милана?', answers: ["prime systems", "prime", "прайм системс"], solved: false },
+                    { id: 'q_mil_2', type: 'options', label: 'Кто написал ей про "быстрые деньги"?', options: ["Лев Беляков", "Алексей Мельников", "Сергей Климов"], correct: "Лев Беляков", solved: false },
+                    { id: 'q_mil_3', type: 'text', label: 'Какая должность была у Миланы?', answers: ["hr-директор", "hr директор", "директор по персоналу"], solved: false },
+                    { id: 'q_mil_4', type: 'text', label: 'Под каким номером она в каталоге?', answers: ["7", "7-я", "седьмое", "07"], solved: false },
+                    { id: 'q_mil_5', type: 'text', label: 'В какую фирму она обратилась за помощью?', answers: ["haeil", "haeil & partners", "хаэль"], solved: false },
+                    { id: 'q_mil_6', type: 'text', label: 'В какой компании работал ее парень?', answers: ["orbit data", "orbit", "орбит дата"], solved: false },
+                    { id: 'q_mil_7', type: 'text', label: 'Кто деактивировал ее аккаунт в CONNECT?', answers: ["admin-01", "admin01", "админ-01", "c.u.", "cu"], solved: false }
+                ]
+            },
+            "klimov": {
+                name: "Сергей Климов",
+                role: "Подозреваемый (C.U.)",
+                questions: [
+                    { id: 'q_kli_1', type: 'text', label: 'Какой псевдоним использует Климов?', answers: ["c.u.", "cu", "c.u", "си ю"], solved: false },
+                    { id: 'q_kli_2', type: 'text', label: 'Соучредителем какой компании он был?', answers: ["vector labs", "вектор лабс", "vector"], solved: false },
+                    { id: 'q_kli_3', type: 'text', label: 'Какая его роль в Vector Labs?', answers: ["соучредитель", "основатель", "co-founder"], solved: false },
+                    { id: 'q_kli_4', type: 'text', label: 'Какая цитата про безопасность на LUMEN?', answers: ["все системы можно взломать", "закон сильнейшего"], solved: false },
+                    { id: 'q_kli_5', type: 'text', label: 'С кем он основал Vector Labs?', answers: ["мельников", "алексей мельников", "алексей"], solved: false },
+                    { id: 'q_kli_6', type: 'text', label: 'В каком году распалась Vector Labs?', answers: ["2019", "2019 году"], solved: false },
+                    { id: 'q_kli_7', type: 'text', label: 'С какой компанией он сотрудничает сейчас?', answers: ["orbit data", "orbit", "орбит дата"], solved: false }
+                ]
+            },
+            "melnikov": {
+                name: "Алексей Мельников",
+                role: "Подозреваемый / Директор ORBIT",
+                questions: [
+                    { id: 'q_mel_1', type: 'text', label: 'Как называется компания Мельникова?', answers: ["orbit data", "orbit", "орбит дата"], solved: false },
+                    { id: 'q_mel_2', type: 'text', label: 'Какая должность у Мельникова?', answers: ["директор", "director"], solved: false },
+                    { id: 'q_mel_3', type: 'text', label: 'Какой проект ORBIT выкупил у PRIME?', answers: ["connect", "коннект"], solved: false },
+                    { id: 'q_mel_4', type: 'text', label: 'Какая цитата про данные на LUMEN?', answers: ["данные это новая нефть", "новая нефть"], solved: false },
+                    { id: 'q_mel_5', type: 'text', label: 'Кто его партнер по Vector Labs?', answers: ["климов", "сергей климов", "сергей"], solved: false },
+                    { id: 'q_mel_6', type: 'text', label: 'Кого он нанял в ORBIT?', answers: ["лев беляков", "лев", "беляков"], solved: false },
+                    { id: 'q_mel_7', type: 'text', label: 'В каком году он основал ORBIT?', answers: ["2019", "2019 году"], solved: false }
+                ]
+            },
+            "sokolov": {
+                name: "Павел Соколов",
+                role: "Свидетель / CEO PRIME",
+                questions: [
+                    { id: 'q_sok_1', type: 'text', label: 'Какая должность у Соколова?', answers: ["ceo", "генеральный директор"], solved: false },
+                    { id: 'q_sok_2', type: 'text', label: 'Какой проект передали ORBIT?', answers: ["c-17", "c17", "с-17"], solved: false },
+                    { id: 'q_sok_3', type: 'text', label: 'Дата передачи проекта (дд.мм.гггг)?', answers: ["17.04.2019", "17.04.19"], solved: false },
+                    { id: 'q_sok_4', type: 'text', label: 'Кто его жена (финдир PRIME)?', answers: ["марина соколова", "марина", "соколова"], solved: false },
+                    { id: 'q_sok_5', type: 'text', label: 'Какая цитата про уроки на LUMEN?', answers: ["никогда не привязывайтесь", "система важнее"], solved: false },
+                    { id: 'q_sok_6', type: 'text', label: 'В какой компании он работает?', answers: ["prime systems", "prime", "прайм системс"], solved: false },
+                    { id: 'q_sok_7', type: 'text', label: 'Кому он передал C-17?', answers: ["orbit data", "orbit", "орбит дата"], solved: false }
+                ]
+            },
+            "lev": {
+                name: "Лев Беляков",
+                role: "Свидетель / DevOps ORBIT",
+                questions: [
+                    { id: 'q_lev_1', type: 'text', label: 'Кем работает Лев в ORBIT?', answers: ["devops", "девопс", "devops-инженер"], solved: false },
+                    { id: 'q_lev_2', type: 'text', label: 'Кем он представился в чате?', answers: ["работник техподдержки", "техподдержка", "тех поддержка"], solved: false },
+                    { id: 'q_lev_3', type: 'text', label: 'Год рождения Льва?', answers: ["1991", "91"], solved: false },
+                    { id: 'q_lev_4', type: 'text', label: 'Год рождения Миланы?', answers: ["1995", "95"], solved: false },
+                    { id: 'q_lev_5', type: 'text', label: 'Что он предложил Милане?', answers: ["быстрые деньги", "деньги"], solved: false },
+                    { id: 'q_lev_6', type: 'text', label: 'Кто подозревает его в похищении?', answers: ["семья миланы", "семья", "родители"], solved: false },
+                    { id: 'q_lev_7', type: 'text', label: 'В какой компании он работает?', answers: ["orbit data", "orbit", "орбит дата"], solved: false }
+                ]
+            },
+            "chon": {
+                name: "Чон У Джин",
+                role: "Свидетель / Директор HAEIL",
+                questions: [
+                    { id: 'q_cho_1', type: 'text', label: 'В какой фирме он работает?', answers: ["haeil", "haeil & partners", "хаэль"], solved: false },
+                    { id: 'q_cho_2', type: 'text', label: 'Какая должность у Чон У Джина?', answers: ["директор", "director"], solved: false },
+                    { id: 'q_cho_3', type: 'text', label: 'Что он делает при попытке написать?', answers: ["деактивирует аккаунт", "деактивация", "блокирует"], solved: false },
+                    { id: 'q_cho_4', type: 'text', label: 'Кто на самом деле C.U.?', answers: ["климов", "сергей климов"], solved: false },
+                    { id: 'q_cho_5', type: 'text', label: 'Какой запрос пришел от PRIME?', answers: ["закрыть дело макаровой", "закрыть дело"], solved: false },
+                    { id: 'q_cho_6', type: 'text', label: 'Кому он передал дело Миланы?', answers: ["андрей власов", "власов", "андрей"], solved: false },
+                    { id: 'q_cho_7', type: 'text', label: 'Какой код связан с его именем?', answers: ["1704", "17.04"], solved: false }
+                ]
+            },
+            "admin01": {
+                name: "ADMIN-01",
+                role: "Сообщник / Системный администратор",
+                questions: [
+                    { id: 'q_adm_1', type: 'text', label: 'В какой системе он работает?', answers: ["connect", "коннект"], solved: false },
+                    { id: 'q_adm_2', type: 'text', label: 'Кому он подчиняется?', answers: ["c.u.", "cu", "c.u", "си ю"], solved: false },
+                    { id: 'q_adm_3', type: 'text', label: 'Чем он управляет?', answers: ["каталогом платьев", "каталог", "платья"], solved: false },
+                    { id: 'q_adm_4', type: 'text', label: 'Кого он деактивировал?', answers: ["милану", "милана", "макарову"], solved: false },
+                    { id: 'q_adm_5', type: 'text', label: 'Что он говорит C.U.?', answers: ["я всё вижу", "я все вижу"], solved: false },
+                    { id: 'q_adm_6', type: 'text', label: 'Какое правило в чате ADMINS?', answers: ["только позиции без имен", "без имен", "только позиции"], solved: false },
+                    { id: 'q_adm_7', type: 'text', label: 'Какой протокол шифрования?', answers: ["des", "дес"], solved: false }
+                ]
+            },
+            "german": {
+                name: "Герман Журавлев",
+                role: "Свидетель / DevSecOps PRIME",
+                questions: [
+                    { id: 'q_ger_1', type: 'text', label: 'В какой компании он работает?', answers: ["prime systems", "prime", "прайм системс"], solved: false },
+                    { id: 'q_ger_2', type: 'text', label: 'Какая должность у Германа?', answers: ["devsecops", "девсекопс", "безопасность"], solved: false },
+                    { id: 'q_ger_3', type: 'text', label: 'Что он перехватил?', answers: ["трафик от миланы", "трафик", "трафик миланы"], solved: false },
+                    { id: 'q_ger_4', type: 'text', label: 'Что сказало руководство?', answers: ["молчать", "молчи", "ничего"], solved: false },
+                    { id: 'q_ger_5', type: 'text', label: 'Какая цитата про логи на LUMEN?', answers: ["я читаю ваши логи", "читаю логи"], solved: false },
+                    { id: 'q_ger_6', type: 'text', label: 'Как он относится к слежке?', answers: ["следят всегда", "всегда", "следят"], solved: false },
+                    { id: 'q_ger_7', type: 'text', label: 'Кого он подозревал?', answers: ["милану", "милана", "макарову"], solved: false }
+                ]
+            }
+        };
+
+        const reportData = [
+            { id: 'r-q1', type: 'text', answers: ["жива"] },
+            { id: 'r-q2', type: 'text', answers: ["климов", "сергей климов"] },
+            { id: 'r-q3', type: 'text', answers: ["c.u.", "cu", "c.u", "си ю"] },
+            { id: 'r-q4', type: 'text', answers: ["17.04.2019", "17.04.19"] },
+            { id: 'r-q5', type: 'text', answers: ["prime systems", "prime", "прайм системс"] },
+            { id: 'r-q6', type: 'text', answers: ["человек", "люди", "женщина", "женщины"] },
+            { id: 'r-q7', type: 'text', answers: ["orbit data", "orbit", "орбит дата"] },
+            { id: 'r-q8', type: 'text', answers: ["соколов", "павел соколов"] },
+            { id: 'r-q9', type: 'text', answers: ["лев беляков", "лев", "беляков"] },
+            { id: 'r-q10', type: 'text', answers: ["admin-01", "admin01", "админ-01"] },
+            { id: 'r-q11', type: 'text', answers: ["лебедева", "мария лебедева"] },
+            { id: 'r-q12', type: 'text', answers: ["чон у джин", "чон", "у джин", "джин"] },
+            { id: 'r-q13', type: 'text', answers: ["2019", "2019 году"] },
+            { id: 'r-q14', type: 'text', answers: ["герман", "герман журавлев", "журавлев"] },
+            { id: 'r-q15', type: 'text', answers: ["devops", "девопс", "devops-инженер"] }
+        ];
+
+        let totalQuestions = 0;
+        for (const char of Object.values(characters)) {
+            totalQuestions += char.questions.length;
+        }
+        
+        let solvedQuestions = 0;
+        let currentCharId = null;
+
+        function initList() {
+            const list = document.getElementById('char-list');
+            list.innerHTML = '';
+            for (const [id, data] of Object.entries(characters)) {
+                const btn = document.createElement('button');
+                btn.className = `char-btn`;
+                btn.id = `btn-${id}`;
+                btn.onclick = () => loadChar(id);
+                btn.innerHTML = `<span>${data.name}</span> <span class="check-icon" id="check-${id}">✓</span>`;
+                list.appendChild(btn);
+            }
+            document.getElementById('evidence-counter').innerText = `0 / ${totalQuestions}`;
+        }
+
+        function loadChar(id) {
+            currentCharId = id;
+            const data = characters[id];
+
+            document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${id}`).classList.add('active');
+
+            document.getElementById('prof-name').innerText = data.name;
+            document.getElementById('prof-role').innerText = data.role;
+
+            let html = '';
+
+            data.questions.forEach((q, index) => {
+                html += `<div class="question-card" id="qblock-${q.id}">`;
+                html += `<div class="question-label">${index + 1}. ${q.label}</div>`;
+                
+                if (q.type === 'text') {
+                    html += `
+                        <div class="input-group">
+                            <input type="text" id="input-${q.id}" placeholder="Введите ответ..." ${q.solved ? 'disabled value="Верно"' : ''} onkeypress="if(event.key==='Enter') checkAnswer('${q.id}')">
+                            <button class="btn-check" id="btn-check-${q.id}" onclick="checkAnswer('${q.id}')" ${q.solved ? 'disabled' : ''}>${q.solved ? 'ПРИНЯТО' : 'ПРОВЕРИТЬ'}</button>
+                        </div>
+                    `;
+                } else if (q.type === 'options') {
+                    html += `<div class="options-group" id="options-${q.id}">`;
+                    q.options.forEach(opt => {
+                        html += `<button class="option-btn" onclick="selectOption('${q.id}', '${opt}', this)" ${q.solved ? 'disabled' : ''}>${opt}</button>`;
+                    });
+                    html += `</div>`;
+                }
+
+                html += `<div class="msg-success" id="succ-${q.id}">Улика добавлена в дело.</div>`;
+                html += `<div class="msg-error" id="err-${q.id}">Неверный ответ.</div>`;
+                html += `</div>`;
+            });
+
+            document.getElementById('prof-content').innerHTML = html;
+            updateCharStatus(id);
+        }
+
+        function checkAnswer(qId) {
+            let foundQ = null;
+            let foundCharId = null;
+            for (const [id, char] of Object.entries(characters)) {
+                const q = char.questions.find(item => item.id === qId);
+                if (q) { foundQ = q; foundCharId = id; break; }
+            }
+            if (!foundQ || foundQ.solved) return;
+
+            const input = document.getElementById(`input-${qId}`);
+            let val = input.value.trim().toLowerCase();
+            let valClean = val.replace(/\./g, '').replace(/\s+/g, ' ');
+
+            let isCorrect = false;
+            foundQ.answers.forEach(ans => {
+                let ansClean = ans.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+                if (val === ans || valClean === ansClean || val.includes(ansClean)) {
+                    isCorrect = true;
+                }
+            });
+
+            if (isCorrect) {
+                foundQ.solved = true;
+                solvedQuestions++;
+                document.getElementById(`input-${qId}`).disabled = true;
+                document.getElementById(`input-${qId}`).value = 'Верно';
+                const btn = document.getElementById(`btn-check-${qId}`);
+                btn.disabled = true;
+                btn.innerText = 'ПРИНЯТО';
+                btn.style.background = 'var(--success)';
+                document.getElementById(`succ-${qId}`).style.display = 'block';
+                document.getElementById(`err-${qId}`).style.display = 'none';
+                
+                updateCharStatus(foundCharId);
+                checkAllSolved();
+            } else {
+                document.getElementById(`err-${qId}`).style.display = 'block';
+                setTimeout(() => { document.getElementById(`err-${qId}`).style.display = 'none'; }, 2000);
+            }
+        }
+
+        function selectOption(qId, opt, btnEl) {
+            let foundQ = null;
+            let foundCharId = null;
+            for (const [id, char] of Object.entries(characters)) {
+                const q = char.questions.find(item => item.id === qId);
+                if (q) { foundQ = q; foundCharId = id; break; }
+            }
+            if (!foundQ || foundQ.solved) return;
+
+            if (opt === foundQ.correct) {
+                foundQ.solved = true;
+                solvedQuestions++;
+                btnEl.style.background = 'var(--success)';
+                btnEl.style.color = '#fff';
+                btnEl.style.borderColor = 'var(--success)';
+                
+                const group = document.getElementById(`options-${qId}`);
+                group.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                
+                document.getElementById(`succ-${qId}`).style.display = 'block';
+                document.getElementById(`err-${qId}`).style.display = 'none';
+
+                updateCharStatus(foundCharId);
+                checkAllSolved();
+            } else {
+                btnEl.style.borderColor = 'var(--danger)';
+                document.getElementById(`err-${qId}`).style.display = 'block';
+                setTimeout(() => { 
+                    btnEl.style.borderColor = 'var(--border)';
+                    document.getElementById(`err-${qId}`).style.display = 'none'; 
+                }, 1000);
+            }
+        }
+
+        function updateCharStatus(charId) {
+            const char = characters[charId];
+            const allSolved = char.questions.every(q => q.solved);
+            const checkIcon = document.getElementById(`check-${charId}`);
+            if (allSolved) {
+                checkIcon.style.display = 'block';
+            } else {
+                checkIcon.style.display = 'none';
+            }
+        }
+
+        function checkAllSolved() {
+            document.getElementById('evidence-counter').innerText = `${solvedQuestions} / ${totalQuestions}`;
+            if (solvedQuestions === totalQuestions) {
+                const btn = document.getElementById('btn-submit');
+                btn.classList.add('active');
+                btn.disabled = false;
+            }
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.profile-view, .report-view, .final-screen').forEach(v => v.classList.remove('active'));
+
+            if (view === 'profiles') {
+                document.querySelector('.nav-tab:nth-child(1)').classList.add('active');
+                document.getElementById('view-profiles').classList.add('active');
+            } else if (view === 'report') {
+                document.querySelector('.nav-tab:nth-child(2)').classList.add('active');
+                document.getElementById('view-report').classList.add('active');
+            }
+        }
+
+        function submitReport() {
+            let reportScore = 0;
+            const maxReportScore = 15;
+
+            reportData.forEach(item => {
+                const input = document.getElementById(item.id);
+                if (!input) return;
+                let val = input.value.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+                
+                let isCorrect = false;
+                item.answers.forEach(ans => {
+                    let ansClean = ans.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+                    if (val === ans || val.includes(ansClean) || ansClean.includes(val)) {
+                        isCorrect = true;
+                    }
+                });
+                if (isCorrect) reportScore++;
+            });
+
+            const totalScore = solvedQuestions + reportScore;
+            const maxScore = totalQuestions + maxReportScore;
+
+            document.querySelector('.profile-view').classList.remove('active');
+            document.querySelector('.report-view').classList.remove('active');
+            document.getElementById('view-final').classList.add('active');
+
+            const title = document.getElementById('final-title');
+            const text = document.getElementById('final-text');
+            const score = document.getElementById('final-score');
+
+            score.innerText = `Итоговый счет: ${totalScore} / ${maxScore} (Улики: ${solvedQuestions}/${totalQuestions}, Отчет: ${reportScore}/${maxReportScore})`;
+
+            if (totalScore >= (maxScore * 0.8)) {
+                title.innerText = "ДЕЛО РАСКРЫТО";
+                title.style.color = "var(--success)";
+                text.innerHTML = "Вы успешно собрали все цифровые следы и составили верный отчет. <br><br>Климов (C.U.) и Мельников предстанут перед судом. Милана Макарова спасена. Вы настоящий профессионал.";
+            } else if (totalScore >= (maxScore * 0.5)) {
+                title.innerText = "ДЕЛО ЧАСТИЧНО РАСКРЫТО";
+                title.style.color = "var(--warning)";
+                text.innerHTML = "Вы собрали достаточно улик, но в отчете есть ошибки. <br><br>Климову удалось скрыть часть следов, но система CONNECT разрушена. Милана жива, но не вышла на связь.";
+            } else {
+                title.innerText = "ДЕЛО ПРОВАЛЕНО";
+                title.style.color = "var(--danger)";
+                text.innerHTML = "Вы не смогли собрать достаточно доказательств. <br><br>Суд признал обвинения несостоятельными. Климов и Мельников остались на свободе. Милана числится мертвой.";
+            }
+        }
+
+        initList();
+    </script>
+</body>
+</html>
