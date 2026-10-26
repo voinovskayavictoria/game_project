@@ -681,6 +681,8 @@ def opaque(slug):
         return hunt_item(arg)
     if kind == "panopticon":
         return panopticon()
+    if kind == "sanitizer":
+        return sanitizer()
     if kind == "dead_drop":
         return dead_drop()
 
@@ -1104,7 +1106,9 @@ def dress(sku):
         chats=SECRET_CHATS,
         request_unlock=REQUEST_UNLOCK,
         is_request=is_req,
-        unlocked=bool(session.get("frag_04_found")),
+        unlocked=bool(session.get("dress_motivation")),   # было frag_04_found
+        motivation=session.get("dress_motivation"),
+        fragment=session.get("dress_fragment"),
     )
 
 
@@ -1130,6 +1134,12 @@ USE_MOTIVES     = ["Забрать себе", "Использовать для �
                    "Выкупить контракт", "Улучшить (апгрейд)", "Перепрограммировать"]
 DESTROY_MOTIVES = ["Уничтожить данные", "Стереть её личность", "Вскрыть систему изнутри"]
 
+def _hunt_reply(state, hid):
+    session[HUNT_STATE_KEY] = state
+    session.modified = True
+    if _wants_json():
+        return _json_state(state)
+    return redirect(url_for("hunt_game", hid=hid))
 
 @app.route("/catalog/<sku>/request", methods=["POST"])
 def dress_request(sku):
@@ -1156,7 +1166,6 @@ def dress_request(sku):
     session["dress_motivation"] = motivation
     session["dress_motive_arch"] = motive_arch
     session["dress_fragment"] = fragment
-    session["frag_04_found"] = True
 
     frags = set(session.get("found_fragments", []))
     frags.add(fragment)
@@ -1393,6 +1402,7 @@ def hunt_item(hid):
         chats=SECRET_CHATS,
     )
 
+
 def _wants_json():
     return request.headers.get("X-Requested-With") == "fetch"
 
@@ -1434,27 +1444,30 @@ def hunt_game(hid):
             dx = max(-1, min(1, _int(request.form.get("dx"))))
             dy = max(-1, min(1, _int(request.form.get("dy"))))
             eng.step(state, dx, dy)
-            if state["status"] == "caught":
-                session["hunt_choice"] = "caught"
-            session[HUNT_STATE_KEY] = state
-            session.modified = True
-            return redirect(url_for("hunt_game", hid=hid))
+            return _hunt_reply(state, hid)
 
         if action == "use":
-            item = request.form.get("item", "")
-            eng.step(state, 0, 0, use=item)
-            if state["status"] == "caught":
-                session["hunt_choice"] = "caught"
-            session[HUNT_STATE_KEY] = state
-            session.modified = True
-            return redirect(url_for("hunt_game", hid=hid))
+            eng.step(state, 0, 0, use=request.form.get("item", ""))
+            return _hunt_reply(state, hid)
 
         if action == "chase_done":
             if state["status"] == "chase" and request.form.get("result") == "win":
                 eng.finish_chase(state, True)
-                session[HUNT_STATE_KEY] = state
-                session.modified = True
-            return redirect(url_for("hunt_game", hid=hid))
+            return _hunt_reply(state, hid)
+
+        # егерь наступил: сдаться или победить в перестрелке
+        if action in ("surrender", "duel_win") and state["status"] == "caught":
+            choice = "surrender" if action == "surrender" else "kill"
+            session["hunt_choice"] = choice
+            session["hunt_finished"] = True
+
+            frag = "HT-SURRENDER" if choice == "surrender" else "HT-KILL"
+            frags = set(session.get("found_fragments", []))
+            frags.add(frag)
+            session["found_fragments"] = list(frags)
+
+            session.modified = True
+            return redirect(url_for("hunt_game_result"))
 
         if action == "choice" and state["status"] == "found":
             choice = request.form.get("choice")
@@ -1633,6 +1646,120 @@ def panopticon_cam_events(cam_id):
         chats=SECRET_CHATS,
     )
 
+
+# ------------------------------------------------------------------
+# SANITIZER
+# ------------------------------------------------------------------
+@app.route("/sanitizer", methods=["GET", "POST"])
+def sanitizer():
+    if not is_secret():
+        return redirect(url_for("inbox"))
+
+    _remember("sanitizer")
+
+    if "san_log" not in session:
+        session["san_log"] = list(SANITIZER["banner"])
+        session["san_cwd"] = "/"
+        session["san_wrong"] = 0
+        session["san_locked"] = False
+
+    if session.get("san_locked"):
+        return render_template("sanitizer.html",
+                               s=SANITIZER, output=session["san_log"],
+                               locked=True, chats=SECRET_CHATS)
+
+    if request.method == "POST":
+        cmd = request.form.get("cmd", "").strip()
+        out = []
+
+        if is_suspicious_text(cmd):
+            return shutdown(reason="keyword")
+
+        parts = cmd.split()
+        name = parts[0] if parts else ""
+        arg = parts[1] if len(parts) > 1 else ""
+
+        cwd = session.get("san_cwd", "/")
+
+        def path_join(arg):
+            if not arg:
+                return cwd
+            if arg.startswith("/"):
+                return arg
+            if arg in (".", "./"):
+                return cwd
+            if arg == "..":
+                return cwd.rstrip("/").rsplit("/", 1)[0] + "/" or "/"
+            return (cwd.rstrip("/") + "/" + arg).replace("//", "/")
+
+        out.append(f"{SANITIZER['prompt']} {cmd}")
+
+        if name == "help":
+            out.append(SANITIZER["help_text"])
+        elif name == "pwd":
+            out.append(cwd)
+        elif name == "whoami":
+            out.append("anon")
+        elif name == "cd":
+            target = path_join(arg)
+            if target in SANITIZER["fs"] or (target.rstrip("/") + "/") in SANITIZER["fs"]:
+                session["san_cwd"] = target if target.endswith("/") else target + "/"
+                if session["san_cwd"] == "//":
+                    session["san_cwd"] = "/"
+            else:
+                out.append(f"cd: {target}: No such file or directory")
+        elif name == "ls":
+            target = path_join(arg) if arg else cwd
+            key = target if target in SANITIZER["fs"] else target.rstrip("/") + "/"
+            if key in SANITIZER["fs"]:
+                owner, perms, content = SANITIZER["fs"][key]
+                out.append(f"{perms}  {owner}  {content}")
+            else:
+                out.append(f"ls: {target}: No such file or directory")
+        elif name == "cat":
+            target = path_join(arg)
+            if target == "/var/log/auth.log":
+                out.append(SANITIZER["auth_log"])
+            elif target in SANITIZER["fs"]:
+                owner, perms, content = SANITIZER["fs"][target]
+                if "r" in perms[1:4] or owner == "anon":
+                    out.append(content or "[пусто]")
+                else:
+                    out.append(f"cat: {target}: Permission denied")
+            else:
+                out.append(f"cat: {target}: No such file or directory")
+        elif name == "sudo" and arg == "-l":
+            out.append("User anon may run the following commands:")
+            out.append("  (root) NOPASSWD: /usr/bin/shred")
+            out.append("  (root) NOPASSWD: /sbin/mkfs.ext4")
+        elif name == "shred":
+            target = path_join(arg)
+            out.append(f"shred: {target}: operation not permitted")
+            out.append("hint: you are not ROOT.")
+        elif name == "exit":
+            session["san_log"] = list(SANITIZER["banner"])
+            out.append("session closed.")
+        elif name == "":
+            pass
+        else:
+            session["san_wrong"] = session.get("san_wrong", 0) + 1
+            out.append(f"{name}: command not found")
+            if session["san_wrong"] >= 3:
+                session["san_locked"] = True
+                out.append("TOO MANY FAILED COMMANDS. LOCKING IP ...")
+                session["san_log"] = session["san_log"] + out
+                return render_template("sanitizer.html",
+                                       s=SANITIZER, output=session["san_log"],
+                                       locked=True, chats=SECRET_CHATS)
+
+        session["san_log"] = session["san_log"] + out
+        session.modified = True
+
+    return render_template("sanitizer.html",
+                           s=SANITIZER, output=session["san_log"],
+                           locked=False, chats=SECRET_CHATS)
+
+
 # ------------------------------------------------------------------
 # DEAD DROP
 # ------------------------------------------------------------------
@@ -1707,18 +1834,12 @@ def debug_plot():
     if hijack_role and quiz_key:
         plot_text = _get_plot_ending(hijack_role, quiz_key, motive_arch)
     else:
-        # отладка: показать только модификаторы, без базового финала
-        mods = []
-        if motive_arch in PLOT_MOTIVE_MODS:
-            mods.append(PLOT_MOTIVE_MODS[motive_arch])
-        hunt = session.get("hunt_choice")
-        if hunt in PLOT_EXTRA_MODS:
-            mods.append(PLOT_EXTRA_MODS[hunt])
-        mods.append(
-            PLOT_EXTRA_MODS["panopticon_rescued"] if session.get("panopticon_rescued")
-            else PLOT_EXTRA_MODS["panopticon_failed"]
-        )
-        plot_text = "(БАЗА НЕ ПРОЙДЕНА — показаны только модификаторы)\n\n" + "\n\n".join(mods)
+        # отладка: только модификаторы, без базового финала
+        mods = _plot_mods(motive_arch, fate)
+        plot_text = ("(БАЗА НЕ ПРОЙДЕНА — показаны только модификаторы, "
+                     f"судьба по умолчанию: {fate})\n\n" + "\n\n".join(mods))
+
+    plot_html = (plot_text or "(пусто — пройди hijack + quiz)").replace("\n", "<br>")
 
     return f"""
     <!doctype html>

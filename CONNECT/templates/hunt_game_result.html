@@ -27,10 +27,11 @@
         Это меняет всё.
       </div>
       <div class="pan-cam__unlocked" style="margin-top: 24px;">
-      <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
-      <div class="pan-cam__unlocked-frag">HT-REVEAL</div>
+        <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+        <div class="pan-cam__unlocked-frag">HT-REVEAL</div>
+      </div>
     </div>
-    </div>
+
   {% elif choice == "hide" %}
     <div class="plot-ending">
       <div class="plot-ending__head">[ СКРЫТО ]</div>
@@ -40,10 +41,41 @@
         Но ты знаешь.
       </div>
       <div class="pan-cam__unlocked" style="margin-top: 24px;">
-      <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
-      <div class="pan-cam__unlocked-frag">HT-HIDE</div>
+        <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+        <div class="pan-cam__unlocked-frag">HT-HIDE</div>
+      </div>
     </div>
+
+  {% elif choice == "surrender" %}
+    <div class="plot-ending">
+      <div class="plot-ending__head">[ СДАЛСЯ ]</div>
+      <div class="plot-ending__text">
+        Егерь наступил на тебя. Ты поднял руки.<br>
+        Ты рассказал ему часть того, что знает следствие.<br>
+        Он отпустил тебя живым.<br>
+        Инженера нашли той же ночью.
+      </div>
+      <div class="pan-cam__unlocked" style="margin-top: 24px;">
+        <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+        <div class="pan-cam__unlocked-frag">HT-SURRENDER</div>
+      </div>
     </div>
+
+  {% elif choice == "kill" %}
+    <div class="plot-ending">
+      <div class="plot-ending__head">[ ЕГЕРЬ МЁРТВ ]</div>
+      <div class="plot-ending__text">
+        Ты принял бой. И выстрелил точнее.<br>
+        Одним егерем меньше. Это благое дело.<br>
+        Но теперь ты тот, кто убил.<br>
+        Система это запомнит.
+      </div>
+      <div class="pan-cam__unlocked" style="margin-top: 24px;">
+        <div class="pan-cam__unlocked-head">[ ФРАГМЕНТ ]</div>
+        <div class="pan-cam__unlocked-frag">HT-KILL</div>
+      </div>
+    </div>
+
   {% else %}
     <div class="plot-ending">
       <div class="plot-ending__head">[ ПРОВАЛ ]</div>

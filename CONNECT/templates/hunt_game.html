@@ -40,7 +40,7 @@
     .hg-screen__tag--r { left:auto; right:26px; color:var(--hg-green); }
 
     .hg-canvas-wrap { position:relative; line-height:0; overflow:hidden; }
-    #game-canvas, #chase-canvas { display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges; background:#000; }
+    #game-canvas, #chase-canvas, #duel-canvas { display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges; background:#000; }
     .hg-canvas-wrap::after {
       content:""; position:absolute; inset:0; pointer-events:none; mix-blend-mode:multiply;
       background:
@@ -48,6 +48,15 @@
         radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.65) 100%);
     }
     .hg-canvas-wrap::before { content:""; position:absolute; inset:0; pointer-events:none; z-index:2; }
+
+    /* цель близко (сигнал >= 70) */
+    .hg-screen.is-near::before,.hg-screen.is-near::after { border-color:var(--hg-amber); }
+    .hg-screen.is-near .hg-canvas-wrap::before { box-shadow:inset 0 0 46px 4px rgba(255,204,51,.28); animation:hgNearGlow 1s ease-in-out infinite; }
+    @keyframes hgNearGlow { 0%,100%{box-shadow:inset 0 0 30px 2px rgba(255,204,51,.14)} 50%{box-shadow:inset 0 0 60px 8px rgba(255,204,51,.4)} }
+    .hg-meter--near .hg-meter__fill { background:var(--hg-red); color:var(--hg-red); animation:hgBlink .7s steps(2) infinite; }
+    .hg-meter--near .hg-meter__top b { color:var(--hg-red); animation:hgBlink .7s steps(2) infinite; }
+    .hg-meter--near .hg-meter__top span { color:var(--hg-amber); }
+
     .hg-screen.is-danger  .hg-canvas-wrap::before { animation:hgDanger 1.1s ease-in-out infinite; }
     .hg-screen.is-critical .hg-canvas-wrap::before { animation:hgDanger .45s ease-in-out infinite; }
     .hg-screen.is-danger::before,.hg-screen.is-danger::after,
@@ -67,7 +76,7 @@
 
     .hg-pad { display:none; margin:18px auto 0; grid-template-columns:repeat(3,62px); grid-template-rows:repeat(2,62px); gap:6px; justify-content:center; }
     @media (max-width:1000px),(pointer:coarse){ .hg-pad{display:grid} }
-    .hg-pad__btn { font-family:inherit; font-size:20px; color:var(--hg-ink2); background:var(--hg-panel); border:1px solid var(--hg-line); cursor:pointer; padding:0; touch-action:manipulation; }
+    .hg-pad__btn { font-family:inherit; font-size:20px; color:var(--hg-ink2); background:var(--hg-panel); border:1px solid var(--hg-line); cursor:pointer; padding:0; touch-action:manipulation; user-select:none; }
     .hg-pad__btn:active { background:rgba(255,42,61,.18); border-color:var(--hg-red); color:#fff; }
     .hg-pad__btn--up{grid-column:2;grid-row:1} .hg-pad__btn--left{grid-column:1;grid-row:2}
     .hg-pad__btn--down{grid-column:2;grid-row:2} .hg-pad__btn--right{grid-column:3;grid-row:2}
@@ -137,7 +146,7 @@
     .hg-end__actions { margin-top:22px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; opacity:0; animation:hgLine .5s ease 2.2s forwards; }
     .hg-end__actions form { margin:0; display:inline-block; }
 
-    /* ---------- ЗАБЕГ ---------- */
+    /* ---------- ОВЕРЛЕИ МИНИ-ИГР ---------- */
     .hg-ov {
       position:absolute; inset:0; z-index:6; display:flex; flex-direction:column;
       align-items:center; justify-content:center; text-align:center; line-height:1.6;
@@ -147,6 +156,7 @@
     .hg-ov--win h2 { color:var(--hg-green); }
     .hg-ov p { margin:0 0 8px; font-size:13px; color:var(--hg-ink2); max-width:480px; }
     .hg-ov .dress-btn { margin-top:14px; }
+    .hg-ov__row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
     .hg-chase-say { min-height:62px; font-size:12.5px; line-height:1.7; }
     .hg-chase-say .me   { color:var(--hg-green); }
     .hg-chase-say .him  { color:var(--hg-amber); }
@@ -178,7 +188,7 @@
 
     <div>
       <!-- ================= ЛАБИРИНТ ================= -->
-      <section id="mazeSec" {% if game.status == "chase" %}hidden{% endif %}>
+      <section id="mazeSec" hidden>
         <div class="hg-screen" id="screen">
           <span class="hg-screen__tag">CAM // MAZE-17</span>
           <span class="hg-screen__tag hg-screen__tag--r">● REC</span>
@@ -202,8 +212,7 @@
       </section>
 
       <!-- ================= ЗАБЕГ ================= -->
-      {% if game.status == "chase" %}
-      <section id="chaseSec">
+      <section id="chaseSec" hidden>
         <div class="hg-screen" id="chaseScreen">
           <span class="hg-screen__tag">CAM // RUN-17</span>
           <span class="hg-screen__tag hg-screen__tag--r">● PURSUIT</span>
@@ -212,58 +221,80 @@
             <div class="hg-ov" id="chaseOv"></div>
           </div>
         </div>
-
         <p class="hg-hint">
           ПРОБЕЛ / ↑ — прыжок &nbsp;|&nbsp; ↓ — пригнуться &nbsp;|&nbsp; фраза сверху — в прыжке, снизу — на земле
         </p>
-
         <div class="hg-pad" id="chasePad">
           <button type="button" class="hg-pad__btn hg-pad__btn--up"   id="cJump">▲</button>
           <button type="button" class="hg-pad__btn hg-pad__btn--down" id="cDuck">▼</button>
         </div>
-
-        <form id="chaseDone" method="post" hidden>
-          <input type="hidden" name="action" value="chase_done">
-          <input type="hidden" name="result" value="win">
-        </form>
       </section>
-      {% endif %}
 
-      {% if game.status == "found" %}
-        <div class="hg-end hg-end--found">
-          <h2 class="hg-end__head">[ ЦЕЛЬ ОСТАНОВЛЕНА ]</h2>
-          <p>Он выдохся. И, кажется, услышал тебя.</p>
-          <p>Инженер. Разработчик. Он смотрит и ничего не говорит.</p>
-          <p class="hg-end__q">Что делать?</p>
-          <div class="hg-end__actions">
-            <form method="post">
-              <input type="hidden" name="action" value="choice">
-              <input type="hidden" name="choice" value="reveal">
-              <button type="submit" class="dress-btn">// РАСКРЫТЬ ЕГО</button>
-            </form>
-            <form method="post">
-              <input type="hidden" name="action" value="choice">
-              <input type="hidden" name="choice" value="hide">
-              <button type="submit" class="dress-btn dress-btn--ghost">// СКРЫТЬ</button>
-            </form>
+      <!-- ================= ПЕРЕСТРЕЛКА ================= -->
+      <section id="duelSec" hidden>
+        <div class="hg-screen" id="duelScreen">
+          <span class="hg-screen__tag">CAM // DUEL-17</span>
+          <span class="hg-screen__tag hg-screen__tag--r">● ENGAGED</span>
+          <div class="hg-canvas-wrap">
+            <canvas id="duel-canvas" width="720" height="360"></canvas>
+            <div class="hg-ov" id="duelOv"></div>
           </div>
         </div>
-      {% elif game.status == "caught" %}
-        <div class="hg-end">
-          <h2 class="hg-end__head">[ ТЕБЯ НАШЛИ ]</h2>
-          <p>Егерь наступил на тебя.</p>
-          <p>Выезд провален. Маршрут записан.</p>
-          <div class="hg-end__actions">
-            <a href="{{ url_for('hunt') }}" class="dress-btn dress-btn--ghost">// выйти</a>
-          </div>
+        <p class="hg-hint">
+          WASD / ↑↓←→ — движение &nbsp;|&nbsp; ПРОБЕЛ или клик — выстрел (прицел автоматический) &nbsp;|&nbsp; ящики держат пули
+        </p>
+        <div class="hg-pad" id="duelPad">
+          <button type="button" class="hg-pad__btn hg-pad__btn--up"    data-k="U">▲</button>
+          <button type="button" class="hg-pad__btn hg-pad__btn--left"  data-k="L">◀</button>
+          <button type="button" class="hg-pad__btn hg-pad__btn--down"  data-k="D">▼</button>
+          <button type="button" class="hg-pad__btn hg-pad__btn--right" data-k="R">▶</button>
+          <button type="button" class="hg-pad__btn hg-pad__btn--wait"  data-k="F">ОГОНЬ</button>
         </div>
-      {% endif %}
+      </section>
+
+      <!-- ============ ЦЕЛЬ ОСТАНОВЛЕНА ============ -->
+      <div class="hg-end hg-end--found" id="foundPanel" hidden>
+        <h2 class="hg-end__head">[ ЦЕЛЬ ОСТАНОВЛЕНА ]</h2>
+        <p>Он выдохся. И, кажется, услышал тебя.</p>
+        <p>Инженер. Разработчик. Он смотрит и ничего не говорит.</p>
+        <p class="hg-end__q">Что делать?</p>
+        <div class="hg-end__actions">
+          <form method="post">
+            <input type="hidden" name="action" value="choice">
+            <input type="hidden" name="choice" value="reveal">
+            <button type="submit" class="dress-btn">// РАСКРЫТЬ ЕГО</button>
+          </form>
+          <form method="post">
+            <input type="hidden" name="action" value="choice">
+            <input type="hidden" name="choice" value="hide">
+            <button type="submit" class="dress-btn dress-btn--ghost">// СКРЫТЬ</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ============ ТЕБЯ НАШЛИ ============ -->
+      <div class="hg-end" id="caughtPanel" hidden>
+        <h2 class="hg-end__head">[ ТЕБЯ НАШЛИ ]</h2>
+        <p>Егерь наступил на тебя. Ствол смотрит в лицо.</p>
+        <p>Сдаться — уйдёшь живым, но не бесплатно. Драться — назад дороги не будет.</p>
+        <p class="hg-end__q">Что делаешь?</p>
+        <div class="hg-end__actions">
+          <form method="post" id="fSurrender">
+            <input type="hidden" name="action" value="surrender">
+            <button type="submit" class="dress-btn dress-btn--ghost">// СДАТЬСЯ</button>
+          </form>
+          <button type="button" class="dress-btn" id="btnFight">// ПРИНЯТЬ БОЙ</button>
+        </div>
+      </div>
+
+      <form method="post" id="fDuelWin" hidden>
+        <input type="hidden" name="action" value="duel_win">
+      </form>
     </div>
 
     <aside class="hg-side">
 
-      {% if game.status == "chase" %}
-      <div class="hg-box hg-box--green">
+      <div class="hg-box hg-box--green" id="chaseBox" hidden>
         <div class="hg-box__label">PURSUIT</div>
         <div class="hg-meter">
           <div class="hg-meter__top"><span>близость</span><b id="cGapVal">0%</b></div>
@@ -273,20 +304,29 @@
         <div class="hg-row"><span>время</span><b id="cTime">75</b></div>
         <div class="hg-chase-say" id="cSay"></div>
       </div>
-      {% endif %}
+
+      <div class="hg-box" id="duelBox" hidden>
+        <div class="hg-box__label">DUEL</div>
+        <div class="hg-row"><span>твоё здоровье</span><b class="hg-trust" id="dHp">●●●●●</b></div>
+        <div class="hg-meter hg-meter--threat">
+          <div class="hg-meter__top"><span>егерь</span><b id="dEVal">8/8</b></div>
+          <div class="hg-meter__bar"><div class="hg-meter__fill is-hot" id="dEBar" style="width:100%"></div></div>
+        </div>
+        <div class="hg-row"><span>патроны</span><b id="dAmmo">6/6</b></div>
+      </div>
 
       <div class="hg-box">
         <div class="hg-box__label">TELEMETRY</div>
-        <div class="hg-row"><span>ходов</span><b id="turns">{{ game.turns }}</b></div>
-        <div class="hg-row"><span>статус</span><b id="status">{{ game.status }}</b></div>
+        <div class="hg-row"><span>ходов</span><b id="turns">0</b></div>
+        <div class="hg-row"><span>статус</span><b id="status">—</b></div>
         <div class="hg-row"><span>режим</span><b id="hudMode">—</b></div>
         <div class="hg-row"><span>исследовано</span><b id="hudExplored">0%</b></div>
         <div class="hg-row"><span>егерей на уровне</span><b id="hudGuards">—</b></div>
         <div class="hg-row"><span>в погоне</span><b id="hudChase">0</b></div>
         <div class="hg-row"><span>подкрепление через</span><b id="hudAlarm">—</b></div>
 
-        <div class="hg-meter">
-          <div class="hg-meter__top"><span>сигнал цели</span><b id="sigVal">0%</b></div>
+        <div class="hg-meter" id="sigBox">
+          <div class="hg-meter__top"><span id="sigLbl">сигнал цели</span><b id="sigVal">0%</b></div>
           <div class="hg-meter__bar"><div class="hg-meter__fill" id="sigBar"></div></div>
         </div>
         <div class="hg-meter hg-meter--threat">
@@ -366,56 +406,48 @@ window.HG = (function () {
     lerp: (a, b, t) => a + (b - a) * t,
     ease: t => 1 - Math.pow(1 - t, 3),
     store: (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
-    load: (k, d) => { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+    load: (k, d) => { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    duelOn: false
   };
 })();
 </script>
 
-<!-- ============ ЛАБИРИНТ ============ -->
+<!-- ============ ЛАБИРИНТ + РОУТИНГ ============ -->
 <script>
 (function () {
   "use strict";
   const { SPR_PLAYER, SPR_GUARD, SPR_TARGET, hash, clamp, lerp, ease, store, load } = window.HG;
 
+  const URL_GAME = "{{ url_for('hunt_game', hid=hunt_id) }}";
+  const SIZE  = {{ labyrinth.size }};
+  const WALLS = {{ labyrinth.walls|tojson }};
+  let G = {{ game|tojson }};
+  const SEED = G.seed;
+
+  let PLAYER, GUARDS, TARGET_POS, TARGET_MODE, STATUS, TURNS, EVENTS, SNEAK, ALARM_IN, INV, PICKUPS, SMOKE, FACING;
+  let px0 = 0, py0 = 0;
+
   const canvas = document.getElementById("game-canvas");
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
 
-  const SIZE        = {{ labyrinth.size }};
-  const WALLS       = {{ labyrinth.walls|tojson }};
-  const PLAYER      = {{ game.player|tojson }};
-  const GUARDS      = {{ game.guards|tojson }};
-  const TARGET_POS  = {{ game.target.pos|tojson }};
-  const TARGET_MODE = {{ game.target.mode|tojson }};
-  const STATUS      = {{ game.status|tojson }};
-  const TURNS       = {{ game.turns|tojson }};
-  const SEED        = {{ game.seed|tojson }};
-  const EVENTS      = {{ game.events|tojson }};
-  const SNEAK       = {{ game.sneak|tojson }};
-  const ALARM_IN    = {{ game.alarm_in|tojson }};
-  const INV         = {{ game.inv|tojson }};
-  const PICKUPS     = {{ game.pickups|tojson }};
-  const SMOKE       = {{ game.smoke|tojson }};
-  const FACING      = {{ game.facing|tojson }};
-
   const VIEW = 15, CS = 48, U = CS / 16, W = canvas.width;
-  const VIS_R = 6;
-  const isPlaying = STATUS === "playing";
-  const ending = !isPlaying;
+  const VIS_R = 7;                       // было 6: обзор +1 клетка
 
   const wallSet = new Set(WALLS.map(w => w[0] + "," + w[1]));
   const isWall = (x, y) => x < 0 || y < 0 || x >= SIZE || y >= SIZE || wallSet.has(x + "," + y);
+  const $ = id => document.getElementById(id);
 
-  /* ---------- состояние между ходами ---------- */
+  /* ---------- память между перезагрузками ---------- */
   const sig = "s" + SEED;
   if (load("hg_sig", null) !== sig) {
     store("hg_sig", sig); store("hg_explored", []); store("hg_log", []);
-    store("hg_prev", null); store("hg_logged", -1); store("hg_psig", null);
+    store("hg_logged", -1); store("hg_psig", null);
   }
-  const prev = load("hg_prev", null);
   const exp = new Uint8Array(SIZE * SIZE);
   load("hg_explored", []).forEach(i => { exp[i] = 1; });
   let logLines = load("hg_log", []);
+  const vis = new Float32Array(SIZE * SIZE);
 
   /* ---------- статическая карта ---------- */
   const buf = document.createElement("canvas");
@@ -486,7 +518,6 @@ window.HG = (function () {
   sctx.drawImage(buf, 0, 0, SIZE * CS, SIZE * CS);
 
   /* ---------- видимость ---------- */
-  const px0 = PLAYER[0], py0 = PLAYER[1];
   function hasLOS(x0, y0, x1, y1) {
     const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
     const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
@@ -500,45 +531,67 @@ window.HG = (function () {
     }
     return true;
   }
-  const vis = new Float32Array(SIZE * SIZE);
-  for (let y = Math.max(0, py0 - VIS_R - 1); y <= Math.min(SIZE - 1, py0 + VIS_R + 1); y++) {
-    for (let x = Math.max(0, px0 - VIS_R - 1); x <= Math.min(SIZE - 1, px0 + VIS_R + 1); x++) {
-      const d = Math.hypot(x - px0, y - py0);
-      if (d <= VIS_R + 0.5 && hasLOS(px0, py0, x, y)) {
-        vis[y * SIZE + x] = clamp(1.15 - (d / (VIS_R + 0.5)) * 0.85, 0.3, 1);
-        exp[y * SIZE + x] = 1;
-      }
-    }
-  }
-  store("hg_explored", (() => { const a = []; for (let i = 0; i < exp.length; i++) if (exp[i]) a.push(i); return a; })());
   const visAt = (x, y) => (x < 0 || y < 0 || x >= SIZE || y >= SIZE) ? 0 : vis[y * SIZE + x];
 
-  /* ---------- цель ---------- */
-  const tD = Math.hypot(px0 - TARGET_POS[0], py0 - TARGET_POS[1]);
-  const tSeen = visAt(TARGET_POS[0], TARGET_POS[1]) > 0;
-  const tShow = ending || (tSeen && (TARGET_MODE !== "hide" || tD <= 2.2));
+  function throwTarget() {
+    let lx = px0, ly = py0;
+    for (let i = 0; i < 6; i++) {
+      const nx = lx + FACING[0], ny = ly + FACING[1];
+      if (isWall(nx, ny)) break;
+      lx = nx; ly = ny;
+    }
+    return [lx, ly];
+  }
+
+  /* ---------- производные величины (считаются при каждом новом состоянии) ---------- */
+  let tD, tSeen, tShow, signal, nearest, chasing, thrLabel, thrPct, exploredPct, THROW, ending, isPlaying, nearHot;
+
+  function derive() {
+    px0 = PLAYER[0]; py0 = PLAYER[1];
+    isPlaying = STATUS === "playing";
+    ending = !isPlaying;
+
+    vis.fill(0);
+    for (let y = Math.max(0, py0 - VIS_R - 1); y <= Math.min(SIZE - 1, py0 + VIS_R + 1); y++) {
+      for (let x = Math.max(0, px0 - VIS_R - 1); x <= Math.min(SIZE - 1, px0 + VIS_R + 1); x++) {
+        const d = Math.hypot(x - px0, y - py0);
+        if (d <= VIS_R + 0.5 && hasLOS(px0, py0, x, y)) {
+          vis[y * SIZE + x] = clamp(1.15 - (d / (VIS_R + 0.5)) * 0.85, 0.3, 1);
+          exp[y * SIZE + x] = 1;
+        }
+      }
+    }
+    const a = []; for (let i = 0; i < exp.length; i++) if (exp[i]) a.push(i);
+    store("hg_explored", a);
+
+    tD = Math.hypot(px0 - TARGET_POS[0], py0 - TARGET_POS[1]);
+    tSeen = visAt(TARGET_POS[0], TARGET_POS[1]) > 0;
+    tShow = ending || (tSeen && (TARGET_MODE !== "hide" || tD <= 2.2));
+
+    const maxD = Math.hypot(SIZE, SIZE) * 0.7;
+    let base = clamp(Math.round((1 - tD / maxD) * 100), 3, 100);
+    if (TARGET_MODE === "hide") base = Math.round(base * 0.6);
+    if (TARGET_MODE === "flee") base = Math.min(100, base + 8);
+    signal = clamp(base + Math.round((hash(TURNS, 7, 3) - .5) * 14), 3, 100);
+    nearHot = isPlaying && signal >= 70;
+
+    nearest = 99;
+    GUARDS.forEach(g => { if (!g.stun) nearest = Math.min(nearest, Math.hypot(px0 - g.pos[0], py0 - g.pos[1])); });
+    chasing = GUARDS.filter(g => g.mode === "chase" && !g.stun).length;
+    thrLabel = "НИЗКАЯ"; thrPct = clamp(Math.round((1 - nearest / 10) * 100), 4, 100);
+    if (nearest <= 7)   thrLabel = "СРЕДНЯЯ";
+    if (nearest <= 4.5) thrLabel = "ВЫСОКАЯ";
+    if (nearest <= 2.5) thrLabel = "КРИТИЧЕСКАЯ";
+    if (chasing)        { thrLabel = "ПОГОНЯ"; thrPct = Math.max(thrPct, 85); }
+
+    let n = 0; for (let i = 0; i < exp.length; i++) n += exp[i];
+    exploredPct = Math.min(100, Math.round((n / (SIZE * SIZE)) * 100));
+    THROW = throwTarget();
+  }
 
   /* ---------- HUD ---------- */
-  const maxD = Math.hypot(SIZE, SIZE) * 0.7;
-  let base = clamp(Math.round((1 - tD / maxD) * 100), 3, 100);
-  if (TARGET_MODE === "hide") base = Math.round(base * 0.6);
-  if (TARGET_MODE === "flee") base = Math.min(100, base + 8);
-  const signal = clamp(base + Math.round((hash(TURNS, 7, 3) - .5) * 14), 3, 100);
-
-  let nearest = 99;
-  GUARDS.forEach(g => { if (!g.stun) nearest = Math.min(nearest, Math.hypot(px0 - g.pos[0], py0 - g.pos[1])); });
-  const chasing = GUARDS.filter(g => g.mode === "chase" && !g.stun).length;
-  let thrLabel = "НИЗКАЯ", thrPct = clamp(Math.round((1 - nearest / 10) * 100), 4, 100);
-  if (nearest <= 7)   thrLabel = "СРЕДНЯЯ";
-  if (nearest <= 4.5) thrLabel = "ВЫСОКАЯ";
-  if (nearest <= 2.5) thrLabel = "КРИТИЧЕСКАЯ";
-  if (chasing)        { thrLabel = "ПОГОНЯ"; thrPct = Math.max(thrPct, 85); }
-
-  let expCount = 0; for (let i = 0; i < exp.length; i++) expCount += exp[i];
-  const exploredPct = Math.min(100, Math.round((expCount / (SIZE * SIZE)) * 100));
-
-  (function paintHud() {
-    const $ = id => document.getElementById(id);
+  function paintHud() {
+    $("turns").textContent = TURNS;
     const labels = { playing: "В ПОИСКЕ", chase: "ЦЕЛЬ ВПЕРЕДИ", found: "ЦЕЛЬ ОСТАНОВЛЕНА", caught: "ОБНАРУЖЕН" };
     const st = $("status");
     st.textContent = labels[STATUS] || STATUS;
@@ -551,41 +604,55 @@ window.HG = (function () {
     $("hudGuards").textContent = GUARDS.length;
     const ch = $("hudChase"); ch.textContent = chasing; ch.className = chasing ? "is-red" : "";
     $("hudAlarm").textContent = ALARM_IN + " х.";
+
     $("sigVal").textContent = signal + "%";
     $("sigBar").style.width = signal + "%";
+    $("sigLbl").textContent = nearHot ? "ЦЕЛЬ РЯДОМ" : "сигнал цели";
+    $("sigBox").classList.toggle("hg-meter--near", nearHot);
+    $("screen").classList.toggle("is-near", nearHot);
+
     $("thrVal").textContent = thrLabel;
     const tb = $("thrBar"); tb.style.width = thrPct + "%";
-    if (nearest <= 4.5 || chasing) tb.classList.add("is-hot");
+    tb.classList.toggle("is-hot", nearest <= 4.5 || chasing > 0);
 
     const screen = $("screen");
+    screen.classList.remove("is-critical", "is-danger");
     if (isPlaying && (nearest <= 2.5 || (chasing && nearest <= 4.5))) screen.classList.add("is-critical");
     else if (isPlaying && (nearest <= 4.5 || chasing)) screen.classList.add("is-danger");
-  })();
+  }
 
   /* ---------- журнал ---------- */
-  (function updateLog() {
-    const el = document.getElementById("log");
-    const last = load("hg_logged", -1);
-    const t = String(TURNS).padStart(3, "0");
-    if (last !== TURNS) {
-      EVENTS.forEach(e => logLines.push({ t: "[" + t + "] " + e[0], c: e[1] || "" }));
-      const ps = load("hg_psig", null);
-      if (isPlaying && ps !== null && Math.abs(signal - ps) >= 6) {
-        logLines.push(signal > ps ? { t: "[" + t + "] сигнал цели растёт: " + signal + "%", c: "g" }
-                                  : { t: "[" + t + "] сигнал цели слабеет: " + signal + "%", c: "d" });
-      }
-      store("hg_psig", signal);
-      store("hg_logged", TURNS);
-    }
-    logLines = logLines.slice(-8);
-    store("hg_log", logLines);
+  function renderLog() {
+    const el = $("log");
+    el.innerHTML = "";
     logLines.forEach(l => {
       const d = document.createElement("div");
       if (l.c) d.className = l.c;
       d.textContent = l.t;
       el.appendChild(d);
     });
-  })();
+  }
+  function pushEvents(first, advanced) {
+    const t = String(TURNS).padStart(3, "0");
+    const prevSig = load("hg_psig", null);
+    const lastLogged = load("hg_logged", -1);
+    if ((first && lastLogged !== TURNS) || advanced) {
+      EVENTS.forEach(e => logLines.push({ t: "[" + t + "] " + e[0], c: e[1] || "" }));
+      if (isPlaying && prevSig !== null && Math.abs(signal - prevSig) >= 6) {
+        logLines.push(signal > prevSig
+          ? { t: "[" + t + "] сигнал цели растёт: " + signal + "%", c: "g" }
+          : { t: "[" + t + "] сигнал цели слабеет: " + signal + "%", c: "d" });
+      }
+      if (isPlaying && signal >= 70 && (prevSig === null || prevSig < 70)) {
+        logLines.push({ t: "[" + t + "] ЦЕЛЬ СОВСЕМ РЯДОМ", c: "w" });
+      }
+      store("hg_psig", signal);
+      store("hg_logged", TURNS);
+    }
+    logLines = logLines.slice(-8);
+    store("hg_log", logLines);
+    renderLog();
+  }
 
   /* ---------- инвентарь ---------- */
   const ITEMS = [
@@ -593,25 +660,9 @@ window.HG = (function () {
     { k: "smoke",  key: "2", name: "Дымовая", desc: "дым на 8 ходов — в нём тебя не видно" },
     { k: "emp",    key: "3", name: "ЭМИ",     desc: "оглушает егерей в радиусе 6 на 4 хода" }
   ];
-  let busy = false;
-  function postForm(fields) {
-    busy = true;
-    const form = document.createElement("form");
-    form.method = "post";
-    fields.forEach(kv => {
-      const i = document.createElement("input");
-      i.type = "hidden"; i.name = kv[0]; i.value = kv[1];
-      form.appendChild(i);
-    });
-    document.body.appendChild(form);
-    form.submit();
-  }
-  function useItem(k) {
-    if (!isPlaying || busy || !(INV[k] > 0)) return;
-    postForm([["action", "use"], ["item", k]]);
-  }
-  (function buildInv() {
-    const box = document.getElementById("inv");
+  function buildInv() {
+    const box = $("inv");
+    box.innerHTML = "";
     ITEMS.forEach(it => {
       const btn = document.createElement("button");
       btn.type = "button"; btn.className = "hg-inv__btn";
@@ -620,31 +671,110 @@ window.HG = (function () {
       btn.addEventListener("click", () => useItem(it.k));
       box.appendChild(btn);
     });
-  })();
-
-  /* ---------- твин хода ---------- */
-  const DUR = 170;
-  const tweenOk = !!(prev && prev.seed === SEED && prev.turns === TURNS - 1);
-  const startAt = performance.now();
-  let dirX = (prev && prev.dir) || 1;
-  if (prev && prev.player) {
-    if (PLAYER[0] > prev.player[0]) dirX = 1;
-    else if (PLAYER[0] < prev.player[0]) dirX = -1;
   }
-  store("hg_prev", {
-    seed: SEED, turns: TURNS, player: PLAYER.slice(),
-    guards: GUARDS.map(g => g.pos.slice()), target: TARGET_POS.slice(), dir: dirX
+
+  /* ---------- сеть: ходы без перезагрузки страницы ---------- */
+  const MIN_GAP = 110;
+  let busy = false, pending = null, lastSend = 0;
+
+  function doSend(data) {
+    busy = true; lastSend = performance.now();
+    fetch(URL_GAME, {
+      method: "POST", credentials: "same-origin",
+      headers: { "X-Requested-With": "fetch", "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(data)
+    })
+    .then(r => {
+      if (!r.ok || (r.headers.get("content-type") || "").indexOf("json") < 0) throw new Error("bad");
+      return r.json();
+    })
+    .then(g => {
+      busy = false;
+      setState(g);
+      route();
+      if (pending && STATUS === "playing") {
+        const p = pending; pending = null;
+        setTimeout(() => { if (!busy && STATUS === "playing") doSend(p); },
+                   Math.max(0, MIN_GAP - (performance.now() - lastSend)));
+      } else pending = null;
+    })
+    .catch(() => { location.reload(); });
+  }
+  function act(data) {
+    if (STATUS !== "playing" || window.HG.duelOn) return;
+    if (busy) { pending = data; return; }
+    if (performance.now() - lastSend < MIN_GAP) return;
+    doSend(data);
+  }
+  function useItem(k) { if (isPlaying && INV[k] > 0) act({ action: "use", item: k }); }
+  window.HG.post = doSend;
+
+  /* ---------- новое состояние ---------- */
+  let prev = null, tweenOk = false, startAt = 0, dirX = 1, lastStatus = null, lastSignal = null;
+
+  function setState(g) {
+    const old = G;
+    const first = !PLAYER;
+    G = g;
+    PLAYER = g.player; GUARDS = g.guards; TARGET_POS = g.target.pos; TARGET_MODE = g.target.mode;
+    STATUS = g.status; TURNS = g.turns; EVENTS = g.events || []; SNEAK = g.sneak; ALARM_IN = g.alarm_in;
+    INV = g.inv; PICKUPS = g.pickups; SMOKE = g.smoke; FACING = g.facing;
+
+    const advanced = !first && g.turns !== old.turns;
+    tweenOk = advanced && g.turns === old.turns + 1;
+    if (advanced) {
+      prev = { player: old.player.slice(), guards: old.guards.map(x => x.pos.slice()), target: old.target.pos.slice() };
+      if (g.player[0] > old.player[0]) dirX = 1; else if (g.player[0] < old.player[0]) dirX = -1;
+      startAt = performance.now();
+    } else if (first) prev = null;
+
+    derive();
+    paintHud();
+    buildInv();
+    pushEvents(first, advanced);
+  }
+
+  /* ---------- показ секций по статусу ---------- */
+  function fx(status) {
+    const screen = $("screen"), flash = $("flash");
+    flash.className = "hg-flash"; void flash.offsetWidth;
+    if (status === "caught") { flash.className = "hg-flash hg-flash--red"; screen.classList.remove("is-shake"); void screen.offsetWidth; screen.classList.add("is-shake"); }
+    else if (status === "found") { flash.className = "hg-flash hg-flash--green"; }
+  }
+
+  function route() {
+    const duel = window.HG.duelOn;
+    $("mazeSec").hidden    = (STATUS === "chase") || duel;
+    $("chaseSec").hidden   = STATUS !== "chase";
+    $("duelSec").hidden    = !duel;
+    $("foundPanel").hidden = STATUS !== "found";
+    $("caughtPanel").hidden = !(STATUS === "caught" && !duel);
+    $("chaseBox").hidden   = STATUS !== "chase";
+    $("duelBox").hidden    = !duel;
+
+    if (STATUS !== lastStatus) {
+      if (STATUS === "chase") window.HG.chase.enter(); else window.HG.chase.leave();
+      if (STATUS === "caught" || STATUS === "found") fx(STATUS);
+      lastStatus = STATUS;
+    }
+  }
+  window.HG.route = route;
+
+  $("btnFight").addEventListener("click", function () {
+    window.HG.duelOn = true;
+    route();
+    window.HG.duel.enter();
   });
 
-  /* ---------- частицы ---------- */
+  /* ---------- рисование ---------- */
   const motes = [];
   for (let i = 0; i < 40; i++) motes.push({
     x: Math.random() * W, y: Math.random() * W,
     vx: (Math.random() - .5) * .18, vy: -.05 - Math.random() * .22,
     s: Math.random() < .25 ? 3 : 2, a: .06 + Math.random() * .18
   });
+  const DUR = 170;
 
-  /* ---------- рисование ---------- */
   function drawSprite(spr, cx, cy, flip, bob, glow, gp) {
     const x = Math.round(cx * CS), y = Math.round(cy * CS - bob * U);
     ctx.fillStyle = "rgba(0,0,0,.55)";
@@ -670,18 +800,7 @@ window.HG = (function () {
   }
   const PK_COL = { bottle: "#7dffb0", smoke: "#b8c4d8", emp: "#3fd7ff" };
 
-  function throwTarget() {
-    let lx = px0, ly = py0;
-    for (let i = 0; i < 6; i++) {
-      const nx = lx + FACING[0], ny = ly + FACING[1];
-      if (isWall(nx, ny)) break;
-      lx = nx; ly = ny;
-    }
-    return [lx, ly];
-  }
-  const THROW = throwTarget();
-
-  const mini = document.getElementById("mini");
+  const mini = $("mini");
   const MM = 6; mini.width = mini.height = SIZE * MM;
   const mctx = mini.getContext("2d");
   let camXc = 0, camYc = 0, lastMini = -1;
@@ -713,15 +832,18 @@ window.HG = (function () {
   let glitchSlice = null, glitchUntil = 0;
 
   function frame(now) {
+    requestAnimationFrame(frame);
+    if ($("mazeSec").hidden) return;
+
     const p = tweenOk ? clamp((now - startAt) / DUR, 0, 1) : 1;
     const e = ease(p);
     const pulse = .5 + .5 * Math.sin(now / 260);
 
     const pPos = [PLAYER[0], PLAYER[1]];
-    if (tweenOk && prev.player) { pPos[0] = lerp(prev.player[0], PLAYER[0], e); pPos[1] = lerp(prev.player[1], PLAYER[1], e); }
-    const gPos = GUARDS.map((g, i) => (tweenOk && prev.guards && prev.guards[i])
+    if (tweenOk && prev) { pPos[0] = lerp(prev.player[0], PLAYER[0], e); pPos[1] = lerp(prev.player[1], PLAYER[1], e); }
+    const gPos = GUARDS.map((g, i) => (tweenOk && prev && prev.guards[i])
       ? [lerp(prev.guards[i][0], g.pos[0], e), lerp(prev.guards[i][1], g.pos[1], e)] : [g.pos[0], g.pos[1]]);
-    const tPos = (tweenOk && prev.target)
+    const tPos = (tweenOk && prev)
       ? [lerp(prev.target[0], TARGET_POS[0], e), lerp(prev.target[1], TARGET_POS[1], e)] : TARGET_POS.slice();
 
     camXc = clamp(pPos[0] - (VIEW - 1) / 2, 0, SIZE - VIEW);
@@ -733,10 +855,8 @@ window.HG = (function () {
     ctx.save();
     ctx.translate(-camPx, -camPy);
 
-    // 1. карта
     ctx.drawImage(staticCv, camPx, camPy, W, W, camPx, camPy, W, W);
 
-    // 2. зоны вокруг егерей
     GUARDS.forEach(g => {
       if (g.stun) return;
       const gx = g.pos[0], gy = g.pos[1], rad = g.mode === "chase" ? 2 : 1;
@@ -751,7 +871,6 @@ window.HG = (function () {
       }
     });
 
-    // 2b. предметы на полу
     PICKUPS.forEach(pk => {
       if (!ending && visAt(pk[0], pk[1]) <= 0) return;
       const col = PK_COL[pk[2]] || "#fff";
@@ -766,7 +885,6 @@ window.HG = (function () {
       ctx.fillStyle = "#06080b"; ctx.fillRect(Math.round(cx - U), Math.round(cy - U), Math.round(U * 2), Math.round(U * 2));
     });
 
-    // 2c. дым
     SMOKE.forEach(c => {
       if (!ending && visAt(c[0], c[1]) <= 0) return;
       const a = Math.min(.62, .18 + c[2] * .06) * (.85 + .15 * Math.sin(now / 200 + c[0] * 3 + c[1]));
@@ -777,7 +895,6 @@ window.HG = (function () {
       ctx.fillRect(c[0] * CS + o * U * 2, c[1] * CS + ((o * 5) % 12) * U, U * 4, U * 3);
     });
 
-    // 2d. прицел бутылки
     if (isPlaying && INV.bottle > 0 && (THROW[0] !== px0 || THROW[1] !== py0)) {
       const cx = THROW[0] * CS + CS / 2, cy = THROW[1] * CS + CS / 2, rr = CS * (.28 + .06 * pulse);
       ctx.strokeStyle = "rgba(125,255,176,.7)"; ctx.lineWidth = 2;
@@ -785,7 +902,6 @@ window.HG = (function () {
       ctx.fillStyle = "rgba(125,255,176,.7)"; ctx.fillRect(Math.round(cx - 2), Math.round(cy - 2), 4, 4);
     }
 
-    // 3. цель
     if (tShow) {
       const tp = .5 + .5 * Math.sin(now / 340);
       const tBob = TARGET_MODE === "flee" ? Math.floor(now / 160) % 2 : Math.floor(now / 420) % 2;
@@ -811,7 +927,6 @@ window.HG = (function () {
       ctx.fillRect(TARGET_POS[0] * CS, TARGET_POS[1] * CS + Math.floor(Math.random() * 12) * U, CS, U * 2);
     }
 
-    // 4. егеря и тепловые метки
     GUARDS.forEach((g, i) => {
       const gx = g.pos[0], gy = g.pos[1];
       const seen = ending || visAt(gx, gy) > 0;
@@ -819,7 +934,7 @@ window.HG = (function () {
         const bob = g.stun ? 0 : Math.floor(now / (g.mode === "chase" ? 200 : 380) + i) % 2;
         const glow = g.stun ? "rgba(63,215,255,.35)" : g.type === "tracker" ? "rgba(63,215,255,.30)" : "rgba(255,204,51,.28)";
         drawSprite(SPR_GUARD, gPos[i][0], gPos[i][1], (px0 > gx) ? 1 : -1, bob, glow, 0.9);
-        if (g.stun)                 mark(gPos[i][0], gPos[i][1], "z", "#3fd7ff");
+        if (g.stun)                   mark(gPos[i][0], gPos[i][1], "z", "#3fd7ff");
         else if (g.mode === "chase")  mark(gPos[i][0], gPos[i][1], "!", "#ff2a3d");
         else if (g.mode === "search") mark(gPos[i][0], gPos[i][1], "?", "#ffcc33");
       } else if (!g.stun) {
@@ -836,11 +951,9 @@ window.HG = (function () {
       }
     });
 
-    // 5. игрок
     const pBob = (tweenOk && p < 1) ? 0 : (SNEAK ? 0 : Math.floor(now / 450) % 2);
     drawSprite(SPR_PLAYER, pPos[0], pPos[1], dirX, pBob, SNEAK ? "rgba(63,215,255,.22)" : "rgba(74,222,128,.32)", 1.0);
 
-    // 6. туман войны
     if (isPlaying) {
       const x0 = Math.max(0, Math.floor(camPx / CS)), x1 = Math.min(SIZE - 1, x0 + VIEW);
       const y0 = Math.max(0, Math.floor(camPy / CS)), y1 = Math.min(SIZE - 1, y0 + VIEW);
@@ -861,7 +974,6 @@ window.HG = (function () {
     }
     ctx.restore();
 
-    // 7. пыль
     ctx.fillStyle = "#9fb4d4";
     motes.forEach(m => {
       m.x += m.vx; m.y += m.vy;
@@ -873,7 +985,6 @@ window.HG = (function () {
     });
     ctx.globalAlpha = 1;
 
-    // 8. глитч при угрозе
     const critical = isPlaying && (nearest <= 2.5 || (chasing && nearest <= 4.5));
     if ((critical || STATUS === "caught") && now > glitchUntil && Math.random() < .06) {
       glitchSlice = { y: Math.floor(Math.random() * W * .85), h: 8 + Math.floor(Math.random() * 40), dx: (Math.random() - .5) * 40 };
@@ -887,43 +998,32 @@ window.HG = (function () {
     if (STATUS === "found")  { ctx.fillStyle = "rgba(74,222,128," + (.04 + .03 * pulse) + ")"; ctx.fillRect(0, 0, W, W); }
 
     drawMini(now);
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
-
-  (function fx() {
-    const screen = document.getElementById("screen"), flash = document.getElementById("flash");
-    if (STATUS === "caught") { flash.className = "hg-flash hg-flash--red"; screen.classList.add("is-shake"); }
-    else if (STATUS === "found") { flash.className = "hg-flash hg-flash--green"; }
-  })();
 
   /* ---------- управление ---------- */
-  function move(dx, dy) {
-    if (!isPlaying || busy) return;
-    if (tweenOk && performance.now() - startAt < DUR * 0.7) return;
-    postForm([["action", "move"], ["dx", dx], ["dy", dy]]);
-  }
+  document.addEventListener("keydown", function (e) {
+    if (STATUS !== "playing" || window.HG.duelOn) return;
+    let dx = 0, dy = 0;
+    const k = e.key;
+    if (k === "1") { e.preventDefault(); useItem("bottle"); return; }
+    if (k === "2") { e.preventDefault(); useItem("smoke");  return; }
+    if (k === "3") { e.preventDefault(); useItem("emp");    return; }
+    if (k === "ArrowUp"    || k === "w" || k === "W" || k === "ц" || k === "Ц") dy = -1;
+    else if (k === "ArrowDown"  || k === "s" || k === "S" || k === "ы" || k === "Ы") dy = 1;
+    else if (k === "ArrowLeft"  || k === "a" || k === "A" || k === "ф" || k === "Ф") dx = -1;
+    else if (k === "ArrowRight" || k === "d" || k === "D" || k === "в" || k === "В") dx = 1;
+    else if (k === " " || k === "Spacebar") { /* ждать */ }
+    else return;
+    e.preventDefault();
+    act({ action: "move", dx: dx, dy: dy });
+  });
+  document.querySelectorAll("#pad .hg-pad__btn").forEach(btn => {
+    btn.addEventListener("click", () => act({ action: "move", dx: parseInt(btn.dataset.dx, 10), dy: parseInt(btn.dataset.dy, 10) }));
+  });
 
-  if (isPlaying) {
-    document.addEventListener("keydown", function (e) {
-      let dx = 0, dy = 0;
-      const k = e.key;
-      if (k === "1") { e.preventDefault(); useItem("bottle"); return; }
-      if (k === "2") { e.preventDefault(); useItem("smoke");  return; }
-      if (k === "3") { e.preventDefault(); useItem("emp");    return; }
-      if (k === "ArrowUp"    || k === "w" || k === "W" || k === "ц" || k === "Ц") dy = -1;
-      else if (k === "ArrowDown"  || k === "s" || k === "S" || k === "ы" || k === "Ы") dy = 1;
-      else if (k === "ArrowLeft"  || k === "a" || k === "A" || k === "ф" || k === "Ф") dx = -1;
-      else if (k === "ArrowRight" || k === "d" || k === "D" || k === "в" || k === "В") dx = 1;
-      else if (k === " " || k === "Spacebar") { /* ждать: dx=dy=0 */ }
-      else return;
-      e.preventDefault();
-      move(dx, dy);
-    });
-    document.querySelectorAll("#pad .hg-pad__btn").forEach(btn => {
-      btn.addEventListener("click", () => move(parseInt(btn.dataset.dx, 10), parseInt(btn.dataset.dy, 10)));
-    });
-  }
+  /* ---------- старт ---------- */
+  setState(G);
+  requestAnimationFrame(frame);
 })();
 </script>
 
@@ -932,7 +1032,6 @@ window.HG = (function () {
 (function () {
   "use strict";
   const cv = document.getElementById("chase-canvas");
-  if (!cv) return;
   const { SPR_PLAYER, SPR_TARGET, hash, clamp } = window.HG;
   const c = cv.getContext("2d");
   c.imageSmoothingEnabled = false;
@@ -940,7 +1039,6 @@ window.HG = (function () {
   const CW = cv.width, CH = cv.height, GROUND = 292, SC = 3;
   const TIME_LIMIT = 75;
 
-  // ---- фразы ----
   const GOOD = [
     "Я не егерь!", "Я пришёл тебя вытащить!", "Я из независимого агентства!",
     "Я знаю про C-17!", "Я не от Климова!", "Тебя ищут не только они!",
@@ -959,7 +1057,7 @@ window.HG = (function () {
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-  let st, last = 0, keyDuck = false, padDuck = false, lastWasPair = false;
+  let st, last = 0, keyDuck = false, padDuck = false, lastWasPair = false, active = false, went = false;
   let bagGood = [];
   function nextGood() {
     if (!bagGood.length) bagGood = GOOD.slice().sort(() => Math.random() - .5);
@@ -972,16 +1070,12 @@ window.HG = (function () {
       objs: [], py: 0, vy: 0, duck: false, stumble: 0, inv: 0,
       say: null, reply: null, shake: 0, flash: 0, bg: 0, pairId: 0, runT: 0
     };
-    lastWasPair = false;
+    lastWasPair = false; went = false;
     sayBox.innerHTML = "";
     hud();
   }
 
-  function showOv(cls, html) {
-    ov.className = "hg-ov " + cls;
-    ov.innerHTML = html;
-    ov.hidden = false;
-  }
+  function showOv(cls, html) { ov.className = "hg-ov " + cls; ov.innerHTML = html; ov.hidden = false; }
   function hideOv() { ov.hidden = true; }
 
   function showReady() {
@@ -1001,7 +1095,7 @@ window.HG = (function () {
   function showWin() {
     showOv("hg-ov--win", "<h2>ТЫ ДОГНАЛ ЕГО</h2><p>Он остановился. Дышит тяжело.</p><p>«...ладно. Я слушаю.»</p>" +
       "<button class='dress-btn' id='cNext'>// ПРОДОЛЖИТЬ</button>");
-    const go = () => $("chaseDone").submit();
+    const go = () => { if (went) return; went = true; window.HG.post({ action: "chase_done", result: "win" }); };
     $("cNext").addEventListener("click", go);
     setTimeout(go, 2600);
   }
@@ -1012,13 +1106,14 @@ window.HG = (function () {
     hideOv();
   }
 
-  // ---- ввод ----
   function jump() {
+    if (!active) return;
     if (st.mode === "ready") { start(); return; }
     if (st.mode !== "run") return;
     if (st.py <= 0 && st.vy <= 0 && !st.duck) st.vy = 760;
   }
   document.addEventListener("keydown", e => {
+    if (!active) return;
     const k = e.key;
     if (k === " " || k === "Spacebar" || k === "ArrowUp" || k === "w" || k === "W" || k === "ц" || k === "Ц") {
       e.preventDefault(); jump();
@@ -1036,8 +1131,6 @@ window.HG = (function () {
   ["touchstart", "mousedown"].forEach(ev => bD.addEventListener(ev, e => { e.preventDefault(); padDuck = true; }, { passive: false }));
   ["touchend", "touchcancel", "mouseup", "mouseleave"].forEach(ev => bD.addEventListener(ev, () => { padDuck = false; }));
 
-  // ---- спавн ----
-  c.font = "bold 14px 'JetBrains Mono', monospace";
   function bubW(text) { c.font = "bold 14px 'JetBrains Mono', monospace"; return Math.ceil(c.measureText(text).width) + 26; }
 
   function spawn() {
@@ -1059,7 +1152,6 @@ window.HG = (function () {
     }
   }
 
-  // ---- геометрия ----
   const PX = 110, PW = 26;
   function pRect() {
     const h = st.duck ? 24 : 44, bottom = GROUND - st.py;
@@ -1068,13 +1160,11 @@ window.HG = (function () {
   function oRect(o) {
     if (o.t === "crate") return { x: o.x, y: GROUND - o.h, w: o.w, h: o.h };
     if (o.t === "beam")  return { x: o.x, y: GROUND - 58, w: o.w, h: 26 };
-    // bubble
     return o.hi ? { x: o.x, y: GROUND - 113, w: o.w, h: 30 }
                 : { x: o.x, y: GROUND - 34,  w: o.w, h: 30 };
   }
   const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
-  // ---- реплики ----
   function addSay(cls, txt) {
     const d = document.createElement("div");
     d.className = cls; d.textContent = txt;
@@ -1103,7 +1193,6 @@ window.HG = (function () {
     }
   }
 
-  // ---- обновление ----
   function update(dt) {
     st.runT += dt;
     if (st.mode !== "run") { st.bg += 60 * dt; return; }
@@ -1120,7 +1209,6 @@ window.HG = (function () {
     if (st.reply) { st.reply.t -= dt; if (st.reply.t <= 0) st.reply = null; }
     st.bg += v * dt;
 
-    // физика прыжка
     if (st.py > 0 || st.vy > 0) {
       const g = (keyDuck || padDuck) ? 5200 : 2100;
       st.vy -= g * dt;
@@ -1128,13 +1216,11 @@ window.HG = (function () {
       if (st.py <= 0) { st.py = 0; st.vy = 0; }
     }
 
-    // спавн и движение
     st.dist += v * dt;
     if (st.dist >= st.nextGap) { spawn(); st.dist = 0; }
     st.objs.forEach(o => { o.x -= v * dt; });
     st.objs = st.objs.filter(o => o.x + o.w > -30);
 
-    // столкновения
     const pr = pRect();
     for (const o of st.objs) {
       if (o.t === "bub") {
@@ -1146,7 +1232,6 @@ window.HG = (function () {
       }
     }
 
-    // дистанция
     if (st.e < 1 && st.trust < 5) st.e = Math.min(1, st.e + .02 * dt);
     st.G = clamp(st.G + (st.e - .85) * 14 * dt, 0, 100);
 
@@ -1159,20 +1244,19 @@ window.HG = (function () {
     const near = Math.round(100 - st.G);
     $("cGapVal").textContent = near + "%";
     $("cGapBar").style.width = near + "%";
+    $("cGapBar").classList.toggle("is-hot", near >= 70);
     let pips = "";
     for (let i = 0; i < 5; i++) pips += i < st.trust ? "●" : "○";
     $("cTrust").textContent = pips;
     $("cTime").textContent = Math.max(0, Math.ceil(TIME_LIMIT - st.t));
   }
 
-  // ---- рисование ----
   function drawBG() {
     c.fillStyle = "#05070a"; c.fillRect(0, 0, CW, CH);
     const g = c.createLinearGradient(0, 0, 0, GROUND);
     g.addColorStop(0, "#080b11"); g.addColorStop(1, "#0d131d");
     c.fillStyle = g; c.fillRect(0, 0, CW, GROUND);
 
-    // дальние стойки серверов
     const off1 = st.bg * .18;
     for (let i = -1; i < CW / 70 + 2; i++) {
       const idx = Math.floor(off1 / 70) + i;
@@ -1189,7 +1273,6 @@ window.HG = (function () {
         }
       }
     }
-    // ближние колонны
     const off2 = st.bg * .45;
     for (let i = -1; i < CW / 210 + 2; i++) {
       const idx = Math.floor(off2 / 210) + i;
@@ -1197,7 +1280,6 @@ window.HG = (function () {
       c.fillStyle = "#101826"; c.fillRect(x, 0, 16, GROUND);
       c.fillStyle = "#18233a"; c.fillRect(x, 0, 3, GROUND);
     }
-    // потолочные трубы
     const off3 = st.bg * .7;
     c.fillStyle = "#111a2b"; c.fillRect(0, 0, CW, 14);
     c.fillStyle = "#1b2842"; c.fillRect(0, 12, CW, 2);
@@ -1205,7 +1287,6 @@ window.HG = (function () {
       const x = (Math.floor(off3 / 120) + i) * 120 - off3;
       c.fillStyle = "#0a1020"; c.fillRect(x, 0, 8, 22);
     }
-    // пол
     c.fillStyle = "#0b1018"; c.fillRect(0, GROUND, CW, CH - GROUND);
     c.fillStyle = "#2b3a58"; c.fillRect(0, GROUND, CW, 3);
     const offF = st.bg;
@@ -1247,7 +1328,6 @@ window.HG = (function () {
     c.font = "bold 14px 'JetBrains Mono', monospace";
     c.textAlign = "center";
     c.fillText(o.text, r.x + r.w / 2, r.y + 20);
-    // подсказка высоты
     c.fillStyle = "rgba(255,204,51,.5)";
     if (o.hi) { c.fillRect(r.x + 10, r.y + r.h + 3, 3, 3); c.fillRect(r.x + 18, r.y + r.h + 3, 3, 3); }
   }
@@ -1270,12 +1350,12 @@ window.HG = (function () {
     const w = Math.ceil(c.measureText(text).width) + 16;
     const bx = clamp(x - w / 2, 4, CW - w - 4);
     c.fillStyle = "rgba(2,3,5,.9)"; c.fillRect(bx, y - 22, w, 22);
-    c.fillStyle = col; c.fillRect(bx, y - 22, w, 2); c.fillRect(bx, y, w, 0);
-    c.textAlign = "center"; c.fillStyle = col;
-    c.fillText(text, bx + w / 2, y - 7);
+    c.fillStyle = col; c.fillRect(bx, y - 22, w, 2);
+    c.textAlign = "center"; c.fillText(text, bx + w / 2, y - 7);
   }
 
   function frame(now) {
+    if (!active) return;
     const dt = Math.min(.05, (now - last) / 1000 || .016);
     last = now;
     update(dt);
@@ -1291,7 +1371,6 @@ window.HG = (function () {
     });
     st.objs.forEach(o => { if (o.t === "bub") drawBubble(o); });
 
-    // инженер
     const ex = 150 + st.G * 5.2;
     const eBob = st.mode === "run" ? Math.floor(st.runT * (4 + st.e * 8)) % 2 * 3 : 0;
     const glowE = c.createRadialGradient(ex + 24, GROUND - 24, 0, ex + 24, GROUND - 24, 60);
@@ -1299,7 +1378,6 @@ window.HG = (function () {
     c.save(); c.globalCompositeOperation = "lighter"; c.fillStyle = glowE; c.fillRect(ex - 40, GROUND - 90, 130, 100); c.restore();
     drawChar(SPR_TARGET, ex, GROUND, eBob, false, false);
 
-    // игрок
     const pr = pRect();
     const pBob = (st.py <= 0 && st.mode === "run") ? Math.floor(st.runT * 9) % 2 * 3 : 0;
     const blink = st.inv > 0 && Math.floor(st.runT * 16) % 2 === 0;
@@ -1308,27 +1386,294 @@ window.HG = (function () {
     c.save(); c.globalCompositeOperation = "lighter"; c.fillStyle = glowP; c.fillRect(PX - 50, pr.y - 50, 130, 130); c.restore();
     drawChar(SPR_PLAYER, PX - 11, GROUND - st.py, pBob, st.duck, false, blink ? .35 : 1);
 
-    // реплики
     if (st.say)   speech(st.say.text, PX + 13, pr.y - 6, st.say.good ? "#4ade80" : "#ff6677");
     if (st.reply) speech(st.reply.text, ex + 24, GROUND - 56, "#ffcc33");
 
-    // вспышка при ударе
     if (st.flash > 0) { c.fillStyle = "rgba(255,42,61," + (st.flash * 1.2).toFixed(2) + ")"; c.fillRect(0, 0, CW, CH); }
 
-    // индикатор, если инженер почти за краем
     if (st.mode === "run" && st.G > 85) {
       c.fillStyle = "#ff2a3d"; c.font = "bold 16px 'JetBrains Mono', monospace"; c.textAlign = "right";
       c.fillText("ОН УХОДИТ ▶", CW - 12, 50);
     }
+    requestAnimationFrame(frame);
+  }
+
+  window.HG.chase = {
+    enter: function () {
+      if (active) return;
+      active = true; reset(); showReady();
+      last = performance.now();
+      requestAnimationFrame(frame);
+    },
+    leave: function () { active = false; }
+  };
+})();
+</script>
+
+<!-- ============ ПЕРЕСТРЕЛКА С ЕГЕРЕМ ============ -->
+<script>
+(function () {
+  "use strict";
+  const cv = document.getElementById("duel-canvas");
+  const { SPR_PLAYER, SPR_GUARD, hash, clamp } = window.HG;
+  const c = cv.getContext("2d");
+  c.imageSmoothingEnabled = false;
+
+  const CW = cv.width, CH = cv.height, H = 15, SPD = 185, MAXHP = 5, EMAXHP = 8, MAG = 6;
+  const COVER = [
+    { x: 238, y: 60,  w: 44, h: 96 },
+    { x: 438, y: 204, w: 44, h: 96 },
+    { x: 339, y: 140, w: 42, h: 80 }
+  ];
+  const $ = id => document.getElementById(id);
+  const ov = $("duelOv");
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  let st, active = false, last = 0, went = false;
+  const keys = { L: 0, R: 0, U: 0, D: 0, F: 0 };
+
+  function reset() {
+    st = {
+      mode: "ready", t: 0, shake: 0, hurt: 0, b: [],
+      p: { x: 70, y: CH / 2, hp: MAXHP, cd: 0, mag: MAG, rl: 0, inv: 0, face: 1 },
+      e: { x: CW - 70, y: CH / 2, hp: EMAXHP, cd: 1.2, tele: 0, dir: 1, flipT: 1, shots: 0, t: 0 }
+    };
+    went = false;
+    hud();
+  }
+
+  function showOv(cls, html) { ov.className = "hg-ov " + cls; ov.innerHTML = html; ov.hidden = false; }
+  function hideOv() { ov.hidden = true; }
+  function submitSurrender() { document.getElementById("fSurrender").submit(); }
+
+  function showReady() {
+    showOv("", "<h2>ПЕРЕСТРЕЛКА</h2>" +
+      "<p>Егерь целится в тебя. Выстрел — пробел или клик, прицел автоматический.</p>" +
+      "<p>Прячься за ящиками: они держат пули. Красная линия — егерь сейчас выстрелит.</p>" +
+      "<p>Шесть патронов, потом перезарядка.</p>" +
+      "<button class='dress-btn' id='dStart'>// В БОЙ</button>");
+    $("dStart").addEventListener("click", start);
+  }
+  function showLose() {
+    showOv("", "<h2>ТЕБЯ ПОДСТРЕЛИЛИ</h2><p>Ты упал, но егерь ещё не закончил.</p>" +
+      "<div class='hg-ov__row'>" +
+      "<button class='dress-btn' id='dRetry'>// ЕЩЁ РАЗ</button>" +
+      "<button class='dress-btn dress-btn--ghost' id='dGiveUp'>// СДАТЬСЯ</button></div>");
+    $("dRetry").addEventListener("click", () => { reset(); start(); });
+    $("dGiveUp").addEventListener("click", submitSurrender);
+  }
+  function showWin() {
+    showOv("hg-ov--win", "<h2>ЕГЕРЬ МЁРТВ</h2><p>Тишина. Руки дрожат.</p><p>Обратного пути уже нет.</p>" +
+      "<button class='dress-btn' id='dNext'>// ПРОДОЛЖИТЬ</button>");
+    const go = () => { if (went) return; went = true; document.getElementById("fDuelWin").submit(); };
+    $("dNext").addEventListener("click", go);
+    setTimeout(go, 2600);
+  }
+  function start() { if (st.mode !== "ready") return; st.mode = "run"; hideOv(); }
+
+  /* ---------- ввод ---------- */
+  const KEYMAP = {
+    ArrowLeft: "L", a: "L", A: "L", "ф": "L", "Ф": "L",
+    ArrowRight: "R", d: "R", D: "R", "в": "R", "В": "R",
+    ArrowUp: "U", w: "U", W: "U", "ц": "U", "Ц": "U",
+    ArrowDown: "D", s: "D", S: "D", "ы": "D", "Ы": "D",
+    " ": "F", Spacebar: "F"
+  };
+  document.addEventListener("keydown", e => {
+    if (!active) return;
+    const k = KEYMAP[e.key];
+    if (!k) return;
+    e.preventDefault();
+    keys[k] = 1;
+  });
+  document.addEventListener("keyup", e => {
+    if (!active) return;
+    const k = KEYMAP[e.key];
+    if (k) keys[k] = 0;
+  });
+  cv.addEventListener("mousedown", () => { if (active) keys.F = 1; });
+  document.addEventListener("mouseup", () => { keys.F = 0; });
+  document.querySelectorAll("#duelPad .hg-pad__btn").forEach(btn => {
+    const k = btn.dataset.k;
+    ["touchstart", "mousedown"].forEach(ev => btn.addEventListener(ev, e => { e.preventDefault(); keys[k] = 1; }, { passive: false }));
+    ["touchend", "touchcancel", "mouseup", "mouseleave"].forEach(ev => btn.addEventListener(ev, () => { keys[k] = 0; }));
+  });
+
+  /* ---------- физика ---------- */
+  function blocked(x, y) {
+    if (x - H < 8 || x + H > CW - 8 || y - H < 26 || y + H > CH - 8) return true;
+    for (const r of COVER) if (x + H > r.x && x - H < r.x + r.w && y + H > r.y && y - H < r.y + r.h) return true;
+    return false;
+  }
+  function mv(o, dx, dy) {
+    if (!blocked(o.x + dx, o.y)) o.x += dx;
+    if (!blocked(o.x, o.y + dy)) o.y += dy;
+  }
+
+  function fireEnemy() {
+    const p = st.p, e = st.e;
+    e.shots++;
+    const a = Math.atan2(p.y - e.y, p.x - e.x);
+    const n = (e.shots % 3 === 0) ? 3 : 1;
+    for (let i = 0; i < n; i++) {
+      const aa = a + (n === 3 ? (i - 1) * .24 : 0);
+      st.b.push({ x: e.x, y: e.y, vx: Math.cos(aa) * 250, vy: Math.sin(aa) * 250, own: "e" });
+    }
+    e.cd = rnd(.9, 1.5) * (e.hp <= 3 ? .7 : 1);
+  }
+
+  function update(dt) {
+    if (st.mode !== "run") return;
+    const p = st.p, e = st.e;
+    st.t += dt;
+    if (p.inv > 0) p.inv -= dt;
+    if (st.shake > 0) st.shake -= dt;
+    if (st.hurt > 0) st.hurt -= dt;
+
+    // игрок
+    const dx = keys.R - keys.L, dy = keys.D - keys.U, l = Math.hypot(dx, dy) || 1;
+    mv(p, dx / l * SPD * dt, dy / l * SPD * dt);
+    if (dx) p.face = dx > 0 ? 1 : -1;
+    if (p.rl > 0) { p.rl -= dt; if (p.rl <= 0) p.mag = MAG; }
+    if (p.cd > 0) p.cd -= dt;
+    if (keys.F && p.cd <= 0 && p.rl <= 0 && p.mag > 0) {
+      const a = Math.atan2(e.y - p.y, e.x - p.x);
+      st.b.push({ x: p.x, y: p.y, vx: Math.cos(a) * 540, vy: Math.sin(a) * 540, own: "p" });
+      p.cd = .24; p.mag--;
+      if (p.mag <= 0) p.rl = 1.4;
+    }
+
+    // егерь
+    e.t += dt;
+    e.flipT -= dt;
+    if (e.flipT <= 0) { e.dir = -e.dir; e.flipT = rnd(.7, 1.5); }
+    const dist = Math.abs(e.x - p.x);
+    let ex = 0;
+    if (dist > 340) ex = -1; else if (dist < 210) ex = 1;
+    const ox = e.x, oy = e.y;
+    mv(e, ex * 80 * dt, e.dir * (e.tele > 0 ? 40 : 100) * dt);
+    if (e.x < CW * .45) e.x = ox;
+    if (e.y === oy) { e.dir = -e.dir; e.flipT = rnd(.7, 1.5); }
+
+    if (e.tele > 0) { e.tele -= dt; if (e.tele <= 0) fireEnemy(); }
+    else { e.cd -= dt; if (e.cd <= 0) e.tele = .45; }
+
+    // пули
+    st.b = st.b.filter(b => {
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      if (b.x < 0 || b.x > CW || b.y < 0 || b.y > CH) return false;
+      for (const r of COVER) if (b.x > r.x && b.x < r.x + r.w && b.y > r.y && b.y < r.y + r.h) return false;
+      if (b.own === "p") {
+        if (Math.abs(b.x - e.x) < 16 && Math.abs(b.y - e.y) < 18) { e.hp--; return false; }
+      } else if (Math.abs(b.x - p.x) < 13 && Math.abs(b.y - p.y) < 15) {
+        if (p.inv <= 0) { p.hp--; p.inv = .7; st.shake = .25; st.hurt = .22; }
+        return false;
+      }
+      return true;
+    });
+
+    if (e.hp <= 0) { st.mode = "win"; showWin(); }
+    else if (p.hp <= 0) { st.mode = "lose"; showLose(); }
+  }
+
+  function hud() {
+    if (!st) return;
+    let pips = "";
+    for (let i = 0; i < MAXHP; i++) pips += i < st.p.hp ? "●" : "○";
+    $("dHp").textContent = pips;
+    const eh = Math.max(0, st.e.hp);
+    $("dEVal").textContent = eh + "/" + EMAXHP;
+    $("dEBar").style.width = (eh / EMAXHP * 100) + "%";
+    $("dAmmo").textContent = st.p.rl > 0 ? "ПЕРЕЗАРЯДКА" : st.p.mag + "/" + MAG;
+  }
+
+  /* ---------- рисование ---------- */
+  function drawFloor() {
+    c.fillStyle = "#070a0f"; c.fillRect(0, 0, CW, CH);
+    for (let y = 0; y < CH; y += 24) for (let x = 0; x < CW; x += 24) {
+      const r = hash(x / 24, y / 24, 5);
+      c.fillStyle = r < .33 ? "#0d1118" : r < .66 ? "#0f131b" : "#0b0f15";
+      c.fillRect(x, y, 24, 24);
+      c.fillStyle = "#171d29"; c.fillRect(x, y, 24, 1); c.fillRect(x, y, 1, 24);
+    }
+    c.fillStyle = "#26365a"; c.fillRect(0, 0, CW, 22);
+    c.fillStyle = "#44598a"; c.fillRect(0, 20, CW, 2);
+    c.fillStyle = "#0c1220"; c.fillRect(0, 0, 6, CH); c.fillRect(CW - 6, 0, 6, CH);
+    c.fillRect(0, CH - 6, CW, 6);
+  }
+  function drawCover() {
+    COVER.forEach(r => {
+      c.fillStyle = "rgba(0,0,0,.5)"; c.fillRect(r.x + 4, r.y + 6, r.w, r.h);
+      c.fillStyle = "#2a1d12"; c.fillRect(r.x, r.y, r.w, r.h);
+      c.fillStyle = "#3d2a17"; c.fillRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8);
+      c.fillStyle = "#5a3e22"; c.fillRect(r.x, r.y, r.w, 4);
+      c.fillStyle = "#ffcc33";
+      for (let i = 0; i < r.h; i += 16) c.fillRect(r.x, r.y + i, 4, 6);
+    });
+  }
+  function drawSpr(spr, x, y, flip, glow) {
+    const w = 40;
+    if (glow) {
+      const g = c.createRadialGradient(x, y, 0, x, y, 46);
+      g.addColorStop(0, glow); g.addColorStop(1, "rgba(0,0,0,0)");
+      c.save(); c.globalCompositeOperation = "lighter"; c.fillStyle = g; c.fillRect(x - 46, y - 46, 92, 92); c.restore();
+    }
+    c.fillStyle = "rgba(0,0,0,.5)"; c.fillRect(x - 12, y + 16, 24, 4);
+    c.save();
+    if (flip) { c.translate(x + w / 2, y - 24); c.scale(-1, 1); c.drawImage(spr, 0, 0, w, w); }
+    else c.drawImage(spr, x - w / 2, y - 24, w, w);
+    c.restore();
+  }
+
+  function frame(now) {
+    if (!active) return;
+    const dt = Math.min(.05, (now - last) / 1000 || .016);
+    last = now;
+    update(dt);
+    hud();
+
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    if (st.shake > 0) c.translate(Math.round(rnd(-4, 4)), Math.round(rnd(-3, 3)));
+    drawFloor();
+    drawCover();
+
+    const p = st.p, e = st.e;
+
+    // предупреждающая линия
+    if (st.mode === "run" && e.tele > 0) {
+      c.strokeStyle = "rgba(255,42,61," + (.35 + .4 * Math.sin(now / 40)) + ")";
+      c.lineWidth = 2; c.setLineDash([8, 6]);
+      c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(p.x, p.y); c.stroke();
+      c.setLineDash([]);
+    }
+
+    drawSpr(SPR_GUARD, e.x, e.y, p.x > e.x ? false : true, "rgba(255,42,61,.3)");
+    const blink = p.inv > 0 && Math.floor(now / 60) % 2 === 0;
+    c.globalAlpha = blink ? .35 : 1;
+    drawSpr(SPR_PLAYER, p.x, p.y, p.face < 0, "rgba(74,222,128,.28)");
+    c.globalAlpha = 1;
+
+    st.b.forEach(b => {
+      c.fillStyle = b.own === "p" ? "#7dffb0" : "#ff4455";
+      c.fillRect(Math.round(b.x - 3), Math.round(b.y - 3), 6, 6);
+    });
+
+    if (st.hurt > 0) { c.fillStyle = "rgba(255,42,61," + (st.hurt * 1.6).toFixed(2) + ")"; c.fillRect(0, 0, CW, CH); }
 
     requestAnimationFrame(frame);
   }
 
-  reset();
-  showReady();
-  requestAnimationFrame(frame);
+  window.HG.duel = {
+    enter: function () {
+      if (active) return;
+      active = true; reset(); showReady();
+      last = performance.now();
+      requestAnimationFrame(frame);
+    }
+  };
 })();
 </script>
 
+<script>window.HG.route();</script>
 </body>
 </html>

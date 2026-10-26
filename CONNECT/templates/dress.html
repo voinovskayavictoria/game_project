@@ -140,7 +140,31 @@
       <div class="dress-page__rent-note">только прокат · оплата почасовая</div>
 
       <div class="lock-banner">● ДАННЫЕ ЗАШИФРОВАНЫ. ТРЕБУЕТСЯ УКАЗАТЬ ЦЕЛЬ</div>
-
+      {% if is_locked %}
+      <div class="rq-inline" id="rq-inline">
+        <p class="rq-hint">Подумай хорошо.<br>Зачем тебе это платье?</p>
+        <form id="rq-form" autocomplete="off">
+          <div class="rq-options">
+            {% for f in request_unlock.fields %}
+              {% for opt in f.options %}
+                <label class="rq-option">
+                  <input type="radio" name="{{ f.name }}" value="{{ opt }}" required>
+                  <span>{{ opt }}</span>
+                </label>
+              {% endfor %}
+            {% endfor %}
+          </div>
+          <button type="submit" class="rq-submit">Подтвердить выбор</button>
+        </form>
+        <div class="rq-result" id="rq-result"></div>
+      </div>
+      {% elif is_request and unlocked %}
+      <div class="rq-result rq-ok" style="margin:14px 0;">
+        {{ request_unlock.success_text }}
+        <b>{{ fragment }}</b>
+        <div style="margin-top:12px;font-size:10px;color:#555;">Твой мотив: {{ motivation }}</div>
+      </div>
+      {% endif %}
       <div class="secret-content">
         <p class="dress-page__desc">{{ dress.description }}</p>
 
@@ -160,12 +184,8 @@
         </div>
       </div>
 
-      <div class="dress-page__cta">
-        {% if is_request %}
-          <button type="button" class="dress-btn" id="rq-open-btn" {% if unlocked %}style="display:none"{% endif %}>
-            СДЕЛАТЬ ЗАПРОС
-          </button>
-        {% else %}
+        <div class="dress-page__cta">
+        {% if not is_request %}
           <a class="dress-btn" href="{{ url_for('order', sku=dress.sku) }}">Заказать</a>
         {% endif %}
       </div>
@@ -174,85 +194,34 @@
   <a class="s-nav-link" href="{{ url_for('catalog') }}">← вернуться в каталог</a>
 </main>
 
-<!-- МОДАЛКА -->
-<div class="rq-overlay" id="rq-overlay">
-  <div class="rq-modal">
-    <div class="rq-modal__head">
-      <span class="rq-modal__title">ЗАПРОС ДОСТУПА // {{ dress.sku }}</span>
-      <button type="button" class="rq-modal__close" id="rq-close-btn">×</button>
-    </div>
-    <div class="rq-modal__body">
-      
-      <p class="rq-hint">
-        Подумай хорошо.<br>
-        Зачем тебе это платье?
-      </p>
-      
-      <form id="rq-form" autocomplete="off">
-        <div class="rq-options">
-          {% for f in request_unlock.fields %}
-            {% for opt in f.options %}
-              <label class="rq-option">
-                <input type="radio" name="{{ f.name }}" value="{{ opt }}" required>
-                <span>{{ opt }}</span>
-              </label>
-            {% endfor %}
-          {% endfor %}
-        </div>
-        
-        <button type="submit" class="rq-submit">Подтвердить выбор</button>
-      </form>
-      
-      <div class="rq-result" id="rq-result"></div>
-    </div>
-  </div>
-</div>
-
-<script src="{{ url_for('static', filename='js/secret.js') }}"></script>
 <script>
 (function(){
-  var overlay = document.getElementById('rq-overlay');
-  var openBtn = document.getElementById('rq-open-btn');
-  var closeBtn = document.getElementById('rq-close-btn');
   var form = document.getElementById('rq-form');
   var result = document.getElementById('rq-result');
-
-  if (!overlay || !openBtn || !form) return;
-
-  function open(){ overlay.classList.add('is-open'); }
-  function close(){ overlay.classList.remove('is-open'); }
-
-  openBtn.addEventListener('click', open);
-  closeBtn.addEventListener('click', close);
-  overlay.addEventListener('click', function(e){ if (e.target === overlay) close(); });
+  if (!form) return;
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
     result.innerHTML = '<div style="color:#888;">ОБРАБОТКА...</div>';
-    var fd = new FormData(form);
-
-    fetch('{{ url_for("dress_request", sku=dress.sku) }}', { method: 'POST', body: fd })
+    fetch('{{ url_for("dress_request", sku=dress.sku) }}', {
+      method: 'POST', body: new FormData(form), credentials: 'same-origin'
+    })
     .then(function(r){ return r.json(); })
     .then(function(data){
       if (data.ok) {
         document.body.classList.remove('is-locked-view');
-        
-        // Красивый вывод
-        var html = '<div class="rq-ok">';
-        html += data.msg;
-        html += '<b>' + data.fragment + '</b>';
-        html += '<div style="margin-top:12px; font-size:10px; color:#555;">Твой мотив: ' + data.motivation + '</div>';
-        html += '</div>';
-        
-        result.innerHTML = html;
-        form.style.display = 'none'; // Прячем кнопки
+        result.innerHTML = '<div class="rq-ok">' + data.msg +
+          '<b>' + data.fragment + '</b>' +
+          '<div style="margin-top:12px;font-size:10px;color:#555;">Твой мотив: ' +
+          data.motivation + '</div></div>';
+        form.style.display = 'none';
+        var hint = document.querySelector('.rq-hint');
+        if (hint) hint.style.display = 'none';
       } else {
         result.innerHTML = '<div class="rq-fail">' + data.msg + '</div>';
       }
     })
-    .catch(function(){ 
-      result.innerHTML = '<div class="rq-fail">ОШИБКА СОЕДИНЕНИЯ</div>'; 
-    });
+    .catch(function(){ result.innerHTML = '<div class="rq-fail">ОШИБКА СОЕДИНЕНИЯ</div>'; });
   });
 })();
 </script>
