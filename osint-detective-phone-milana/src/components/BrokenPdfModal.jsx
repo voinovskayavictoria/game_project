@@ -4,8 +4,8 @@ export default function BrokenPdfModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-      <div className="bg-zinc-100 text-black w-full max-w-2xl h-[85vh] rounded-lg shadow-2xl flex flex-col overflow-hidden">
+    <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-3 z-50">
+      <div className="bg-zinc-100 text-black w-full h-[90%] rounded-xl shadow-2xl flex flex-col overflow-hidden">
         
         {/* Шапка PDF */}
         <div className="bg-zinc-300 p-3 flex justify-between items-center border-b border-zinc-400">
