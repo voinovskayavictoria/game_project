@@ -130,7 +130,7 @@ TEAM = [
         "name": "Герман Журавлев", 
         "role": "DevSecOps",
         "age": 31, 
-        "since": 2020, 
+        "since": 2015, 
         "photo": "img/team/solovyev.jpg", 
         "featured": False,
         "short": "Инфраструктура, CI/CD, мониторинг.",
