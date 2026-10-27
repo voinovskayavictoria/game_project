@@ -11,12 +11,12 @@ export const MILANA_RESUME = {
     "Переговоры",
   ],
   phone: "+7 (999) 123-4567",
-  email: "milana.makarova@primesystems.io",
+  email: "m•••••@primesystems.io",
   birthdate: "15.03.1995",
 };
 
 export const SECURITY_QUESTIONS = [
-  { q: "На какой должности работает Милана?", a: "менеджер" },
+  { q: "На какой должности работает Милана?", a: "hr" },
   { q: "Сколько лет опыта?", a: "5" },
   { q: "Год рождения?", a: "1995" },
 ];

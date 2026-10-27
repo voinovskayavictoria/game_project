@@ -5,13 +5,13 @@ import SelfDestruct from '../components/SelfDestruct';
 const NOTES = [
   {
     title: 'Список покупок',
-    date: '22.05',
+    date: '20.10',
     body:
       '— молоко\n— хлеб\n— корм для Бони\n— зарядка от телефона',
   },
   {
     title: 'Личное',
-    date: '15.05',
+    date: '15.10',
     body:
       'Лев злится, что скрываемся.\nЯ понимаю, что так нельзя — но если узнают, уволят обоих.\nЕще и этот Герман что-то вынюхивает вечно.\n Надо быть осторожнее...',
   },
@@ -68,7 +68,7 @@ export default function NotesApp({ onBack }) {
       </div>
 
       <div className="bg-zinc-900 border-t border-zinc-800 p-3 text-center text-xs text-zinc-500">
-        Обновлено: 23.05.2025
+        Обновлено: 20.10.2026
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ export default function BrowserError({ onBack }) {
     <div className="relative w-full h-full bg-zinc-950 text-white font-sans flex flex-col">
       
       {/* Адресная строка */}
-      <div className="bg-zinc-900 border-b border-zinc-800 p-3 flex items-center gap-2">
+      <div className="bg-zinc-900 border-b border-zinc-800 px-3 pb-3 pt-8 flex items-center gap-2">
         <button
           onClick={onBack}
           className="text-blue-500 hover:text-blue-400 transition-colors"
@@ -13,7 +13,6 @@ export default function BrowserError({ onBack }) {
           <ChevronLeft size={20} />
         </button>
         <div className="flex-1 bg-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-400 truncate">
-          https://prime-systems.com
         </div>
       </div>
 
@@ -33,21 +32,6 @@ export default function BrowserError({ onBack }) {
             <Wifi size={20} className="text-zinc-500" />
             <span className="text-sm font-semibold">Wi-Fi отключен</span>
           </div>
-          <p className="text-xs text-zinc-400">
-            Для доступа к сайтам h&p.ru, prime-systems.com и другим ресурсам требуется интернет.
-          </p>
-        </div>
-
-        <div className="bg-blue-900 border border-blue-700 rounded-2xl p-4 w-full max-w-sm">
-          <p className="text-xs text-blue-200 text-center">
-            💡 <strong>Подсказка:</strong> Открой эти сайты в браузере своего компьютера, используя реальные адреса:
-            <br /><br />
-            🔗 <span className="font-mono">https://prime-systems.com</span>
-            <br />
-            🔗 <span className="font-mono">https://haeilpartners.com</span>
-            <br />
-            🔗 <span className="font-mono">https://orbitdata.com</span>
-          </p>
         </div>
 
       </div>

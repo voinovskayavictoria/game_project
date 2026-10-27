@@ -8,10 +8,10 @@ const FILES = [
     Icon: FileText,
     color: 'bg-red-500',
     size: '234 КБ',
-    date: '15.03.2025',
+    date: '15.03.2026',
     status: 'ok',
     content:
-      'РЕЗЮМЕ\nМилана Макарова\nМенеджер по работе с персоналом (HR)\nPRIME SYSTEMS\nОпыт: 5 лет\nПочта: milana.makarova@primesystems.io\nГод рождения: 1995',
+      'РЕЗЮМЕ\nМилана Макарова\nМенеджер по работе с персоналом (HR)\nPRIME SYSTEMS\nОпыт: 5 лет\nПочта: ••••••@primesystems.io\nГод рождения: 1995',
   },
   {
     id: 'video1',
@@ -19,16 +19,16 @@ const FILES = [
     Icon: Video,
     color: 'bg-pink-500',
     size: '128 МБ',
-    date: '18.05.2025',
+    date: '18.09.2026',
     status: 'corrupted',
   },
   {
     id: 'screenshot2',
-    name: 'Screenshot_2025-05-21.png',
+    name: 'Screenshot_2026-09-21.png',
     Icon: Image,
     color: 'bg-blue-500',
     size: '96 КБ',
-    date: '21.05.2025',
+    date: '21.09.2026',
     status: 'corrupted',
   },
 ];
@@ -39,7 +39,7 @@ export default function FileManager({ onBack }) {
   return (
     <div className="relative w-full h-full bg-zinc-950 text-white font-sans flex flex-col overflow-hidden">
 
-      <div className="flex items-center gap-3 px-3 py-2.5 h-14 border-b border-zinc-800 flex-shrink-0">
+      <div className="flex items-center gap-3 px-3 pt-10 pb-2.5 h-14 border-b border-zinc-800 flex-shrink-0">
         <button
           onClick={onBack}
           className="w-9 h-9 rounded-full hover:bg-zinc-800 flex items-center justify-center text-blue-500 transition-colors"
@@ -50,7 +50,7 @@ export default function FileManager({ onBack }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        <div className="text-xs text-zinc-500 px-1 mb-1">Материалы дела №17 / MILANA</div>
+        <div className="text-xs text-zinc-500 px-1 mb-1">Все файлы</div>
 
         {FILES.map((file) => {
           const Icon = file.Icon;
