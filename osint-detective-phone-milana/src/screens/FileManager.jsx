@@ -3,17 +3,6 @@ import { ChevronLeft, FileText, Music, Video, Image, FileCode, X } from 'lucide-
 
 const FILES = [
   {
-    id: 'resume',
-    name: 'Резюме_Миланы.pdf',
-    Icon: FileText,
-    color: 'bg-red-500',
-    size: '234 КБ',
-    date: '15.03.2026',
-    status: 'ok',
-    content:
-      'РЕЗЮМЕ\nМилана Макарова\nМенеджер по работе с персоналом (HR)\nPRIME SYSTEMS\nОпыт: 5 лет\nПочта: ••••••@primesystems.io\nГод рождения: 1995',
-  },
-  {
     id: 'video1',
     name: 'Скрытая_запись_офис.mp4',
     Icon: Video,
