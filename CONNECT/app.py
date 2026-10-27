@@ -1600,7 +1600,8 @@ def hunt_game(hid):
             session["hunt_choice"] = "surrender"
             session["hunt_finished"] = True
             frags = set(session.get("found_fragments", []))
-            frags -= {"HT-REVEAL", "HT-HIDE", "HT-SURRENDER"}
+            frags -= {"HT-REVEAL", "HT-HIDE"}
+            frags.add("HT-SURRENDER")  # <-- add this line
             session["found_fragments"] = list(frags)
             session.modified = True
             return redirect(url_for("hunt_game_result"))
