@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма допуска №17-04 // Бюро B&D</title>
+    <link href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #eef2f5;
+            --bg-panel: #ffffff;
+            --text-main: #1a202c;
+            --text-muted: #4a5568;
+            --border: #cbd5e0;
+            --accent: #1e3a8a;
+            --danger: #991b1b;
+            --success: #064e3b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            padding: 30px 40px;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-titles h1 {
+            font-family: 'PT Serif', serif;
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .header-titles p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .doc-stamp {
+            border: 2px solid var(--danger);
+            color: var(--danger);
+            font-family: 'PT Serif', serif;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 10px 15px;
+            text-transform: uppercase;
+            transform: rotate(5deg);
+            opacity: 0.8;
+        }
+
+        .content { padding: 40px; }
+
+        .intro-text {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            margin-bottom: 30px;
+            text-align: justify;
+        }
+
+        .intro-text p { margin-bottom: 15px; }
+
+        .section-title {
+            font-family: 'PT Serif', serif;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            margin-top: 30px;
+        }
+
+        .checkbox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 35px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            padding: 15px;
+            border: 1px solid var(--border);
+            background: #fafafa;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover { background: #f0f4f8; }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 3px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        .checkbox-text {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            text-align: justify;
+        }
+
+        .quiz-item {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .quiz-question {
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-left: 10px;
+        }
+
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 3px;
+        }
+
+        .options label:hover { background: #f0f4f8; }
+
+        .options label.selected {
+            background: #e2e8f0;
+            color: var(--text-main);
+            border-color: var(--border);
+            font-weight: 500;
+        }
+
+        .options input[type="radio"] {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            font-family: 'Roboto', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+
+        .btn-submit:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .btn-submit:not(:disabled):hover {
+            background: #152c6b;
+        }
+
+        .error-box {
+            display: none;
+            background: #fff5f5;
+            border: 1px solid #fc8181;
+            color: var(--danger);
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .success-box {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            border: 1px solid var(--success);
+            background: #f0fdf4;
+            margin-top: 20px;
+        }
+
+        .success-box h2 {
+            font-family: 'PT Serif', serif;
+            color: var(--success);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .content { padding: 20px; }
+            .header { padding: 20px; flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-titles">
+                <h1>Бюро независимых расследований B&D</h1>
+                <p>Форма допуска к материалам дела № 17-04</p>
+            </div>
+            <div class="doc-stamp">Для служебного пользования</div>
+        </div>
+
+        <div class="content">
+            
+            <div class="intro-text" id="intro-text">
+                <p>Уважаемый стажер-следователь. Вам вверен опечатанный конверт с первичными материалами по делу №17-04. В состав переданного досье входят: официальное заявление родителей пропавшей, базовая информация об объекте (Макаровой М.А.), а также сопутствующие материалы дела.</p>
+                <p>Вскрытие конверта и доступ к содержимому возможны только после подписания внутреннего регламента Бюро и прохождения обязательной аттестации.</p>
+            </div>
+
+            <div id="form-area">
+                <!-- Раздел 1: Соглашения -->
+                <div class="section-title">Раздел 1. Подтверждение ознакомления</div>
+                <div class="checkbox-list">
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="cb1" onchange="checkForm()">
+                        <span class="checkbox-text"><b>1. Условность материалов.</b> Я подтверждаю, что ознакомлен(а) со статусом материалов дела №17-04. Все данные, включая упоминания организаций, а также события и лица, являются вымышленными и смоделированы в образовательных целях.</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="cb2" onchange="checkForm()">
+                        <span class="checkbox-text"><b>2. Конфиденциальность данных.</b> Я уведомлен(а), что Бюро не осуществляет сбор, обработку или передачу моих персональных данных. Все действия фиксируются исключительно в локальном журнале для контроля прохождения процедуры допуска.</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="cb3" onchange="checkForm()">
+                        <span class="checkbox-text"><b>3. Психологическая безопасность.</b> Материалы дела содержат описание сцен насилия, слежки и незаконного оборота людей. Я подтверждаю отсутствие противопоказаний и принимаю ответственность за свое психоэмоциональное состояние в ходе изучения досье.</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="cb4" onchange="checkForm()">
+                        <span class="checkbox-text"><b>4. Добровольность участия.</b> Я уведомлен(а) о своем праве в любой момент прервать сессию и закрыть доступ к системе без каких-либо негативных последствий для себя.</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="cb5" onchange="checkForm()">
+                        <span class="checkbox-text"><b>5. Цели и задачи.</b> Я осознаю, что основной целью изучения материалов является демонстрация методов сбора открытых данных (OSINT) и механизмов формирования цифрового следа, а также изучение принципов работы теневого сегмента сети.</span>
+                    </label>
+                </div>
+
+                <!-- Раздел 2: Аттестация -->
+                <div class="section-title">Раздел 2. Обязательная аттестация стажера</div>
+                <div id="questions-container"></div>
+
+                <div class="error-box" id="error-box">
+                    ОШИБКА: Стажер-следователь не прошел аттестацию. Обнаружены неверные ответы. Доступ к конверту заблокирован.
+                </div>
+
+                <button class="btn-submit" id="btn-submit" onclick="verifyAccess()" disabled>
+                    Заверить и подписать регламент
+                </button>
+            </div>
+
+            <!-- Блок успеха (Вскрытие конверта) -->
+            <div class="success-box" id="success-box">
+                <h2>РЕГЛАМЕНТ ПОДПИСАН</h2>
+                <p>Аттестация пройдена. Печать с конверта снята. Досье по делу №17-04 (включая заявление родителей и первичные данные объекта) готово к изучению.</p>
+                <button class="btn-submit" onclick="openDossier()" style="background: var(--success); margin-top: 25px;">
+                    Вскрыть конверт и начать изучение
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { q: "Дайте определение термину OSINT в контексте расследования:", 
+              options: ["А) Сбор и анализ разведывательной информации из открытых источников", "Б) Применение вредоносного ПО для хищения конфиденциальных данных", "В) Метод криптографической защиты каналов связи"], correct: 0 },
+            { q: "Укажите основную деятельность Data Brokers:", 
+              options: ["А) Обеспечение технической поддержки пользователей", "Б) Систематизация, скупка и последующая перепродажа персональных данных", "В) Разработка и распространение антивирусного ПО"], correct: 1 },
+            { q: "Какова роль искусственного интеллекта в процессе формирования цифрового следа?", 
+              options: ["А) Осуществление физического видеонаблюдения за субъектом", "Б) Автоматическое удаление следов пребывания субъекта в сети", "В) Анализ разрозненных массивов данных и составление подробного профиля"], correct: 2 },
+            { q: "Какие данные классифицируются как пассивный цифровой след?", 
+              options: ["А) Публикация текстовых сообщений и оценка контента", "Б) Метаданные, геолокация и системные логи устройства", "В) Явное заполнение анкет на сайтах"], correct: 1 },
+            { q: "Определите основную площадку для реализации скомпрометированных баз данных:", 
+              options: ["А) Открытые поисковые системы", "Б) Теневые сегменты сети (Даркнет)", "В) Официальные маркетплейсы"], correct: 1 },
+            { q: "Что подразумевается под термином «доксинг» (doxing)?", 
+              options: ["А) Публикация персональных данных лица без его согласия с целью преследования", "Б) Несанкционированный доступ к банковским счетам", "В) Создание фишинговых копий сайтов"], correct: 0 },
+            { q: "С какой целью злоумышленники осуществляют сбор цифрового следа?", 
+              options: ["А) Для таргетирования рекламных объявлений", "Б) Для шантажа, мошенничества и кражи цифровой личности", "В) Для оказания помощи в трудоустройстве"], correct: 1 },
+            { q: "Укажите базовый метод защиты персонального цифрового следа:", 
+              options: ["А) Использование VPN-туннелей и двухфакторной аутентификации", "Б) Размещение полных персональных данных в открытом доступе", "В) Применение идентичных паролей на всех ресурсах"], correct: 0 },
+            { q: "Дайте определение термину «фишинг»:", 
+              options: ["А) Метод обхода систем сетевой безопасности", "Б) Способ получения доступа к конфиденциальным данным путем социальной инженерии и подмены ресурсов", "В) Процесс шифрования трафика"], correct: 1 },
+            { q: "Расшифруйте значение эвфемизма «Платье», используемого в каталоге CONNECT:", 
+              options: ["А) Предмет гардероба, используемый для маскировки", "Б) Кодовое обозначение похищенного человека (жертвы трафикинга)", "В) Условное название криптовалютного кошелька"], correct: 1 }
+        ];
+
+        let selectedAnswers = {};
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            quizData.forEach((item, index) => {
+                let html = `<div class="quiz-item">
+                    <div class="quiz-question">${index + 1}. ${item.q}</div>
+                    <div class="options">`;
+                item.options.forEach((opt, optIndex) => {
+                    html += `
+                        <label id="label-${index}-${optIndex}" onclick="selectAnswer(${index}, ${optIndex})">
+                            <input type="radio" name="q${index}" value="${optIndex}">
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+                html += `</div></div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function selectAnswer(qIndex, optIndex) {
+            selectedAnswers[qIndex] = optIndex;
+            quizData[qIndex].options.forEach((_, i) => {
+                document.getElementById(`label-${qIndex}-${i}`).classList.remove('selected');
+            });
+            document.getElementById(`label-${qIndex}-${optIndex}`).classList.add('selected');
+            checkForm();
+        }
+
+        function checkForm() {
+            const allChecked = ['cb1', 'cb2', 'cb3', 'cb4', 'cb5'].every(id => document.getElementById(id).checked);
+            const allAnswered = Object.keys(selectedAnswers).length === quizData.length;
+
+            const btn = document.getElementById('btn-submit');
+            const err = document.getElementById('error-box');
+
+            btn.disabled = !(allChecked && allAnswered);
+            err.style.display = 'none';
+        }
+
+        function verifyAccess() {
+            const err = document.getElementById('error-box');
+            let correctCount = 0;
+
+            quizData.forEach((item, index) => {
+                if (selectedAnswers[index] === item.correct) {
+                    correctCount++;
+                }
+            });
+
+            if (correctCount === 10) {
+                document.getElementById('form-area').style.display = 'none';
+                document.getElementById('intro-text').style.display = 'none';
+                document.getElementById('success-box').style.display = 'block';
+            } else {
+                err.innerHTML = `<b>ОТКАЗАНО В ДОСТУПЕ.</b><br>Результат аттестации: ${correctCount} из 10 верных ответов. Стажер-следователь обязан повторить процедуру.`;
+                err.style.display = 'block';
+            }
+        }
+
+        // ВНИМАНИЕ: Сюда вставь ссылку на досье, которое ты скидываешь им в конверте.
+        function openDossier() {
+            // Пока здесь стоит телефон. Если досье будет в другом месте (например, папка с документами), замени ссылку!
+            window.location.href = "https://milana-phone-vvnh.onrender.com"; 
+        }
+
+        window.onload = renderQuestions;
+    </script>
+</body>
+</html>
