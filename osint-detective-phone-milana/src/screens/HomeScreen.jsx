@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   MessageSquare, Phone, Image, Mail, Globe, Folder, Settings, Camera, Search, FileText, Map as MapIcon,
 } from 'lucide-react';
+import { THREADS } from '../data';
 
 const APPS = [
   { id: 'messages', Icon: MessageSquare, name: 'Сообщения', bgClass: 'bg-blue-500' },
@@ -23,25 +24,31 @@ const DOCK_APPS = [
   { id: 'files', Icon: Folder, bgClass: 'bg-yellow-500' },
 ];
 
-const AppIcon = ({ app, onOpen }) => {
+const AppIcon = ({ app, onOpen, unreadCount }) => {
   const { Icon, name, bgClass } = app;
   return (
     <button
       onClick={() => onOpen(app.id)}
-      className="flex flex-col items-center justify-center w-20 h-24 active:scale-95 transition-transform duration-100"
+      className="flex flex-col items-center justify-center w-20 h-24 active:scale-95 transition-transform duration-100 relative"
     >
-      <div className={`w-14 h-14 ${bgClass} rounded-[20px] flex items-center justify-center shadow-lg`}>
+      <div className={`w-14 h-14 ${bgClass} rounded-[20px] flex items-center justify-center shadow-lg relative`}>
         <Icon className="text-white" size={28} strokeWidth={1.5} />
+      {/* ВОТ ДОБАВЛЕННЫЙ БЛОК СО СЧЕТЧИКОМ */}
+        {app.id === 'messages' && unreadCount > 0 && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white font-bold ">
+            {unreadCount}
+          </div>
+        )}
       </div>
       <span className="app-label text-white mt-2 truncate w-full text-center px-1 drop-shadow-md">
-  {name}
-</span>
+        {name}
+      </span>
     </button>
   );
 };
 
 export default function HomeScreen({ onOpenApp }) {
-  const [notifications] = useState(3);
+  const unreadCount = THREADS.filter(t => t.unread).length;
 
   return (
     <div className="relative w-full h-full text-white font-sans flex flex-col justify-between p-4 overflow-hidden">
@@ -63,7 +70,7 @@ export default function HomeScreen({ onOpenApp }) {
       
       <div className="relative grid grid-cols-4 gap-y-4 gap-x-2 px-1 text-center mt-3 mb-auto">
         {APPS.map((app) => (
-          <AppIcon key={app.id} app={app} onOpen={onOpenApp} />
+          <AppIcon key={app.id} app={app} onOpen={onOpenApp} unreadCount={unreadCount}/>
         ))}
       </div>
 
@@ -83,9 +90,9 @@ export default function HomeScreen({ onOpenApp }) {
               className={`w-14 h-14 ${bgClass} rounded-[20px] flex items-center justify-center shadow-lg active:scale-95 transition-transform relative`}
             >
               <Icon className="text-white" size={28} strokeWidth={1.5} />
-              {app.id === 'messages' && notifications > 0 && (
+              {app.id === 'messages' && unreadCount > 0 && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white font-bold">
-                  {notifications}
+                  {unreadCount}
                 </div>
               )}
             </button>

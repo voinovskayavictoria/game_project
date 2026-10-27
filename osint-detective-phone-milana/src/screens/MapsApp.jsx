@@ -51,7 +51,7 @@ export default function MapsApp({ onBack }) {
             <div className="flex-1">
               <div className="text-sm font-semibold text-white">Последняя геопозиция</div>
               <div className="text-xs text-zinc-400 mt-1">
-                Зафиксирована 24.05.2025 в 03:47<br />
+                Зафиксирована 22.10.2026 в 03:47<br />
                 Промзона, ул. Заводская, 17, корпус 4
               </div>
             </div>

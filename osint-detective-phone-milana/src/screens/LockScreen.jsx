@@ -56,7 +56,7 @@ export default function LockScreen({ onUnlock, onBack }) {
         </div>
         <div className="flex items-center gap-2 mt-4 text-sm text-white/80 drop-shadow">
           <span className="text-2xl">🌥️</span>
-          <span>+7°  Москва</span>
+          <span>+7° Минск</span>
         </div>
       </div>
 
@@ -67,7 +67,7 @@ export default function LockScreen({ onUnlock, onBack }) {
         </div>
         <div className="flex flex-col">
           <div className="text-sm font-semibold text-white">Сообщения</div>
-          <div className="text-xs text-zinc-300">1 новое сообщение</div>
+          <div className="text-xs text-zinc-300">2 новых сообщения</div>
         </div>
       </div>
 

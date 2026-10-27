@@ -80,7 +80,7 @@ TEAM = [
         "name": "Милана Макарова",
         "role": "HR-директор",
         "age": 30, 
-        "since": 2016, 
+        "since": 2021, 
         "photo": "img/team/makarova.jpg", 
         "featured": False,
         "short": "Подбор, адаптация и развитие сотрудников.",

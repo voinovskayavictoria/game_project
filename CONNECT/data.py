@@ -296,9 +296,10 @@ QUIZ_ROUNDS = [
             {"id": "a", "label": "Буду искать другой вход"},
             {"id": "b", "label": "Смирюсь"},
             {"id": "c", "label": "Сломаю его"},
+            {"id": "d", "label": "Сделаю скриншот и уйду"},
         ],
         "correct": "a",
-        "flags_by_choice": {"b": "loss_of_self"},
+        "flags_by_choice": {"a": "curiosity", "b": "loss_of_self", "c": "aggression", "d": "selfish"},
     },
     {
         "id": 24, "act": 3,
@@ -392,7 +393,6 @@ QUIZ_CONFIG = {
         "C1-17",
     ],
 }
-
 # ------------------------------------------------------------------
 # ФИНАЛЫ — по доминирующему флагу
 # ------------------------------------------------------------------
@@ -549,6 +549,13 @@ QUIZ_FINALS = {
         "fragment": "C1-17-S",
     },
 }
+
+# Приоритет при равенстве флагов
+FLAG_PRIORITY = [
+    "aggression", "paranoia", "lies", "distrust",
+    "isolation", "curiosity", "existential",
+    "selfish", "loss_of_self",
+]
 
 # Приоритет при равенстве флагов
 FLAG_PRIORITY = [

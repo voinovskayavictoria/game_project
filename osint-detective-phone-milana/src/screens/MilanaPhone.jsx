@@ -16,14 +16,14 @@ import BrokenPdfModal from '../components/BrokenPdfModal';
 const CODEWORD = 'orbit';
 
 const CONTACTS = [
-  { name: 'Лев 💙', avatar: '🧑🏻', color: 'bg-sky-500', phone: '+7 999 555-12-34' },
-  { name: 'Маша Лебедева', avatar: '📰', color: 'bg-zinc-600', phone: '+7 999 777-88-11' },
-  { name: 'Герман', avatar: '😐', color: 'bg-orange-600', phone: '+7 999 111-22-33' },
-  { name: 'Мама ❤️', avatar: '👩🏻', color: 'bg-pink-500', phone: '+7 916 200-30-40' },
-  { name: 'Настя', avatar: '💁🏼‍♀️', color: 'bg-fuchsia-500', phone: '+7 999 444-55-66' },
-  { name: 'Саша (бывший)', avatar: '🧔', color: 'bg-zinc-700', phone: '+7 999 000-11-22' },
-  { name: 'Салон «Нежность»', avatar: '💅', color: 'bg-rose-400', phone: '+7 495 100-50-50' },
-  { name: 'Яндекс Еда', avatar: '🍔', color: 'bg-yellow-500', phone: '8 800 555-35-35' },
+  { name: 'Лев 💙', avatar: '🧑🏻', color: 'bg-sky-500', phone: 'Скрытый номер' },
+  { name: 'Маша Лебедева', avatar: '📰', color: 'bg-zinc-600', phone: 'Скрытый номер' },
+  { name: 'Герман', avatar: '😐', color: 'bg-orange-600', phone: 'Скрытый номер' },
+  { name: 'Мама ❤️', avatar: '👩🏻', color: 'bg-pink-500', phone: 'Скрытый номер' },
+  { name: 'Настя', avatar: '💁🏼‍♀️', color: 'bg-fuchsia-500', phone: 'Скрытый номер' },
+  { name: 'Саша (бывший)', avatar: '🧔', color: 'bg-zinc-700', phone: 'Скрытый номер' },
+  { name: 'Салон «Нежность»', avatar: '💅', color: 'bg-rose-400', phone: 'Скрытый номер' },
+  { name: 'Яндекс Еда', avatar: '🍔', color: 'bg-yellow-500', phone: 'Скрытый номер' },
 ];
 
 function ToggleRow({ Icon, label, value, onToggle }) {
@@ -243,13 +243,19 @@ export default function MilanaPhone({ onBack, initialScreen = 'threads' }) {
   const openThread = (id) => {
     setActiveThreadId(id);
     setScreen('thread');
+    // Находим чат, который открываем, и убираем у него статус "непрочитано"
+    const threadIndex = THREADS.findIndex(t => t.id === id);
+    if (threadIndex !== -1) {
+      THREADS[threadIndex].unread = false; 
+      // Если у вас есть глобальное состояние, его тоже нужно обновить (см. ниже)
+    }
   };
 
   // ---------- ЭКРАН БЛОКИРОВКИ ----------
   if (!unlocked) {
     return (
       <div className="w-full h-full bg-gradient-to-b from-zinc-900 to-zinc-950 text-white flex flex-col items-center justify-center p-4 relative">
-        <button onClick={onBack} className="absolute top-4 left-4 text-zinc-500 hover:text-white z-10">
+        <button onClick={onBack} className="absolute top-10 left-4 text-zinc-500 hover:text-white z-10">
           <ChevronLeft size={24} />
         </button>
 
