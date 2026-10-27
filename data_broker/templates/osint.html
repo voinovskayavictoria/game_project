@@ -45,7 +45,7 @@
 
         .input-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .input-label { font-size: 1rem; font-weight: 600; margin-bottom: 12px; display: block; }
-        .input-hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+        .input-hint { font-size: 0.85rem; color: var(--accent); margin-bottom: 16px; font-weight: 500; background: #eff6ff; padding: 10px; border-radius: 4px; }
         textarea { width: 100%; height: 100px; background: #fff; border: 1px solid var(--border); padding: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; border-radius: 6px; outline: none; resize: none; margin-bottom: 16px; transition: border 0.2s; }
         textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .btn-analyze { background: var(--accent); color: #fff; border: none; padding: 12px 24px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.95rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; width: 100%; }
@@ -97,7 +97,6 @@
         .point__input::placeholder { color: #b8aa8a !important; font-style: italic; font-family: "Courier Prime", monospace; font-size: 12px; letter-spacing: 1px; }
         .point__input:focus, .signature-input:focus { background: rgba(255,240,180,.6) !important; border-bottom-color: #1a2a5a !important; }
 
-        /* Стили для правильных/неправильных ответов */
         .point__input.input-ok { border-bottom-color: var(--success) !important; color: var(--success) !important; }
         .point__input.input-bad { border-bottom-color: var(--danger) !important; color: var(--danger) !important; text-decoration: line-through; }
         .res-icon { font-size: 24px; font-weight: bold; line-height: 1; margin-bottom: 2px; }
@@ -145,7 +144,7 @@
         </div>
         <div class="score-board">
             <span>Найдено улик:</span>
-            <span id="evidence-counter">0</span>
+            <span id="evidence-counter">0 / 0</span>
         </div>
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="switchView('profiles')">База данных</div>
@@ -245,7 +244,7 @@
 
             <div class="point">
                 <div class="point__num">8.</div>
-                <div class="point__text">Гражданина Макарову втянул в преступную схему (предложил «быстрый заработок») сотрудник:</div>
+                <div class="point__text">Гражданка Макарову втянул в преступную схему (предложил «быстрый заработок») сотрудник:</div>
                 <div class="point__input-wrapper">
                     <input class="point__input" id="r-q8" placeholder="Фамилия Имя...">
                     <span class="res-icon" id="icon-r-q8"></span>
@@ -360,7 +359,7 @@
         ];
         const specialNames = ["шульга", "калинкова", "войновская"];
 
-        // --- БАЗА ДАННЫХ OSINT ---
+        // --- БАЗА ДАННЫХ OSINT (ИСПРАВЛЕНЫ ВСЕ КОЛОНКИ И ДОБАВЛЕНЫ HARD_KEYS) ---
         const characters = {
             "milana": {
                 name: "Милана Макарова",
@@ -374,38 +373,37 @@
                     { label: "Проблема: Долги", keys: ["долг", "деньги", "кредит"], found: false },
                     { label: "Опыт работы: 5 лет", keys: ["5 лет", "5"], found: false },
                     { label: "Пароль от CONNECT: 1704", keys: ["1704"], found: false },
-                    { label: "Telegram", keys: ["telegram", "тг", "milanka_makarova"], found: false },
+                    { label: "Telegram: @milanka_makarova", keys: ["@milanka_makarova", "milanka_makarova"], found: false },
                     { label: "Пароль от публичного CONNECT: 1234", keys: ["1234", "makarova"], found: false },
-                    { label: "Портрет: Наивная / Уязвимая", keys: ["наивная", "уязвимая", "добрая", "испуганная", "отчаянная"], found: false }
+                    { label: "Портрет личности: Наивная", keys: ["уязвимая", "добрая", "испуганная", "отчаянная", "жертва", "тупая"], hard_keys: ["наивная"], found: false, pts: 1 }
                 ]
             },
             "klimov": {
                 name: "Сергей Климов",
-                role: "Главный подозреваемый (C.U.)",
+                role: "Подозреваемый",
                 facts: [
-                    { label: "Компания: Vector Labs", keys: ["vector", "вектор"], found: false },
+                    { label: "Бывшая компания: Vector Labs", keys: ["vector", "вектор"], found: false },
                     { label: "Роль: Соучредитель", keys: ["соучредитель", "основатель"], found: false },
                     { label: "Партнер: Алексей Мельников", keys: ["мельников", "алексей"], found: false },
                     { label: "Год распада Vector Labs: 2019", keys: ["2019"], found: false },
                     { label: "Статус: Независимый консультант", keys: ["консультант"], found: false },
-                    { label: "Связан с OD-17", keys: ["od-17", "od17", "даркнет"], found: false },
-                    { label: "Нанимал PRIME на аутсорс", keys: ["аутсорс", "нанимал"], found: false },
-                    { label: "Портрет: Нарцисс / Психопат", keys: ["нарцисс", "психопат", "манипулятор", "жестокий", "высокомерный", "холодный"], found: false }
+                    { label: "Связан с: OD-17", keys: ["od-17", "od17", "даркнет"], found: false },
+                    { label: "Связан с: PRIME, ORBIT", keys: ["PRIME","прайм", "Прайм", "Орбит","орбит","ORBIT","orbit"], found: false },
+                    { label: "Портрет личности: Нарцисс", keys: ["манипулятор", "жестокий", "высокомерный", "холодный", "расчетливый", "злой", "психопат"], hard_keys: ["нарцисс"], found: false, pts: 1 }
                 ]
             },
             "melnikov": {
                 name: "Алексей Мельников",
-                role: "Соучастник",
+                role: "Директор ORBIT",
                 facts: [
                     { label: "Компания: ORBIT DATA", keys: ["orbit", "орбит"], found: false },
                     { label: "Прошлая компания: Vector Labs", keys: ["vector", "вектор"], found: false },
-                    { label: "Роль: Соучредитель VL", keys: ["соучредитель", "основатель"], found: false },
+                    { label: "Роль в прошлой компании: Соучредитель VL", keys: ["соучредитель", "основатель"], found: false },
                     { label: "Должность: Директор", keys: ["директор"], found: false },
-                    { label: "Основал ORBIT в 2019", keys: ["2019", "основал"], found: false },
-                    { label: "Купленный проект: CONNECT", keys: ["connect", "коннект"], found: false },
-                    { label: "Нанял Льва Белякова", keys: ["лев", "беляков"], found: false },
+                    { label: "Год основания: 2019", keys: ["2019", "основал"], found: false },
+                    { label: "Купленный проект: C-17", keys: ["c-17", "C-17",], found: false },
                     { label: "Цитата: «Данные - новая нефть»", keys: ["нефть", "данные"], found: false },
-                    { label: "Портрет: Прагматик / Циничный", keys: ["прагматик", "циничный", "жадный", "расчетливый"], found: false }
+                    { label: "Портрет личности: Прагматик", keys: ["жадный", "расчетливый", "жестокий", "злой", "хитрый", "циничный"], hard_keys: ["прагматик"], found: false, pts: 1 }
                 ]
             },
             "sokolov": {
@@ -417,8 +415,8 @@
                     { label: "Проект: C-17", keys: ["c-17", "c17", "с-17"], found: false },
                     { label: "Дата передачи: 17.04.2019", keys: ["17.04", "17 апреля"], found: false },
                     { label: "Жена: Марина Соколова", keys: ["марина", "жена"], found: false },
-                    { label: "Передал права на C-17", keys: ["orbit", "права"], found: false },
-                    { label: "Портрет: Уставший / Авторитарный", keys: ["уставший", "авторитарный", "строгий"], found: false }
+                    { label: "Кому передал права: ORBIT", keys: ["orbit", "орбит", "ORBIT"], found: false },
+                    { label: "Портрет личности: Уставший", keys: ["авторитарный", "строгий", "хороший", "добрый"], hard_keys: ["уставший"], found: false, pts: 1 }
                 ]
             },
             "lev": {
@@ -428,11 +426,9 @@
                     { label: "Компания: ORBIT DATA", keys: ["orbit", "орбит"], found: false },
                     { label: "Должность: DevOps", keys: ["devops", "девопс"], found: false },
                     { label: "Год рождения: 1991", keys: ["1991", "91"], found: false },
-                    { label: "В ORBIT с 2020", keys: ["2020"], found: false },
-                    { label: "Встречается с Миланой", keys: ["милана", "встречается"], found: false },
-                    { label: "Его подозревает семья", keys: ["семья", "подозревает"], found: false },
-                    { label: "Предложил 'быстрые деньги'", keys: ["быстрые", "деньги", "работа"], found: false },
-                    { label: "Портрет: Тревожный / Влюбленный", keys: ["тревожный", "влюбленный", "испуганный", "виноватый"], found: false }
+                    { label: "Год в ORBIT: 2020", keys: ["2020"], found: false },
+                    { label: "Отношения с Миланой: Да", keys: ["милана", "встречается"], found: false },
+                    { label: "Портрет личности: Тревожный", keys: ["испуганный", "виноватый", "заботливый", "ненадежный", "мутный", "слабый"], hard_keys: ["тревожный", "влюбленный"], found: false, pts: 1 }
                 ]
             },
             "german": {
@@ -441,9 +437,8 @@
                 facts: [
                     { label: "Компания: PRIME SYSTEMS", keys: ["prime", "прайм"], found: false },
                     { label: "Должность: DevSecOps", keys: ["devsecops", "девсекопс"], found: false },
-                    { label: "Перехватил трафик", keys: ["трафик", "перехватил"], found: false },
-                    { label: "Знал о бэкдорах", keys: ["бэкдор", "предупредил"], found: false },
-                    { label: "Портрет: Параноик", keys: ["параноик", "наблюдательный", "бдительный"], found: false }
+                    { label: "Год рождения: 1995", keys: ["1995"], found: false },
+                    { label: "Портрет личности: Параноик", keys: ["наблюдательный", "бдительный", "тревожный","нарцисс","влюбленный","подозрительный"], hard_keys: ["параноик"], found: false, pts: 1 }
                 ]
             },
             "admin01": {
@@ -451,8 +446,9 @@
                 role: "Администратор",
                 facts: [
                     { label: "Система: CONNECT", keys: ["connect", "коннект"], found: false },
-                    { label: "Подчиняется C.U.", keys: ["c.u", "cu"], found: false },
-                    { label: "Портрет: Безэмоциональный", keys: ["робот", "послушный", "жестокий", "безэмоциональный"], found: false }
+                    { label: "Подчиняется: C.U.", keys: ["c.u", "cu"], found: false },
+                    { label: "Настоящее имя: Алексей Мельников", keys: ["алексей", "мельников"], found: false },
+                    { label: "Портрет личности: Безэмоциональный", keys: ["робот", "послушный", "жестокий", "холодый","серьезный","умный"], hard_keys: ["безэмоциональный"], found: false, pts: 1 }
                 ]
             },
             "cu": {
@@ -460,9 +456,8 @@
                 role: "Координатор",
                 facts: [
                     { label: "Настоящее имя: Сергей Климов", keys: ["климов", "сергей"], found: false },
-                    { label: "Создатель CONNECT", keys: ["connect", "создатель"], found: false },
-                    { label: "Связан с OD-17", keys: ["od-17", "od17"], found: false },
-                    { label: "Код: 1704", keys: ["1704"], found: false }
+                    { label: "Создатель: CONNECT", keys: ["connect", "создатель"], found: false },
+                    { label: "Связан с: OD-17", keys: ["od-17", "od17"], found: false }
                 ]
             },
             "haeil": {
@@ -472,36 +467,36 @@
                     { label: "Директор: Чон У Джин", keys: ["чон", "джин"], found: false },
                     { label: "Юрист: Андрей Власов", keys: ["власов", "андрей"], found: false },
                     { label: "Партнер: Ольга Миронова", keys: ["ольга", "миронова"], found: false },
-                    { label: "Обслуживает PRIME и ORBIT", keys: ["prime", "orbit"], found: false }
+                    { label: "Обслуживает: PRIME и ORBIT", keys: ["prime", "orbit"], found: false }
                 ]
             },
             "prime": {
                 name: "PRIME SYSTEMS",
                 role: "IT-корпорация",
                 facts: [
-                    { label: "Создатель C-17", keys: ["c-17", "c17", "создатель"], found: false },
+                    { label: "Создатель: C-17", keys: ["c-17", "c17", "создатель"], found: false },
                     { label: "CEO: Павел Соколов", keys: ["соколов", "павел"], found: false },
-                    { label: "CTO: Анна Воронова", keys: ["воронова", "анна"], found: false },
-                    { label: "Передала C-17 в 2019", keys: ["2019", "передала"], found: false }
+                    { label: "Год создания: 2014", keys: ["2014"], found: false },
+                    { label: "Передала C-17: в 2019", keys: ["2019", "передала"], found: false }
                 ]
             },
             "orbit": {
                 name: "ORBIT DATA",
                 role: "Аналитика",
                 facts: [
-                    { label: "Основана в 2019", keys: ["2019", "основана"], found: false },
-                    { label: "Выкупила CONNECT", keys: ["connect", "выкупила"], found: false },
+                    { label: "Основана: в 2019", keys: ["2019", "основана"], found: false },
+                    { label: "Выкупила: C-17", keys: ["c17", "с-17"], found: false },
                     { label: "Директор: Мельников", keys: ["мельников", "алексей"], found: false },
-                    { label: "Внедрила OD-17", keys: ["od-17", "даркнет"], found: false }
+                    { label: "Внедрила: OD-17", keys: ["od-17", "даркнет"], found: false }
                 ]
             }
         };
 
         // --- ПРАВИЛЬНЫЕ ОТВЕТЫ ---
         const reportAnswers = {
-            'r-q1': ["торговля людьми", "трафикинг", "оборот людей", "незаконный оборот", "похищение"],
-            'r-q2': ["orbit data", "orbit", "орбит дата"],
-            'r-q3': ["prime systems", "prime", "прайм системс"],
+            'r-q1': ["торговля людьми", "трафикинг", "оборот людей", "незаконный оборот", "похищение", "эскорт", "проституция", "продажа людей"],
+            'r-q2': ["orbit data", "orbit", "орбит дата", "орбит", "orbit"],
+            'r-q3': ["prime systems", "prime", "прайм системс", "прайм", "prime"],
             'r-q4': ["человек", "люди", "женщина", "девушка", "жертва"],
             'r-q5': ["сергей климов", "климов"],
             'r-q6': ["алексей мельников", "мельников"],
@@ -514,12 +509,18 @@
             'r-q13': ["1234"],
             'r-q14': ["милана", "макарова", "милана макарова"],
             'r-q15': ["жива"],
-            'r-q16': ["2", "два", "двое", "2 человека", "два человека", "инженер", "юзер", "user-02", "user02"]
+            'r-q16': ["2", "два", "двое", "2 человека", "два человека", "инженер", "юзер", "user-02", "user02", "3"]
         };
 
-        let totalFacts = 0;
-        for (const char of Object.values(characters)) totalFacts += char.facts.length;
-        let foundFacts = 0;
+        let totalMaxScore = 0;
+        for (const char of Object.values(characters)) {
+            char.facts.forEach(f => {
+                totalMaxScore += (f.hard_keys ? 3 : 1);
+            });
+        }
+        
+        let osintScore = 0;
+        let foundFactsCount = 0;
         let currentCharId = null;
 
         function initList() {
@@ -533,7 +534,7 @@
                 btn.innerHTML = `<span>${data.name}</span> <span class="check-icon" id="check-${id}">✓</span>`;
                 list.appendChild(btn);
             }
-            document.getElementById('evidence-counter').innerText = `0 / ${totalFacts}`;
+            document.getElementById('evidence-counter').innerText = `0 / ${totalMaxScore}`;
         }
 
         function loadChar(id) {
@@ -549,18 +550,38 @@
             let html = `
                 <div class="input-card">
                     <label class="input-label">Выкачать цифровой след</label>
-                    <p class="input-hint">Введите факты: год рождения, место работы, должность, опишите личность одним словом и т.д.</p>
-                    <textarea id="trace-input" placeholder="Например: 1995, прайм, hr, нарцисс..."></textarea>
+                    <p class="input-hint">Вводите найденные факты <b>по одному слову</b> (без пробелов) или через запятую. Для портрета подойдет любое прилагательное!</p>
+                    <textarea id="trace-input" placeholder="Например: 1995, прайм, hr..."></textarea>
                     <button class="btn-analyze" onclick="analyzeTraces('${id}')">ПРОАНАЛИЗИРОВАТЬ ТЕКСТ</button>
                     <div class="results-grid" id="results-${id}">
             `;
 
             data.facts.forEach((fact, index) => {
                 const statusClass = fact.found ? 'found' : '';
-                const statusText = fact.found ? 'НАЙДЕНО' : 'ПУСТО';
+                let statusText = fact.found ? `НАЙДЕНО (+${fact.pts})` : 'ПУСТО';
+                
+                let displayLabel = fact.label;
+
+                if (!fact.found) {
+                    if (displayLabel.startsWith("Портрет личности:")) {
+                        displayLabel = "Портрет личности: ??? (опишите характер)";
+                    } else {
+                        let parts = displayLabel.split(':');
+                        if (parts.length > 1) {
+                            displayLabel = parts[0] + ": ???";
+                        } else {
+                            displayLabel = displayLabel + ": ???"; // Страховка
+                        }
+                    }
+                } else {
+                    if (displayLabel.startsWith("Портрет личности:")) {
+                        displayLabel = "Портрет личности: Успешно определен!";
+                    }
+                }
+
                 html += `
                     <div class="fact-item ${statusClass}" id="fact-${id}-${index}">
-                        <span class="label">${fact.found ? fact.label : 'Неизвестный факт...'}</span>
+                        <span class="label">${displayLabel}</span>
                         <span class="status">${statusText}</span>
                     </div>
                 `;
@@ -570,33 +591,78 @@
             document.getElementById('prof-content').innerHTML = html;
         }
 
+        // Вспомогательная функция для точного поиска слов
+        function isStrictMatch(rawInput, inputWords, keys) {
+            return keys.some(key => {
+                if (!key) return false;
+                key = key.toLowerCase();
+                if (key.includes(' ')) {
+                    return rawInput.includes(key);
+                }
+                return inputWords.includes(key);
+            });
+        }
+
         function analyzeTraces(charId) {
-            const input = document.getElementById('trace-input').value.toLowerCase();
+            const rawInput = document.getElementById('trace-input').value.toLowerCase();
+            // Разбиваем ввод на отдельные слова
+            const inputWords = rawInput.split(/[\s,]+/);
+            
             const data = characters[charId];
             let newlyFound = 0;
 
             data.facts.forEach((fact, index) => {
-                if (!fact.found) {
-                    const isMatch = fact.keys.some(key => input.includes(key));
+                if (!fact.found || (fact.found && fact.hard_keys && fact.pts === 1)) {
+                    
+                    let isHardMatch = false;
+                    if (fact.hard_keys) {
+                        isHardMatch = isStrictMatch(rawInput, inputWords, fact.hard_keys);
+                    }
+                    
+                    let isMatch = isHardMatch;
+                    
+                    // СПЕЦЛОГИКА ДЛЯ ПОРТРЕТА ЛИЧНОСТИ
+                    if (!isMatch && fact.label.startsWith("Портрет личности:")) {
+                        // Принимаем ЛЮБОЕ слово от 3-х букв (любое прилагательное)
+                        isMatch = /[а-яёa-z]{3,}/i.test(rawInput);
+                    } else if (!isMatch) {
+                        isMatch = isStrictMatch(rawInput, inputWords, fact.keys);
+                    }
+                    
                     if (isMatch) {
-                        fact.found = true;
-                        foundFacts++;
-                        newlyFound++;
+                        let earnedPts = isHardMatch ? 3 : 1;
                         
-                        const el = document.getElementById(`fact-${charId}-${index}`);
-                        el.classList.add('found');
-                        el.querySelector('.label').innerText = fact.label;
-                        el.querySelector('.status').innerText = 'НАЙДЕНО';
+                        if (!fact.found) {
+                            fact.found = true;
+                            fact.pts = earnedPts;
+                            osintScore += earnedPts;
+                            foundFactsCount++;
+                            newlyFound++;
+                            
+                            const el = document.getElementById(`fact-${charId}-${index}`);
+                            el.classList.add('found');
+                            el.querySelector('.label').innerText = fact.label.startsWith("Портрет") ? "Портрет личности: Успешно определен!" : fact.label;
+                            el.querySelector('.status').innerText = `НАЙДЕНО (+${earnedPts})`;
+                            
+                        } else if (fact.found && earnedPts > fact.pts) {
+                            // Апгрейд портрета с 1 до 3
+                            osintScore += (earnedPts - fact.pts);
+                            fact.pts = earnedPts;
+                            newlyFound++;
+                            
+                            const el = document.getElementById(`fact-${charId}-${index}`);
+                            el.querySelector('.status').innerText = `НАЙДЕНО (+${earnedPts})`;
+                        }
                     }
                 }
             });
 
-            document.getElementById('evidence-counter').innerText = `${foundFacts} / ${totalFacts}`;
+            document.getElementById('evidence-counter').innerText = `${osintScore} / ${totalMaxScore}`;
             updateCharStatus(charId);
 
             if (newlyFound > 0) {
                 document.getElementById('trace-input').value = '';
-                document.getElementById('trace-input').placeholder = `Найдено новых: ${newlyFound}.`;
+                document.getElementById('trace-input').placeholder = `Обновлено фактов: ${newlyFound}.`;
             } else {
                 document.getElementById('trace-input').placeholder = "Совпадений нет.";
             }
@@ -625,10 +691,9 @@
             }
         }
 
-                function submitReport() {
+        function submitReport() {
             let reportScore = 0;
             
-            // Очищаем старые отметки перед новой проверкой
             document.querySelectorAll('.point__input').forEach(el => {
                 el.classList.remove('input-ok', 'input-bad');
             });
@@ -673,7 +738,6 @@
                 }
             }
 
-            // Бонус за имя
             const invName = document.getElementById('investigator-name').value.trim().toLowerCase().replace(/ё/g, 'е');
             let nameBonus = 0;
             let nameBonusText = "";
@@ -693,9 +757,8 @@
                 }
             }
 
-            // СЧИТАЕМ ОБЩИЙ СЧЕТ
-            const totalScore = foundFacts + reportScore + nameBonus;
-            const maxScore = totalFacts + 20 + 4; // Максимум 91 балл
+            const totalScore = osintScore + reportScore + nameBonus;
+            const maxScore = totalMaxScore + 20 + 4; // Максимум
             const percent = (totalScore / maxScore) * 100;
 
             const scoreBox = document.getElementById('score-box');
@@ -713,37 +776,24 @@
             let finalText = "";
             let finalColor = "";
 
-            // ДЕСЯТЬ УРОВНЕЙ КОНЦОВОК
-            if (totalScore >= 90) {
-                finalColor = "#166534"; // Темно-зеленый
+            if (totalScore >= (maxScore * 0.8)) {
+                finalColor = "#166534"; 
                 finalText = "<b>ЛЕГЕНДА БЮРО.</b> Вы вычислили абсолютно всё. Каждый цифровой след был найден, а отчет составлен безупречно. Климов, Мельников и вся их сеть отправляются за решетку на максимальный срок. Милана и спасенные вами люди свободны.";
-            } else if (totalScore >= 80) {
-                finalColor = "#15803d"; // Зеленый
+            } else if (totalScore >= (maxScore * 0.65)) {
+                finalColor = "#15803d";
                 finalText = "<b>БЕЗУПРЕЧНО.</b> Суд аплодирует вашей работе. Вы нашли почти все улики и составили идеальный отчет. Адвокатам злодеев нечего вам противопоставить. Все преступники изолированы.";
-            } else if (totalScore >= 70) {
-                finalColor = "#16a34a"; // Светло-зеленый
-                finalText = "<b>ТРИУМФ.</b> Вы вычислили главных злодеев и спасли жертв. В вашем отчете есть пара мелких неточностей, но это не помешало суду вынести обвинительный приговор.";
-            } else if (totalScore >= 60) {
-                finalColor = "#ca8a04"; // Желтый
+            } else if (totalScore >= (maxScore * 0.5)) {
+                finalColor = "#ca8a04";
                 finalText = "<b>ДЕЛО РАСКРЫТО.</b> Хорошая работа. Вы собрали достаточно доказательств, чтобы посадить Климова и Мельникова. Правда, пара фигурантов успела сбежать, пока вы собирали данные.";
-            } else if (totalScore >= 50) {
-                finalColor = "#d97706"; // Оранжевый
+            } else if (totalScore >= (maxScore * 0.35)) {
+                finalColor = "#d97706";
                 finalText = "<b>ЧАСТИЧНЫЙ УСПЕХ.</b> Преступники понесут наказание, но не по всем пунктам. Из-за пробелов в отчете адвокаты смогли смягчить приговор, а система CONNECT продолжила работу в тени.";
-            } else if (totalScore >= 40) {
-                finalColor = "#b45309"; // Темно-оранжевый
-                finalText = "<b>НА ГРАНИ ПРОВАЛА.</b> Дело развалилось в суде. Вам удалось спасти Милану, но главные злодеи вышли на свободу из-за недостатка улик. Вы сделали всё, что могли, но этого оказалось мало.";
-            } else if (totalScore >= 30) {
-                finalColor = "#dc2626"; // Красный
-                finalText = "<b>СЛАБОЕ РАССЛЕДОВАНИЕ.</b> Вы нашли лишь обрывки информации. Суд признал вину только мелких исполнителей (вроде ADMIN-01), а настоящие кукловоды даже не узнали о вашем существовании.";
-            } else if (totalScore >= 20) {
-                finalColor = "#991b1b"; // Темно-красный
-                finalText = "<b>ПРОВАЛ.</b> Ваш отчет подняли на смех. Вы не нашли ни нужных паролей, ни имен. Климов и его команда заметают следы, а дело №17-04 уходит в архив нераскрытым.";
-            } else if (totalScore >= 10) {
-                finalColor = "#7f1d1d"; // Очень темный красный
-                finalText = "<b>ФИАСКО.</b> Вы провалили задание. Не собрано почти ничего, злодеи остались на свободе, а потерпевшая числится мертвой. Бюро разочаровано в ваших навыках.";
+            } else if (totalScore >= (maxScore * 0.2)) {
+                finalColor = "#dc2626";
+                finalText = "<b>СЛАБОЕ РАССЛЕДОВАНИЕ.</b> Вы нашли лишь обрывки информации. Суд признал вину только мелких исполнителей, а настоящие кукловоды даже не узнали о вашем существовании.";
             } else {
-                finalColor = "#000000"; // Черный
-                finalText = "<b>ДЕЛО В МУСОРКЕ.</b> Вы даже не пытались. Пустой отчет, ноль улик. Злодеи продолжат свой бизнес, а вы больше никогда не получите лицензию следователя.";
+                finalColor = "#991b1b";
+                finalText = "<b>ПРОВАЛ.</b> Ваш отчет подняли на смех. Вы не нашли ни нужных паролей, ни имен. Климов и его команда заметают следы, а дело №17-04 уходит в архив нераскрытым.";
             }
 
             scoreTitle.style.color = finalColor;
